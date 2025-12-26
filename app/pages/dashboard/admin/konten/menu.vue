@@ -3,13 +3,15 @@ import { ref, onMounted, watchEffect } from 'vue'
 import { definePageMeta, useFetch, navigateTo, useToast } from '#imports'
 import { useAuth } from '~/composables/useAuth'
 
+
 /**
  * Admin: Kelola Menu
  * Mengelola struktur menu Header, Sidebar, dan Footer
  */
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  ssr: false
 })
 
 const { isAdmin, authState, userRole } = useAuth()
@@ -173,7 +175,8 @@ async function onSave() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <ClientOnly>
+    <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-highlighted">Kelola Menu</h1>
@@ -197,8 +200,7 @@ async function onSave() {
     </div>
 
     <UCard>
-      <ClientOnly>
-        <template #header>
+      <template #header>
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-highlighted">Struktur Menu: {{ positions.find(p => p.value === currentPosition)?.label }}</h2>
           <UButton label="Tambah Menu Utama" icon="i-lucide-plus" size="xs" variant="outline" @click="addMenu(null)" />
@@ -297,7 +299,7 @@ async function onSave() {
           </div>
         </div>
       </div>
-      </ClientOnly>
     </UCard>
-  </div>
+    </div>
+  </ClientOnly>
 </template>

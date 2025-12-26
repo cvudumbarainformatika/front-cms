@@ -5,7 +5,8 @@
  */
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  ssr: false
 })
 
 const { isAdmin, authState, userRole } = useAuth()

@@ -4,7 +4,10 @@ import TiptapEditor from '~/components/editor/TiptapEditor.vue'
 import { definePageMeta, useRoute, useFetch, useToast, navigateTo } from '#imports'
 import { useAuth } from '~/composables/useAuth'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ 
+  layout: 'dashboard',
+  ssr: false 
+})
 
 const route = useRoute()
 const toast = useToast()
