@@ -140,11 +140,12 @@ async function onSave() {
       />
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-6">
-      <!-- Left: Main Content -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Hero Section -->
-        <UCard>
+    <ClientOnly>
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Left: Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Hero Section -->
+          <UCard>
           <template #header>
             <h2 class="font-semibold text-highlighted">Hero Section</h2>
           </template>
@@ -244,7 +245,8 @@ async function onSave() {
             </UFormGroup>
           </div>
         </UCard>
+        </div>
       </div>
-    </div>
+    </ClientOnly>
   </div>
 </template>

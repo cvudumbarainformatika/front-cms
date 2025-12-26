@@ -46,6 +46,40 @@ watchEffect(() => {
 })
 
 // Methods
+function normalizePath(raw: any): string {
+  const s = (raw ?? '').toString().trim()
+  if (!s || s === '/') return ''
+  // only allow internal path for content editor (no http/https)
+  if (/^https?:\/\//i.test(s)) return ''
+  return s
+}
+
+function isValidInternalPath(raw: any): boolean {
+  return normalizePath(raw).length > 0
+}
+
+function onEditContent(it: any) {
+  const raw = it.to || it.slug
+  if (!isValidInternalPath(raw)) {
+    toast.add({ title: 'Path tidak valid', description: 'Isi Path / URL dengan path internal. Contoh: /profil/visi-misi', color: 'warning' })
+    return
+  }
+  const to = getEditorPath(it)
+  if (!to) {
+    toast.add({ title: 'Path tidak valid', description: 'Tidak dapat membuka editor tanpa path yang benar.', color: 'warning' })
+    return
+  }
+  navigateTo(to)
+}
+
+function getEditorPath(it: any) {
+  const base = '/dashboard/admin/konten/editor/'
+  const raw = it.to || it.slug
+  if (!raw) return undefined
+  const clean = typeof raw === 'string' ? (raw.startsWith('/') ? raw.slice(1) : raw) : String(raw)
+  if (!clean) return undefined // hindari navigasi ke editor/ tanpa slug
+  return base + clean
+}
 function addMenu(parentId: string | null = null) {
   const newItem = {
     id: `menu-${Date.now()}`,
@@ -163,7 +197,8 @@ async function onSave() {
     </div>
 
     <UCard>
-      <template #header>
+      <ClientOnly>
+        <template #header>
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-highlighted">Struktur Menu: {{ positions.find(p => p.value === currentPosition)?.label }}</h2>
           <UButton label="Tambah Menu Utama" icon="i-lucide-plus" size="xs" variant="outline" @click="addMenu(null)" />
@@ -192,7 +227,7 @@ async function onSave() {
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               <UFormGroup label="Dinamis" size="xs" class="flex flex-col items-center">
-                <UToggle v-model="item.isDynamic" size="sm" />
+                <USwitch v-model="item.isDynamic" size="sm" />
               </UFormGroup>
               <div class="flex items-center gap-1 border-l border-default pl-2 ml-2">
                 <UButton 
@@ -202,6 +237,16 @@ async function onSave() {
                   color="neutral"
                   @click="addMenu(item.id)"
                   title="Tambah Submenu"
+                  />
+                  <UButton
+                    :disabled="!isValidInternalPath(item.to || item.slug)"
+                    icon="i-lucide-file-pen"
+                    variant="ghost"
+                    size="xs"
+                    color="primary"
+                    @click="onEditContent(item)"
+                    title="Buat/Edit Konten"
+                  
                 />
                 <UButton 
                   v-if="!item.isFixed"
@@ -228,8 +273,17 @@ async function onSave() {
               </div>
               <div class="flex items-center gap-3">
                 <UFormGroup label="Dinamis" size="xs" class="flex flex-col items-center">
-                  <UToggle v-model="child.isDynamic" size="xs" />
+                  <USwitch v-model="child.isDynamic" size="xs" />
                 </UFormGroup>
+                <UButton
+                  :disabled="!isValidInternalPath(child.to || child.slug)"
+                  icon="i-lucide-file-pen"
+                  variant="ghost"
+                  size="xs"
+                  color="primary"
+                  @click="onEditContent(child)"
+                  title="Buat/Edit Konten"
+                />
                 <UButton 
                   v-if="!child.isFixed"
                   icon="i-lucide-trash" 
@@ -243,6 +297,7 @@ async function onSave() {
           </div>
         </div>
       </div>
+      </ClientOnly>
     </UCard>
   </div>
 </template>

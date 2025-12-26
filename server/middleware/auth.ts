@@ -3,6 +3,11 @@ import { defineEventHandler, getRequestURL, getRequestHeader, createError } from
 export default defineEventHandler((event) => {
   const url = getRequestURL(event)
   
+  // Skip auth for upload endpoint
+  if (url.pathname === '/api/upload') {
+    return
+  }
+
   // Hanya proteksi rute API yang membutuhkan admin
   // Misalnya: POST /api/homepage, POST /api/berita, dll.
   if (url.pathname.startsWith('/api/') && event.method === 'POST') {

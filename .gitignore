@@ -1,3 +1,7 @@
+# Uploads
+public/uploads/**/*
+!public/uploads/.gitkeep
+
 # Nuxt dev/build outputs
 .output
 .data

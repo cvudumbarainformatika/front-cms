@@ -1,0 +1,109 @@
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useEditor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
+import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
+import Image from '@tiptap/extension-image'
+
+interface Props {
+  modelValue: string
+  placeholder?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
+  placeholder: 'Tulis konten di sini...'
+})
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+const editor = ref<any>(null)
+
+onMounted(() => {
+  editor.value = useEditor({
+    content: props.modelValue || '',
+    editable: true,
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3, 4] },
+        bulletList: { keepMarks: true },
+        orderedList: { keepMarks: true },
+        dropcursor: false,
+        gapcursor: false
+      }),
+      Underline,
+      Link.configure({ openOnClick: false }),
+      Image.configure({ inline: false, allowBase64: true })
+    ],
+    onUpdate: ({ editor }) => {
+      emit('update:modelValue', editor.getHTML())
+    }
+  })
+})
+
+watch(() => props.modelValue, (val) => {
+  if (!editor.value) return
+  const currentContent = editor.value.getHTML()
+  if (val !== currentContent) {
+    editor.value.commands.setContent(val || '', false)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (editor.value) {
+    editor.value.destroy()
+    editor.value = null
+  }
+})
+
+const canUndo = computed(() => editor.value?.can?.().undo?.() ?? false)
+const canRedo = computed(() => editor.value?.can?.().redo?.() ?? false)
+</script>
+
+<template>
+  <div v-if="editor" class="rounded-md border border-default overflow-hidden">
+    <div class="flex flex-wrap items-center gap-1 p-2 border-b border-default bg-muted/40">
+      <UButton size="xs" variant="ghost" icon="i-lucide-undo" :disabled="!canUndo" @click="editor?.chain().focus().undo().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-redo" :disabled="!canRedo" @click="editor?.chain().focus().redo().run()" />
+      <USeparator orientation="vertical" />
+
+      <UButton size="xs" variant="ghost" icon="i-lucide-bold" :color="editor?.isActive?.('bold') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleBold().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-italic" :color="editor?.isActive?.('italic') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleItalic().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-underline" :color="editor?.isActive?.('underline') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleUnderline().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-strikethrough" :color="editor?.isActive?.('strike') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleStrike().run()" />
+      <USeparator orientation="vertical" />
+
+      <UButton size="xs" variant="ghost" icon="i-lucide-heading-1" :color="editor?.isActive?.'heading', { level: 1 }) ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleHeading({ level: 1 }).run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-heading-2" :color="editor?.isActive?.'heading', { level: 2 }) ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-heading-3" :color="editor?.isActive?.'heading', { level: 3 }) ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleHeading({ level: 3 }).run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-heading-4" :color="editor?.isActive?.'heading', { level: 4 }) ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleHeading({ level: 4 }).run()" />
+      <USeparator orientation="vertical" />
+
+      <UButton size="xs" variant="ghost" icon="i-lucide-list" :color="editor?.isActive?.'bulletList') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleBulletList().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-list-ordered" :color="editor?.isActive?.'orderedList') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleOrderedList().run()" />
+      <USeparator orientation="vertical" />
+
+      <UButton size="xs" variant="ghost" icon="i-lucide-quote" :color="editor?.isActive?.'blockquote') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleBlockquote().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-code" :color="editor?.isActive?.'code') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleCode().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-code-xml" :color="editor?.isActive?.'codeBlock') ? 'primary' : 'neutral'" @click="editor?.chain().focus().toggleCodeBlock().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-minus" title="Horizontal Rule" @click="editor?.chain().focus().setHorizontalRule().run()" />
+
+
+      <UButton size="xs" variant="ghost" icon="i-lucide-link" @click="() => { const url = prompt('Masukkan URL'); if (url) editor?.chain().focus().setLink({ href: url }).run() }" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-link-2-off" @click="editor?.chain().focus().unsetLink().run()" />
+
+      <input id="tiptap-image-input" type="file" accept="image/*" class="hidden" @change="(e:any)=>{ const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ editor?.chain().focus().setImage({ src: String(r.result) }).run(); (e.target as HTMLInputElement).value=''; }; r.readAsDataURL(f) }" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-image" @click="() => { document.getElementById('tiptap-image-input')?.click() }" />
+
+      <USeparator orientation="vertical" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-eraser" title="Clear Marks" @click="editor?.chain().focus().unsetAllMarks().run()" />
+      <UButton size="xs" variant="ghost" icon="i-lucide-eraser" title="Clear Nodes" @click="editor?.chain().focus().clearNodes().run()" />
+    </div>
+
+    <EditorContent :editor="editor" class="min-h-[420px] p-4 prose prose-primary dark:prose-invert max-w-none" />
+
+  </div>
+</template>
