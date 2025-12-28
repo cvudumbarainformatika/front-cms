@@ -3,6 +3,10 @@
  * List Agenda Kegiatan PDPI
  */
 
+definePageMeta({
+  layout: 'news'
+})
+
 const route = useRoute()
 const router = useRouter()
 
@@ -61,13 +65,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <div>
-    <UPageHero
+  <UPage>
+    <UPageHeader
       title="Agenda Kegiatan"
       description="Webinar, workshop, seminar, dan kongres untuk pengembangan kompetensi"
     />
 
-    <UPageSection>
+    <UPageBody>
       <!-- Filters -->
       <div class="flex flex-col md:flex-row gap-4 mb-8">
         <UButton
@@ -80,82 +84,39 @@ useSeoMeta({
           {{ upcoming ? 'Acara Mendatang' : 'Semua Acara' }}
         </UButton>
         <div class="flex-1" />
-        <UButtonGroup orientation="horizontal" size="md">
+        <div role="group" class="flex flex-wrap gap-2">
           <UButton
             v-for="t in types"
             :key="t.value"
             :variant="type === t.value ? 'solid' : 'outline'"
             :color="type === t.value ? 'primary' : 'neutral'"
             :icon="t.icon"
+            size="md"
             @click="setType(t.value)"
           >
             {{ t.label }}
           </UButton>
-        </UButtonGroup>
+        </div>
       </div>
 
       <!-- Agenda Grid -->
-      <div
-        v-if="agendaData?.data?.items.length"
-        class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
-      >
-        <UPageCard
-          v-for="agenda in agendaData.data.items"
-          :key="agenda.id"
-          :title="agenda.title"
-          :description="agenda.description"
-          spotlight
-        >
-          <template v-if="agenda.image" #header>
-            <img
-              :src="agenda.image"
-              :alt="agenda.title"
-              class="w-full h-40 object-cover"
-            >
-          </template>
-          <template #footer>
-            <div class="space-y-3">
-              <div class="flex  items-center gap-2 text-sm">
-                <UIcon name="i-lucide-calendar" class="w-4 h-4 text-primary" />
-                <span class="font-medium">
-                  {{ new Date(agenda.date).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  }) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-muted">
-                <UIcon
-                  :name="agenda.isOnline ? 'i-lucide-video' : 'i-lucide-map-pin'"
-                  class="w-4 h-4"
-                />
-                <span>{{ agenda.location }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-muted">
-                <UIcon name="i-lucide-wallet" class="w-4 h-4" />
-                <span>{{ agenda.fee }}</span>
-              </div>
-              <div class="flex items-center justify-between pt-3 border-t border-default">
-                <UBadge :label="`${agenda.skp} SKP`" color="primary" />
-                <div class="flex items-center gap-1 text-xs text-muted">
-                  <UIcon name="i-lucide-users" class="w-3.5 h-3.5" />
-                  <span>{{ agenda.registered }}/{{ agenda.quota }}</span>
-                </div>
-              </div>
-              <UButton
-                v-if="agenda.registrationUrl"
-                :to="agenda.registrationUrl"
-                external
-                block
-                size="sm"
-                trailing-icon="i-lucide-external-link"
-              >
-                Daftar Sekarang
-              </UButton>
-            </div>
-          </template>
-        </UPageCard>
+      <div v-if="agendaData?.data?.items.length" >
+        <UBlogPosts class="contents">
+          <UBlogPost
+            v-for="agenda in agendaData.data.items"
+            :key="agenda.id"
+            :to="`/agenda/${agenda.slug}`"
+            :title="agenda.title"
+            :description="agenda.description"
+            :image="agenda.image"
+            :date="new Date(agenda.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+            :authors="[{ name: agenda.isOnline ? 'Online' : 'Luring', avatar: { src: agenda.image || 'https://api.dicebear.com/8.x/initials/svg?seed=AG&backgroundType=gradientLinear' } }]"
+            :badge="{ label: `${agenda.skp} SKP` }"
+            variant="naked"
+            orientation="vertical"
+            :ui="{ image: 'h-48 object-cover', description: 'line-clamp-2' }"
+          />
+        </UBlogPosts>
       </div>
 
       <!-- Empty State -->
@@ -186,6 +147,29 @@ useSeoMeta({
           @update:model-value="(newPage: number) => router.push({ query: { ...route.query, page: newPage } })"
         />
       </div>
-    </UPageSection>
-  </div>
+    </UPageBody>
+
+    <template #right>
+      <UPageAside>
+        <div class="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-auto pr-1">
+          <h3 class="text-sm font-medium text-muted">Agenda Terbaru</h3>
+          <div class="space-y-3">
+            <div
+              v-for="ag in (agendaData?.data?.items || []).slice(0, 6)"
+              :key="`ag-${ag.id}`"
+              class="flex items-start gap-3"
+            >
+              <img :src="ag.image" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+              <div class="min-w-0">
+                <NuxtLink :to="ag.registrationUrl || '#'" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
+                  {{ ag.title }}
+                </NuxtLink>
+                <p class="text-xs text-muted">{{ new Date(ag.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UPageAside>
+    </template>
+  </UPage>
 </template>

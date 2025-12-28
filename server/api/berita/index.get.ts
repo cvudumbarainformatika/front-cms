@@ -15,8 +15,34 @@ export default defineEventHandler((event) => {
   const search = query.search as string
   const month = query.month as string // format: YYYY-MM
   const sort = (query.sort as string) || '' // 'popular' untuk urut berdasarkan views
+  const status = (query.status as string) || '' // 'draft' | 'published' | 'all'
 
   let items = getAllBerita()
+
+  // Normalize legacy fields on all items (status, deletedAt)
+  items = items.map((it: any) => ({
+    ...it,
+    status: it?.status ?? 'published',
+    deletedAt: it?.deletedAt ?? ''
+  }))
+
+  // Helper status: treat missing as 'published' for compatibility with legacy data
+  const getStatus = (it: any) => (it?.status ?? 'published')
+
+  // Soft delete handling: exclude deleted by default
+  const isDeleted = (it: any) => !!it.deletedAt
+  if (status === 'deleted') {
+    items = items.filter(isDeleted)
+  } else {
+    items = items.filter(it => !isDeleted(it))
+    // Filter by status (only on non-deleted)
+    if (status && status !== 'all') {
+      items = items.filter(item => getStatus(item) === status)
+    } else if (!status) {
+      // default untuk publik: hanya published jika status tidak dispesifikasikan
+      items = items.filter(item => getStatus(item) !== 'draft')
+    }
+  }
 
   // Filter by category
   if (category) {

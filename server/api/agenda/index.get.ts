@@ -12,12 +12,24 @@ export default defineEventHandler((event) => {
   const type = query.type as string
   const page = parseInt(query.page as string) || 1
   const limit = parseInt(query.limit as string) || 12
+  const status = (query.status as string) || ''
 
-  let items = upcoming ? getUpcomingAgenda() : getAllAgenda()
+  let items = (upcoming ? getUpcomingAgenda() : getAllAgenda()).map((it: any) => ({
+    ...it,
+    status: it?.status ?? 'published',
+    deletedAt: it?.deletedAt ?? ''
+  }))
 
   // Filter by type
   if (type) {
     items = getAgendaByType(type)
+  }
+
+  // Filter by status
+  if (status === 'deleted') items = items.filter((a: any) => !!a.deletedAt)
+  else {
+    items = items.filter((a: any) => !a.deletedAt)
+    if (status && status !== 'all') items = items.filter((a: any) => (a as any).status === status)
   }
 
   // Pagination

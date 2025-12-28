@@ -274,9 +274,9 @@ async function onSave() {
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <UFormGroup label="Dinamis" size="xs" class="flex flex-col items-center">
+                <UFormField label="Dinamis" size="xs" class="flex flex-col items-center">
                   <USwitch v-model="child.isDynamic" size="xs" />
-                </UFormGroup>
+                </UFormField>
                 <UButton
                   :disabled="!isValidInternalPath(child.to || child.slug)"
                   icon="i-lucide-file-pen"
