@@ -254,7 +254,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               >
                 <img :src="berita.image" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
-                  <NuxtLink :to="`/berita/${berita.slug}`" class="line-clamp-2 font-medium hover:underline">
+                  <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ berita.title }}
                   </NuxtLink>
                   <p class="text-xs text-muted">{{ formatDayMonth(berita.publishedAt) }}</p>
