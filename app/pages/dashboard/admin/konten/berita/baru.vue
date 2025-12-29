@@ -19,12 +19,34 @@ const form = reactive({
 
 const activeTab = ref<'konten'|'seo'|'pengaturan'>('konten')
 
-function genSlug() {
-  form.slug = (form.slug || form.title)
+function slugify (text: string) {
+  return (text || '')
     .toLowerCase().trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+}
+function genSlug() {
+  form.slug = slugify(form.slug || form.title)
+}
+
+const autoSlug = ref('')
+watch(() => form.title, (t) => {
+  const s = slugify(t)
+  if (!form.slug || form.slug === autoSlug.value) {
+    form.slug = s
+  }
+  autoSlug.value = s
+})
+
+function onFileUpload (files: File[]|FileList) {
+  const file = Array.isArray(files) ? files[0] : files?.[0]
+  if (!file) return
+  const fd = new FormData()
+  fd.append('file', file)
+  $fetch('/api/upload', { method: 'POST', body: fd })
+    .then((res: any) => { if (res?.url) form.image = res.url })
+    .catch(() => {})
 }
 
 const saving = ref(false)
@@ -72,6 +94,10 @@ function addTag () {
   tagInput.value = ''
   errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
 }
+function removeTag (t: string) {
+  form.tags = form.tags.filter(x => x !== t)
+  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
+}
 </script>
 
 <template>
@@ -102,8 +128,14 @@ function addTag () {
           <UFormField label="Excerpt">
             <UTextarea v-model="form.excerpt" :rows="6" placeholder="Ringkasan singkat yang menarik" class="w-full" />
           </UFormField>
-          <UFormField label="Cover Image URL">
-            <UInput v-model="form.image" placeholder="https://..."  class="w-full"/>
+          <UFormField label="Cover Image">
+            <UFileUpload
+              icon="i-lucide-image"
+              label="Drop your image here"
+              description="SVG, PNG, JPG or GIF (max. 2MB)"
+              class="w-full min-h-48"
+              @change="onFileUpload"
+            />
             <img v-if="form.image" :src="form.image" alt="cover" class="mt-2 w-full h-28 object-cover rounded"  />
           </UFormField>
           <UFormField label="Kategori" :error="errors.category">
@@ -111,7 +143,7 @@ function addTag () {
           </UFormField>
           <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
             <div class="flex flex-wrap gap-1 mb-2">
-              <UBadge v-for="t in form.tags" :key="t" :label="t" variant="subtle" />
+              <UBadge v-for="t in form.tags" :key="t" :label="t" variant="subtle" class="cursor-pointer" @click="removeTag(t)" />
             </div>
             <UInput v-model="tagInput" placeholder="Ketik tag lalu Enter" @keyup.enter.prevent="addTag" class="w-full" />
           </UFormField>

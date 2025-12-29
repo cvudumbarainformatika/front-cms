@@ -1,21 +1,14 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard', ssr: false })
 import type { DocumentItem } from '~/types/content'
 
-const columns = [{
-  key: 'name',
-  label: 'Nama Dokumen'
-}, {
-  key: 'type',
-  label: 'Tipe'
-}, {
-  key: 'validUntil',
-  label: 'Berlaku Hingga'
-}, {
-  key: 'status',
-  label: 'Status'
-}, {
-  key: 'actions'
-}] as any[]
+const columns = [
+  { id: 'name', key: 'name', label: 'Nama Dokumen' },
+  { id: 'type', key: 'type', label: 'Tipe' },
+  { id: 'validUntil', key: 'validUntil', label: 'Berlaku Hingga' },
+  { id: 'status', key: 'status', label: 'Status' },
+  { id: 'actions', key: 'actions', label: 'Aksi' }
+] as any[]
 
 const { data: response, pending } = await useFetch<{ success: boolean, data: DocumentItem[] }>('/api/documents')
 const documents = computed(() => response.value?.data || [])
@@ -55,7 +48,7 @@ const items = (row: DocumentItem) => [
     <UCard :ui="{ body: '!p-0' }">
       <UTable
         :columns="columns"
-        :rows="documents"
+        :data="documents"
         :loading="pending"
       >
         <template #name-data="{ row }">

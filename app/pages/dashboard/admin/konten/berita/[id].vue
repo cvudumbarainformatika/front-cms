@@ -32,10 +32,21 @@ watchEffect(() => {
   }
 })
 
-function genSlug() {
-  form.slug = (form.slug || form.title)
-    .toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+function slugify (text: string) {
+  return (text || '')
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
 }
+function genSlug() { form.slug = slugify(form.slug || form.title) }
+
+const autoSlug = ref('')
+watch(() => form.title, (t) => {
+  const s = slugify(t)
+  if (!form.slug || form.slug === autoSlug.value) form.slug = s
+  autoSlug.value = s
+})
 
 const saving = ref(false)
 async function save(status?: 'draft'|'published') {
@@ -73,23 +84,14 @@ const doAutosave = useDebounceFn(async () => {
 
 watch(form, () => doAutosave(), { deep: true })
 
-// Simple uploader using /api/upload
-const uploading = ref(false)
-async function onUpload(e: Event) {
-  const files = (e.target as HTMLInputElement).files
-  if (!files || !files[0]) return
+function onFileUpload (files: File[]|FileList) {
+  const file = Array.isArray(files) ? files[0] : files?.[0]
+  if (!file) return
   const fd = new FormData()
-  fd.append('file', files[0])
-  uploading.value = true
-  try {
-    const res: any = await $fetch('/api/upload', { method: 'POST', body: fd })
-    if (res?.url) form.image = res.url
-    toast.add({ title: 'Cover terupload', color: 'success' })
-  } catch (e: any) {
-    toast.add({ title: 'Upload gagal', description: e?.statusMessage || 'Coba lagi', color: 'error' })
-  } finally {
-    uploading.value = false
-  }
+  fd.append('file', file)
+  $fetch('/api/upload', { method: 'POST', body: fd })
+    .then((res: any) => { if (res?.url) form.image = res.url })
+    .catch(() => {})
 }
 
 const previewHtml = computed(() => (form.content || '').toString())
@@ -151,11 +153,13 @@ function addTag () {
             <UTextarea v-model="form.excerpt" :rows="6" placeholder="Ringkasan singkat yang menarik" />
           </UFormField>
           <UFormField label="Cover Image">
-            <div class="flex items-center gap-2">
-              <UInput v-model="form.image" placeholder="https://..." class="flex-1" />
-              <UButton :loading="uploading" variant="outline" icon="i-lucide-upload" @click="()=>$refs.file?.click()">Upload</UButton>
-              <input ref="file" type="file" accept="image/*" class="hidden" @change="onUpload" />
-            </div>
+            <UFileUpload
+              icon="i-lucide-image"
+              label="Drop your image here"
+              description="SVG, PNG, JPG or GIF (max. 2MB)"
+              class="w-full min-h-48"
+              @change="onFileUpload"
+            />
             <img v-if="form.image" :src="form.image" alt="cover" class="mt-2 w-full h-28 object-cover rounded" />
           </UFormField>
           <UFormField label="Kategori" :error="errors.category">

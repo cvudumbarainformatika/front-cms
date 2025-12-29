@@ -56,6 +56,16 @@ async function toggleStatus () {
 }
 
 const previewHtml = computed(() => (form.description || '').toString())
+
+function onFileUpload (files: File[]|FileList) {
+  const file = Array.isArray(files) ? files[0] : files?.[0]
+  if (!file) return
+  const fd = new FormData()
+  fd.append('file', file)
+  $fetch('/api/upload', { method: 'POST', body: fd })
+    .then((res: any) => { if (res?.url) form.image = res.url })
+    .catch(() => {})
+}
 </script>
 
 <template>
@@ -110,8 +120,14 @@ const previewHtml = computed(() => (form.description || '').toString())
           <UFormField label="URL Pendaftaran">
             <UInput v-model="form.registrationUrl" placeholder="https://..." />
           </UFormField>
-          <UFormField label="Cover Image URL">
-            <UInput v-model="form.image" placeholder="https://..." />
+          <UFormField label="Cover Image">
+            <UFileUpload
+              icon="i-lucide-image"
+              label="Drop your image here"
+              description="SVG, PNG, JPG or GIF (max. 2MB)"
+              class="w-full min-h-48"
+              @change="onFileUpload"
+            />
             <img v-if="form.image" :src="form.image" alt="cover" class="mt-2 w-full h-28 object-cover rounded" />
           </UFormField>
           <UFormField label="Status">
