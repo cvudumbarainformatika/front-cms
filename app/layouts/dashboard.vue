@@ -50,10 +50,12 @@ watch(sidebarCollapsed, (value) => {
       ]"
     >
       <!-- Header -->
+      <!-- <ClientOnly> -->
       <DashboardHeader
         :sidebar-collapsed="sidebarCollapsed"
         @toggle-sidebar="toggleSidebar"
       />
+      <!-- </ClientOnly> -->
 
       <!-- Page Content -->
       <main class="flex-1 p-4 lg:p-6">

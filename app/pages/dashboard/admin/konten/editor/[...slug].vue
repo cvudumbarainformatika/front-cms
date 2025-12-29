@@ -104,15 +104,15 @@ async function onSave() {
       <ClientOnly>
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div class="xl:col-span-2 space-y-4">
-            <UFormGroup label="Judul">
+            <UFormField label="Judul">
             <UInput v-model="form.title" placeholder="Judul halaman" />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Deskripsi">
+          <UFormField label="Deskripsi">
             <UTextarea v-model="form.description" :rows="3" placeholder="Ringkasan singkat" />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Editor">
+          <UFormField label="Editor">
             <UButtonGroup size="xs" class="mb-2">
               <UButton :variant="editorMode === 'wysiwyg' ? 'solid' : 'outline'" @click="editorMode = 'wysiwyg'" icon="i-lucide-type" label="WYSIWYG" />
               <UButton :variant="editorMode === 'markdown' ? 'solid' : 'outline'" @click="editorMode = 'markdown'" icon="i-lucide-file-code" label="Markdown" />
@@ -124,21 +124,21 @@ async function onSave() {
             </div>
             <UTextarea v-else v-model="form.body" :rows="16" class="font-mono" placeholder="# Heading
 Tulis konten..." />
-          </UFormGroup>
+          </UFormField>
           </div>
 
           <div class="space-y-4">
-          <UFormGroup label="Tanggal">
+          <UFormField label="Tanggal">
             <UInput v-model="form.date" type="datetime-local" />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Gambar (URL)">
+          <UFormField label="Gambar (URL)">
             <UInput v-model="form.image.src" placeholder="https://..." />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Badge">
+          <UFormField label="Badge">
             <UInput v-model="form.badge.label" placeholder="Label badge (opsional)" />
-          </UFormGroup>
+          </UFormField>
 
           <UAlert color="neutral" variant="subtle" title="Penulis" description="Tambahkan penulis pada versi berikut. Saat ini opsional." />
           </div>

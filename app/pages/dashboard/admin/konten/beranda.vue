@@ -152,13 +152,13 @@ async function onSave() {
           </template>
           
           <div class="space-y-4">
-            <UFormGroup label="Judul Utama (Title)" help="Muncul di bagian paling atas hero">
+            <UFormField label="Judul Utama (Title)" help="Muncul di bagian paling atas hero">
               <UInput v-model="state.hero.title" />
-            </UFormGroup>
+            </UFormField>
             
-            <UFormGroup label="Deskripsi Hero">
+            <UFormField label="Deskripsi Hero">
               <UTextarea v-model="state.hero.description" :rows="3" />
-            </UFormGroup>
+            </UFormField>
 
             <USeparator label="Gambar Hero Slider" class="py-4" />
             
@@ -192,15 +192,15 @@ async function onSave() {
                 @click="removeFeature(idx)" 
               />
               <div class="space-y-3">
-                <UFormGroup label="Ikon" size="sm">
+                <UFormField label="Ikon" size="sm">
                   <UInput v-model="feature.icon" placeholder="i-lucide-..." />
-                </UFormGroup>
-                <UFormGroup label="Judul" size="sm">
+                </UFormField>
+                <UFormField label="Judul" size="sm">
                   <UInput v-model="feature.title" />
-                </UFormGroup>
-                <UFormGroup label="Deskripsi" size="sm">
+                </UFormField>
+                <UFormField label="Deskripsi" size="sm">
                   <UTextarea v-model="feature.description" :rows="2" />
-                </UFormGroup>
+                </UFormField>
               </div>
             </div>
           </div>
@@ -220,12 +220,12 @@ async function onSave() {
 
           <div class="space-y-4">
             <div v-for="(stat, idx) in state.stats" :key="idx" class="flex gap-2 items-end">
-              <UFormGroup label="Label" size="sm" class="flex-1">
+              <UFormField label="Label" size="sm" class="flex-1">
                 <UInput v-model="stat.label" />
-              </UFormGroup>
-              <UFormGroup label="Nilai" size="sm" class="flex-1">
+              </UFormField>
+              <UFormField label="Nilai" size="sm" class="flex-1">
                 <UInput v-model="stat.value" />
-              </UFormGroup>
+              </UFormField>
               <UButton icon="i-lucide-trash" color="error" variant="ghost" size="sm" @click="removeStat(idx)" />
             </div>
           </div>
@@ -238,12 +238,12 @@ async function onSave() {
           </template>
           
           <div class="space-y-4">
-            <UFormGroup label="Meta Title" help="Tampil di tab browser">
+            <UFormField label="Meta Title" help="Tampil di tab browser">
               <UInput v-model="state.seo.title" />
-            </UFormGroup>
-            <UFormGroup label="Meta Description">
+            </UFormField>
+            <UFormField label="Meta Description">
               <UTextarea v-model="state.seo.description" :rows="4" />
-            </UFormGroup>
+            </UFormField>
           </div>
         </UCard>
         </div>

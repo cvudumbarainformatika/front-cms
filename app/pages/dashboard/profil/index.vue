@@ -4,14 +4,24 @@ import type { FormSubmitEvent } from '#ui/types'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'protected',
   ssr: false
 })
 
-const { user, updateProfile } = useAuth()
+const { user, updateProfile, isAuthenticated } = useAuth()
+const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
 const fileRef = ref<HTMLInputElement>()
+
+// Cek authentikasi saat komponen di mount
+onMounted(async () => {
+  // Tunggu sebentar agar state authentikasi terinisialisasi dari localStorage
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  if (!isAuthenticated.value) {
+    await router.push('/login')
+  }
+})
 
 // Modals state
 const isPasswordModalOpen = ref(false)
@@ -112,7 +122,8 @@ function onFileClick() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <!-- <div> -->
+    <div class="space-y-6">
     <div>
       <h1 class="text-2xl font-bold text-highlighted">Profil Saya</h1>
       <p class="text-muted">Kelola informasi data diri dan keamanan akun</p>
@@ -131,7 +142,7 @@ function onFileClick() {
           </template>
 
           <UForm :schema="profileSchema" :state="state" class="space-y-4" @submit="onSaveProfile">
-            <UFormGroup
+            <UFormField
               name="name"
               label="Nama"
               description="Nama ini akan muncul di profil publik Anda."
@@ -142,9 +153,9 @@ function onFileClick() {
                 autocomplete="off"
                 icon="i-lucide-user"
               />
-            </UFormGroup>
+            </UFormField>
             <USeparator />
-            <UFormGroup
+            <UFormField
               name="email"
               label="Email"
               description="Digunakan untuk masuk dan notifikasi."
@@ -157,9 +168,9 @@ function onFileClick() {
                 icon="i-lucide-mail"
                 disabled
               />
-            </UFormGroup>
+            </UFormField>
             <USeparator />
-            <UFormGroup
+            <UFormField
               name="phone"
               label="Telepon"
               description="Nomor telepon aktif untuk dihubungi."
@@ -171,9 +182,9 @@ function onFileClick() {
                 autocomplete="off"
                 icon="i-lucide-phone"
               />
-            </UFormGroup>
+            </UFormField>
             <USeparator />
-            <UFormGroup
+            <UFormField
               name="avatar"
               label="Avatar"
               description="JPG, GIF atau PNG. Maks 1MB."
@@ -198,9 +209,9 @@ function onFileClick() {
                   @change="onFileChange"
                 >
               </div>
-            </UFormGroup>
+            </UFormField>
             <USeparator />
-            <UFormGroup
+            <UFormField
               name="address"
               label="Alamat"
               description="Alamat domisili Anda."
@@ -213,9 +224,9 @@ function onFileClick() {
                 autoresize
                 class="w-full"
               />
-            </UFormGroup>
+            </UFormField>
             <USeparator />
-            <UFormGroup
+            <UFormField
               name="bio"
               label="Bio"
               description="Deskripsi singkat tentang diri Anda."
@@ -228,7 +239,7 @@ function onFileClick() {
                 autoresize
                 class="w-full"
               />
-            </UFormGroup>
+            </UFormField>
 
             <div class="flex justify-end pt-4">
               <UButton
@@ -253,43 +264,43 @@ function onFileClick() {
           </template>
 
           <div class="space-y-4">
-            <UFormGroup
+            <UFormField
               label="Password"
               description="Kelola dan ubah password Anda."
               class="flex items-center justify-between not-last:pb-4 gap-2"
             >
               <UButton label="Ubah Password" color="gray" variant="outline" @click="isPasswordModalOpen = true" />
-            </UFormGroup>
+            </UFormField>
 
             <USeparator />
 
-            <UFormGroup
+            <UFormField
               label="Autentikasi Dua Faktor"
               description="Tambahkan lapisan keamanan ekstra ke akun Anda."
               class="flex items-center justify-between not-last:pb-4 gap-2"
             >
               <UButton label="Aktifkan 2FA" color="gray" variant="outline" @click="isTwoFactorModalOpen = true" />
-            </UFormGroup>
+            </UFormField>
 
             <USeparator />
 
-            <UFormGroup
+            <UFormField
               label="Ingat Saya"
               description="Biarkan saya tetap login selama 30 hari."
               class="flex items-center justify-between not-last:pb-4 gap-2"
             >
-              <UToggle v-model="securityState.ingat_saya" />
-            </UFormGroup>
+              <USwitch v-model="securityState.ingat_saya" />
+            </UFormField>
 
             <USeparator />
 
-            <UFormGroup
+            <UFormField
               label="Logout Otomatis"
               description="Logout otomatis setelah 30 menit tidak aktif."
               class="flex items-center justify-between not-last:pb-4 gap-2"
             >
-              <UToggle v-model="securityState.logout_otomatis" />
-            </UFormGroup>
+              <USwitch v-model="securityState.logout_otomatis" />
+            </UFormField>
           </div>
         </UCard>
       </template>
@@ -302,17 +313,17 @@ function onFileClick() {
             <h3 class="text-base font-semibold">Ubah Password</h3>
         </template>
         <form @submit.prevent="onChangePassword" class="space-y-4">
-          <UFormGroup label="Password Saat Ini" name="currentPassword" required>
+          <UFormField label="Password Saat Ini" name="currentPassword" required>
             <UInput type="password" v-model="passwordState.currentPassword" />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Password Baru" name="newPassword" required>
+          <UFormField label="Password Baru" name="newPassword" required>
             <UInput type="password" v-model="passwordState.newPassword" />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Konfirmasi Password Baru" name="confirmPassword" required>
+          <UFormField label="Konfirmasi Password Baru" name="confirmPassword" required>
             <UInput type="password" v-model="passwordState.confirmPassword" />
-          </UFormGroup>
+          </UFormField>
           
           <div class="flex justify-end pt-4">
             <UButton
@@ -335,5 +346,6 @@ function onFileClick() {
         <p>Langkah-langkah untuk mengaktifkan 2FA akan muncul di sini.</p>
       </UCard>
     </UModal>
-  </div>
+    </div>
+  <!-- </div> -->
 </template>

@@ -42,7 +42,7 @@ const filteredMenus = computed<MenuItem[]>(() => {
   <aside
     :class="[
       'h-full border-r border-default bg-default transition-all duration-300',
-      collapsed ? 'w-16' : 'w-64'
+      props.collapsed ? 'w-16' : 'w-64'
     ]"
   >
     <!-- Logo -->
@@ -59,10 +59,12 @@ const filteredMenus = computed<MenuItem[]>(() => {
     <!-- Navigation -->
     <div class="p-3 overflow-y-auto h-[calc(100vh-4rem)]">
       <template v-if="status === 'success'">
+        <!-- <ClientOnly> -->
         <SidebarMenu
           :items="filteredMenus"
           :collapsed="collapsed"
         />
+        <!-- </ClientOnly> -->
       </template>
 
       <template v-else>

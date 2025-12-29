@@ -9,6 +9,7 @@ const { data: headerMenus, status } = await useMenu('header')
 const { isAuthenticated, user } = useAuth()
 
 const route = useRoute()
+const auth = useAuth()
 
 /**
  * Transform menu items untuk UNavigationMenu
@@ -49,67 +50,69 @@ const navigationItems = computed(() => {
     <template #right>
       <UColorModeButton />
 
-      <!-- Guest Buttons -->
-      <template v-if="!isAuthenticated">
-        <UTooltip text="Masuk">
-          <UButton
-            icon="i-lucide-log-in"
-            color="neutral"
-            variant="ghost"
-            to="/login"
-            aria-label="Masuk"
-          />
-        </UTooltip>
-
-        <UTooltip text="Daftar Anggota">
-          <UButton
-            icon="i-lucide-user-plus"
-            color="neutral"
-            variant="ghost"
-            to="/daftar"
-            aria-label="Daftar"
-          />
-        </UTooltip>
-      </template>
-
-      <!-- Authenticated User Menu -->
-      <template v-else>
-        <UDropdownMenu
-          :items="[
-            [{
-              label: user?.name || 'User',
-              slot: 'header',
-              disabled: true
-            }],
-            [{
-              label: 'Dashboard',
-              icon: 'i-lucide-layout-dashboard',
-              to: '/dashboard'
-            }, {
-              label: 'Profil Saya',
-              icon: 'i-lucide-user',
-              to: '/dashboard/profil'
-            }],
-            [{
-              label: 'Keluar',
-              icon: 'i-lucide-log-out',
-              click: () => useAuth().logout()
-            }]
-          ]"
-        >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            class="p-1"
-          >
-            <UAvatar
-              :src="user?.avatar"
-              :alt="user?.name"
-              size="sm"
+      <ClientOnly>
+        <!-- Guest Buttons -->
+        <template v-if="!isAuthenticated">
+          <UTooltip text="Masuk">
+            <UButton
+              icon="i-lucide-log-in"
+              color="neutral"
+              variant="ghost"
+              to="/login"
+              aria-label="Masuk"
             />
-          </UButton>
-        </UDropdownMenu>
-      </template>
+          </UTooltip>
+
+          <UTooltip text="Daftar Anggota">
+            <UButton
+              icon="i-lucide-user-plus"
+              color="neutral"
+              variant="ghost"
+              to="/daftar"
+              aria-label="Daftar"
+            />
+          </UTooltip>
+        </template>
+
+        <!-- Authenticated User Menu -->
+        <template v-else>
+          <UDropdownMenu
+            :items="[
+              [{
+                label: user?.name || 'User',
+                slot: 'header',
+                disabled: true
+              }],
+              [{
+                label: 'Dashboard',
+                icon: 'i-lucide-layout-dashboard',
+                to: '/dashboard'
+              }, {
+                label: 'Profil Saya',
+                icon: 'i-lucide-user',
+                to: '/dashboard/profil'
+              }],
+              [{
+                label: 'Keluar',
+                icon: 'i-lucide-log-out',
+                click: () => async () => await auth?.logout()
+              }]
+            ]"
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              class="p-1"
+            >
+              <UAvatar
+                :src="user?.avatar"
+                :alt="user?.name"
+                size="sm"
+              />
+            </UButton>
+          </UDropdownMenu>
+        </template>
+      </ClientOnly>
     </template>
 
     <!-- Mobile Navigation -->
@@ -152,7 +155,7 @@ const navigationItems = computed(() => {
           color="neutral"
           variant="subtle"
           block
-          @click="useAuth().logout()"
+          @click="async () => await auth?.logout()"
         />
       </template>
     </template>

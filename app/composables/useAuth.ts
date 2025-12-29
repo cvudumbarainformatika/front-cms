@@ -5,13 +5,6 @@
 
 import type { User, AuthState, UserRole } from '../types/user'
 
-interface ApiAuthResponse {
-  token?: string
-  accessToken?: string
-  access_token?: string
-  user?: Partial<User> & { role?: UserRole }
-}
-
 interface ApiResponse<T> {
   data: T
   success: boolean
@@ -70,8 +63,7 @@ export const useAuth = () => {
           }
 
           // Perbarui state hanya jika berbeda
-          if (authState.value.token !== tokenFromStorage ||
-              authState.value.user?.id !== parsedUser.id) {
+          if (authState.value.token !== tokenFromStorage || authState.value.user?.id !== parsedUser.id) {
             authState.value = {
               isAuthenticated: true,
               user: parsedUser,
@@ -104,7 +96,7 @@ export const useAuth = () => {
   initializeAuthFromStorage()
 
   // Gunakan onNuxtReady atau onMounted untuk memastikan inisialisasi setelah client hydrate
-  if (process.client) {
+  if (import.meta.client) {
     // Event listener untuk perubahan localStorage dari tab/window lain
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (e) => {
@@ -120,7 +112,7 @@ export const useAuth = () => {
    */
   const login = async (email: string, password: string) => {
     const { $apiFetch } = useNuxtApp()
-    const res = await $apiFetch<ApiResponse<{ access_token: string; user: Partial<User> & { role?: UserRole } }>>('/auth/login', {
+    const res = await $apiFetch<ApiResponse<{ access_token: string, user: Partial<User> & { role?: UserRole } }>>('/auth/login', {
       method: 'POST',
       body: { email, password }
     })
@@ -135,7 +127,7 @@ export const useAuth = () => {
     const finalUser: User = {
       id: apiUser?.id ?? 'unknown',
       email,
-      name: typeof apiUser?.name === 'string' ? apiUser?.name : email.split('@')[0],
+      name: apiUser?.name ?? 'Unknown',
       role: (apiUser?.role as UserRole) ?? 'member'
     }
 
@@ -226,7 +218,7 @@ export const useAuth = () => {
         await $apiFetch('/auth/logout', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${authState.value.token}`
+            Authorization: `Bearer ${authState.value.token}`
           }
         })
       } catch (error) {

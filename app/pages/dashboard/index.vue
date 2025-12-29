@@ -6,7 +6,7 @@
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'protected'
+  ssr: false
 })
 
 useSeoMeta({
@@ -14,7 +14,8 @@ useSeoMeta({
   description: 'Dashboard anggota PDPI'
 })
 
-const { user, isAdmin } = useAuth()
+const { user, isAdmin, isAuthenticated } = useAuth()
+const router = useRouter()
 
 // Dummy stats data
 const stats = ref([
@@ -88,36 +89,50 @@ const notifications = ref([
     date: '1 minggu lalu'
   }
 ])
+
+// Cek authentikasi saat komponen di mount
+const checkAuth = async () => {
+  // Tunggu sebentar agar state authentikasi terinisialisasi dari localStorage
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  if (!isAuthenticated.value) {
+    await router.push('/login')
+  }
+}
+
+onMounted(checkAuth)
 </script>
 
 <template>
   <div class="space-y-6">
     <!-- Welcome Section -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
+      <ClientOnly>
         <h1 class="text-2xl font-bold text-highlighted">
           Selamat Datang, {{ user?.name?.split(' ')[0] }}! 👋
         </h1>
         <p class="text-muted">
           NPA: {{ user?.memberId || 'Belum tersedia' }}
         </p>
-      </div>
+      </ClientOnly>
 
       <div class="flex gap-2">
-        <UButton
-          label="Profil Saya"
-          icon="i-lucide-user"
-          color="neutral"
-          variant="outline"
-          to="/dashboard/profil"
-        />
-        <UButton
-          v-if="isAdmin"
-          label="Kelola Anggota"
-          icon="i-lucide-users"
-          color="primary"
-          to="/dashboard/admin/anggota"
-        />
+        <ClientOnly>
+          <UButton
+            label="Profil Saya"
+            icon="i-lucide-user"
+            color="neutral"
+            variant="outline"
+            to="/dashboard/profil"
+          />
+          <UButton
+            v-if="isAdmin"
+            label="Kelola Anggota"
+            icon="i-lucide-users"
+            color="primary"
+            to="/dashboard/admin/anggota"
+          />
+        </ClientOnly>
       </div>
     </div>
 
@@ -136,8 +151,12 @@ const notifications = ref([
             />
           </div>
           <div>
-            <p class="text-sm text-muted">{{ stat.label }}</p>
-            <p class="text-2xl font-bold text-highlighted">{{ stat.value }}</p>
+            <p class="text-sm text-muted">
+              {{ stat.label }}
+            </p>
+            <p class="text-2xl font-bold text-highlighted">
+              {{ stat.value }}
+            </p>
             <p
               v-if="stat.change"
               :class="[
@@ -147,7 +166,10 @@ const notifications = ref([
             >
               {{ stat.change }} bulan ini
             </p>
-            <p v-if="stat.description" class="text-xs text-muted">
+            <p
+              v-if="stat.description"
+              class="text-xs text-muted"
+            >
               {{ stat.description }}
             </p>
           </div>
@@ -161,7 +183,9 @@ const notifications = ref([
       <UPageCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-highlighted">Agenda Mendatang</h2>
+            <h2 class="font-semibold text-highlighted">
+              {{ 'Agenda Mendatang' }}
+            </h2>
             <UButton
               label="Lihat Semua"
               variant="link"
@@ -185,10 +209,17 @@ const notifications = ref([
               />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-highlighted truncate">{{ event.title }}</p>
-              <p class="text-sm text-muted">{{ event.date }}</p>
+              <p class="font-medium text-highlighted truncate">
+                {{ event.title }}
+              </p>
+              <p class="text-sm text-muted">
+                {{ event.date }}
+              </p>
             </div>
-            <UBadge color="primary" variant="subtle">
+            <UBadge
+              color="primary"
+              variant="subtle"
+            >
               {{ event.skp }} SKP
             </UBadge>
           </div>
@@ -199,7 +230,9 @@ const notifications = ref([
       <UPageCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-highlighted">Notifikasi</h2>
+            <h2 class="font-semibold text-highlighted">
+              {{ 'Notifikasi' }}
+            </h2>
             <UButton
               icon="i-lucide-check-check"
               variant="ghost"
@@ -230,9 +263,15 @@ const notifications = ref([
               />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-highlighted">{{ notif.title }}</p>
-              <p class="text-sm text-muted line-clamp-2">{{ notif.message }}</p>
-              <p class="text-xs text-muted mt-1">{{ notif.date }}</p>
+              <p class="font-medium text-highlighted">
+                {{ notif.title }}
+              </p>
+              <p class="text-sm text-muted line-clamp-2">
+                {{ notif.message }}
+              </p>
+              <p class="text-xs text-muted mt-1">
+                {{ notif.date }}
+              </p>
             </div>
           </div>
         </div>

@@ -228,9 +228,9 @@ async function onSave() {
               </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              <UFormGroup label="Dinamis" size="xs" class="flex flex-col items-center">
+              <UFormField label="Dinamis" size="xs" class="flex flex-col items-center">
                 <USwitch v-model="item.isDynamic" size="sm" />
-              </UFormGroup>
+              </UFormField>
               <div class="flex items-center gap-1 border-l border-default pl-2 ml-2">
                 <UButton 
                   icon="i-lucide-plus" 

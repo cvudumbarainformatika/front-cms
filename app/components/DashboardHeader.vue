@@ -80,7 +80,6 @@ const emit = defineEmits<{
         :items="[
           [{
             label: user?.name || 'User',
-            description: user?.role?.replace('_', ' ').toUpperCase(),
             slot: 'header',
             disabled: true
           }],

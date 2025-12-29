@@ -27,6 +27,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/docs': { redirect: '/docs/getting-started', prerender: false },
+    '/dashboard/**': { ssr: false },
     // Proxy ke backend Go saat development: /backend/** -> http://localhost:8080/api/v1/**
     '/backend/**': { proxy: 'http://localhost:8080/api/v1/**' }
   },
