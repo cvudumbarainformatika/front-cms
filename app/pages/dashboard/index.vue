@@ -5,7 +5,8 @@
  */
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: 'protected'
 })
 
 useSeoMeta({

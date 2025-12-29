@@ -5,6 +5,19 @@
 
 import type { User, AuthState, UserRole } from '../types/user'
 
+interface ApiAuthResponse {
+  token?: string
+  accessToken?: string
+  access_token?: string
+  user?: Partial<User> & { role?: UserRole }
+}
+
+interface ApiResponse<T> {
+  data: T
+  success: boolean
+  message?: string
+}
+
 export interface RegisterData {
   name: string
   email: string
@@ -24,46 +37,6 @@ export interface UpdateProfileData {
 /**
  * Dummy user data untuk development
  */
-const dummyUsers: Record<string, User> = {
-  member: {
-    id: '1',
-    email: 'anggota@pdpi.or.id',
-    name: 'Dr. Ahmad Respirologi',
-    role: 'member',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=member',
-    memberId: 'PDPI-2024-001',
-    branchId: 'jkt-001'
-  },
-  admin_cabang: {
-    id: '2',
-    email: 'admin.cabang@pdpi.or.id',
-    name: 'Dr. Budi Admin Cabang',
-    role: 'admin_cabang',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin_cabang',
-    memberId: 'PDPI-2020-042',
-    organizationLevel: 'cabang',
-    branchId: 'jkt-001'
-  },
-  admin_wilayah: {
-    id: '3',
-    email: 'admin.wilayah@pdpi.or.id',
-    name: 'Dr. Citra Admin Wilayah',
-    role: 'admin_wilayah',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin_wilayah',
-    memberId: 'PDPI-2018-015',
-    organizationLevel: 'wilayah',
-    regionId: 'jabar-001'
-  },
-  admin_pusat: {
-    id: '4',
-    email: 'admin.pusat@pdpi.or.id',
-    name: 'Dr. Diana Admin Pusat',
-    role: 'admin_pusat',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin_pusat',
-    memberId: 'PDPI-2015-003',
-    organizationLevel: 'pusat'
-  }
-}
 
 /**
  * Composable untuk autentikasi
@@ -80,26 +53,104 @@ export const useAuth = () => {
   const user = computed(() => authState.value.user)
   const userRole = computed<UserRole>(() => authState.value.user?.role || 'public')
 
-  /**
-   * Login dummy - untuk development
-   * @param role - Role yang ingin digunakan untuk testing
-   */
-  const login = async (role: UserRole = 'member') => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
+  // Fungsi untuk memuat data dari localStorage dan menginisialisasi state
+  const initializeAuthFromStorage = () => {
+    if (typeof window !== 'undefined') {
+      const tokenFromStorage = localStorage.getItem('auth_token')
+      const userFromStorage = localStorage.getItem('auth_user')
 
-    const dummyUser = dummyUsers[role]
-    if (!dummyUser) {
-      throw new Error('Invalid role for dummy login')
+      if (tokenFromStorage && userFromStorage) {
+        try {
+          const userData = JSON.parse(userFromStorage)
+          const parsedUser: User = {
+            id: userData.id || 'unknown',
+            email: userData.email || 'unknown@example.com',
+            name: userData.name || 'Unknown',
+            role: userData.role || 'member'
+          }
+
+          // Perbarui state hanya jika berbeda
+          if (authState.value.token !== tokenFromStorage ||
+              authState.value.user?.id !== parsedUser.id) {
+            authState.value = {
+              isAuthenticated: true,
+              user: parsedUser,
+              token: tokenFromStorage
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing user from localStorage:', e)
+          // Hapus data yang rusak
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+          authState.value = {
+            isAuthenticated: false,
+            user: null,
+            token: null
+          }
+        }
+      } else if (authState.value.isAuthenticated) {
+        // Jika state mengatakan user sudah login tapi tidak ada data di localStorage
+        authState.value = {
+          isAuthenticated: false,
+          user: null,
+          token: null
+        }
+      }
+    }
+  }
+
+  // Panggil inisialisasi saat composable digunakan
+  initializeAuthFromStorage()
+
+  // Gunakan onNuxtReady atau onMounted untuk memastikan inisialisasi setelah client hydrate
+  if (process.client) {
+    // Event listener untuk perubahan localStorage dari tab/window lain
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'auth_token' || e.key === 'auth_user') {
+          initializeAuthFromStorage()
+        }
+      })
+    }
+  }
+
+  /**
+   * Login backend-only: selalu panggil `${apiBase}/auth`
+   */
+  const login = async (email: string, password: string) => {
+    const { $apiFetch } = useNuxtApp()
+    const res = await $apiFetch<ApiResponse<{ access_token: string; user: Partial<User> & { role?: UserRole } }>>('/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    })
+
+    if (!res?.data?.access_token) {
+      throw new Error('Login gagal: token tidak ditemukan dalam respons')
+    }
+
+    const token: string = res.data.access_token
+    const apiUser: (Partial<User> & { role?: UserRole }) | null = res.data.user ?? null
+
+    const finalUser: User = {
+      id: apiUser?.id ?? 'unknown',
+      email,
+      name: typeof apiUser?.name === 'string' ? apiUser?.name : email.split('@')[0],
+      role: (apiUser?.role as UserRole) ?? 'member'
     }
 
     authState.value = {
       isAuthenticated: true,
-      user: dummyUser,
-      token: `dummy-token-${Date.now()}`
+      user: finalUser,
+      token: token
     }
 
-    return dummyUser
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('auth_token', token)
+      localStorage.setItem('auth_user', JSON.stringify(finalUser))
+    }
+
+    return finalUser
   }
 
   /**
@@ -120,10 +171,17 @@ export const useAuth = () => {
       branchId: data.branchId
     }
 
+    const dummyToken = `dummy-token-${Date.now()}`
+
     authState.value = {
       isAuthenticated: true,
       user: newUser,
-      token: `dummy-token-${Date.now()}`
+      token: dummyToken
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('auth_token', dummyToken)
+      localStorage.setItem('auth_user', JSON.stringify(newUser))
     }
 
     return newUser
@@ -135,9 +193,14 @@ export const useAuth = () => {
   const updateProfile = async (data: UpdateProfileData) => {
     await new Promise(resolve => setTimeout(resolve, 500))
     if (authState.value.user) {
-      authState.value.user = { 
-        ...authState.value.user, 
-        ...data 
+      authState.value.user = {
+        ...authState.value.user,
+        ...data
+      }
+
+      // Update localStorage juga
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('auth_user', JSON.stringify(authState.value.user))
       }
     }
   }
@@ -145,9 +208,10 @@ export const useAuth = () => {
   /**
    * Update Password
    */
-  const updatePassword = async (oldPass: string, newPass: string) => {
+  const updatePassword = async (_oldPass: string, _newPass: string) => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    // Always success for dummy
+    // Jika password diupdate, mungkin perlu refresh token
+    // Dalam implementasi nyata, Anda mungkin perlu login ulang atau mendapatkan token baru
     return true
   }
 
@@ -155,12 +219,31 @@ export const useAuth = () => {
    * Logout
    */
   const logout = async () => {
-    await new Promise(resolve => setTimeout(resolve, 300))
+    // Jika ada token, kirim permintaan logout ke backend
+    if (authState.value.token) {
+      try {
+        const { $apiFetch } = useNuxtApp()
+        await $apiFetch('/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authState.value.token}`
+          }
+        })
+      } catch (error) {
+        console.error('Logout API error:', error)
+        // Tetap lanjutkan proses logout meskipun API gagal
+      }
+    }
 
     authState.value = {
       isAuthenticated: false,
       user: null,
       token: null
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
     }
 
     // Redirect ke home

@@ -8,19 +8,37 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-og-image'
   ],
-
   devtools: {
     enabled: true
   },
 
   css: ['~/assets/css/main.css'],
 
-  routeRules: {
-    '/docs': { redirect: '/docs/getting-started', prerender: false }
+  runtimeConfig: {
+    public: {
+      // Prefix backend Go yang akan di-proxy di dev dan diproxy oleh Nginx di prod
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/backend'
+    }
   },
 
-  compatibilityDate: '2024-07-11',
+  build: {
+    transpile: ['@tiptap/vue-3']
+  },
 
+  routeRules: {
+    '/docs': { redirect: '/docs/getting-started', prerender: false },
+    // Proxy ke backend Go saat development: /backend/** -> http://localhost:8080/api/v1/**
+    '/backend/**': { proxy: 'http://localhost:8080/api/v1/**' }
+  },
+  compatibilityDate: '2024-07-11',
+  nitro: {
+    prerender: {
+      routes: [
+        '/'
+      ],
+      crawlLinks: true
+    }
+  },
   vite: {
     resolve: {
       dedupe: [
@@ -46,20 +64,6 @@ export default defineNuxtConfig({
       noExternal: ['@tiptap/*', 'prosemirror-*']
     }
   },
-
-  build: {
-    transpile: ['@tiptap/vue-3']
-  },
-
-  nitro: {
-    prerender: {
-      routes: [
-        '/'
-      ],
-      crawlLinks: true
-    }
-  },
-
   eslint: {
     config: {
       stylistic: {

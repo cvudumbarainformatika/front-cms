@@ -5,15 +5,6 @@
  * Role-based access dengan collapsible sidebar
  */
 
-const { isAuthenticated } = useAuth()
-
-// Redirect ke login jika belum authenticated
-watch(isAuthenticated, (value) => {
-  if (!value) {
-    navigateTo('/login')
-  }
-}, { immediate: true })
-
 // Sidebar collapsed state
 const sidebarCollapsed = ref(false)
 

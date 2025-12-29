@@ -42,20 +42,11 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-// Demo role selection
-const demoRole = ref('member')
-const demoRoles = [
-  { label: 'Anggota', value: 'member' },
-  { label: 'Admin Cabang', value: 'admin_cabang' },
-  { label: 'Admin Wilayah', value: 'admin_wilayah' },
-  { label: 'Admin Pusat', value: 'admin_pusat' }
-]
-
-async function onSubmit(_payload: FormSubmitEvent<Schema>) {
+async function onSubmit(payload: FormSubmitEvent<Schema>) {
   loading.value = true
 
   try {
-    await login(demoRole.value as any)
+    await login(payload.data.email, payload.data.password)
 
     toast.add({
       title: 'Berhasil masuk!',
@@ -64,10 +55,11 @@ async function onSubmit(_payload: FormSubmitEvent<Schema>) {
     })
 
     await router.push('/dashboard')
-  } catch (error) {
+  } catch (_error) {
+    console.error('Login error:', _error)
     toast.add({
       title: 'Gagal masuk',
-      description: 'Email atau password salah.',
+      description: 'Email atau password salah atau server tidak tersedia.',
       color: 'error'
     })
   } finally {
@@ -79,29 +71,18 @@ async function onSubmit(_payload: FormSubmitEvent<Schema>) {
 <template>
   <div class="max-w-sm mx-auto space-y-6">
     <div class="text-center">
-      <OrganizationLogo size="lg" class="justify-center mb-4" />
-      <h1 class="text-xl font-bold text-highlighted">Selamat Datang</h1>
-      <p class="text-muted text-sm">Masuk ke portal anggota PDPI</p>
-    </div>
-
-    <!-- Demo Role Selector -->
-    <UAlert
-      icon="i-lucide-info"
-      color="info"
-      variant="subtle"
-      title="Mode Demo"
-      description="Pilih role untuk testing (fitur ini akan dihapus di production)"
-    />
-
-    <UFormField label="Pilih Role Demo" name="demo-role">
-      <USelect
-        v-model="demoRole"
-        :items="demoRoles"
-        class="w-full"
+      <OrganizationLogo
+        size="2xl"
+        class="justify-center mb-4"
+        :show-text="false"
       />
-    </UFormField>
-
-    <USeparator label="atau login manual" />
+      <h1 class="text-xl font-bold text-highlighted">
+        Selamat Datang
+      </h1>
+      <p class="text-muted text-sm">
+        Masuk ke portal anggota PDPI
+      </p>
+    </div>
 
     <UAuthForm
       :fields="fields"
@@ -110,24 +91,35 @@ async function onSubmit(_payload: FormSubmitEvent<Schema>) {
       submit-label="Masuk"
       @submit="onSubmit"
     >
-      <template #description>
-        Belum punya akun?
-        <ULink to="/daftar" class="text-primary font-medium">
-          Daftar sekarang
-        </ULink>.
-      </template>
-
       <template #password-hint>
-        <ULink to="/lupa-password" class="text-primary font-medium" tabindex="-1">
+        <ULink
+          to="/lupa-password"
+          class="text-primary font-medium"
+          tabindex="-1"
+        >
           Lupa password?
         </ULink>
       </template>
 
       <template #footer>
+        <USeparator label="..." class="my-4" />
         Dengan masuk, Anda menyetujui
-        <ULink to="/syarat-ketentuan" class="text-primary font-medium">
+        <ULink
+          to="/syarat-ketentuan"
+          class="text-primary font-medium"
+        >
           Syarat & Ketentuan
         </ULink> kami.
+
+        <div class="text-center pt-4">
+          Belum punya akun?
+          <ULink
+            to="/daftar"
+            class="text-primary font-medium"
+          >
+            Daftar sekarang
+          </ULink>.
+        </div>
       </template>
     </UAuthForm>
   </div>

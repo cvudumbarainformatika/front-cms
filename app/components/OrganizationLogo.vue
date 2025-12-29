@@ -18,18 +18,18 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const sizeClasses = {
-  sm: 'h-6',
-  md: 'h-8',
-  lg: 'h-10',
-  xl: 'h-12',
-  '2xl': 'h-14',
+  'sm': 'h-6',
+  'md': 'h-8',
+  'lg': 'h-10',
+  'xl': 'h-12',
+  '2xl': 'h-14'
 }
 
 const textSizeClasses = {
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-lg',
-  xl: 'text-xl',
+  'sm': 'text-sm',
+  'md': 'text-base',
+  'lg': 'text-lg',
+  'xl': 'text-xl',
   '2xl': 'text-2xl'
 }
 </script>
@@ -39,7 +39,7 @@ const textSizeClasses = {
     <!-- Logo Icon/Image -->
     <div
       :class="[
-        sizeClasses[size],
+        sizeClasses[props.size],
         'aspect-square rounded-lg bg-primary flex items-center justify-center'
       ]"
     >

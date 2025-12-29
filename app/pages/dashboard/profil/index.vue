@@ -2,7 +2,11 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
 
-definePageMeta({ layout: 'dashboard', ssr: false })
+definePageMeta({
+  layout: 'dashboard',
+  middleware: 'protected',
+  ssr: false
+})
 
 const { user, updateProfile } = useAuth()
 const toast = useToast()
@@ -60,14 +64,14 @@ async function onSaveProfile(event: FormSubmitEvent<ProfileSchema>) {
     toast.add({
       title: 'Profil Diperbarui',
       icon: 'i-lucide-check',
-      color: 'green'
+      color: 'primary'
     })
   } catch (error: any) {
     toast.add({
       title: 'Gagal Memperbarui',
       description: error.message,
       icon: 'i-lucide-alert-circle',
-      color: 'red'
+      color: 'neutral'
     })
   } finally {
     loading.value = false
@@ -84,7 +88,7 @@ async function onChangePassword() {
     toast.add({
       title: 'Password Berhasil Diubah',
       icon: 'i-lucide-check',
-      color: 'green'
+      color: 'success'
     })
     // Reset state password
     passwordState.currentPassword = ''
@@ -225,21 +229,21 @@ function onFileClick() {
                 class="w-full"
               />
             </UFormGroup>
-            
+
             <div class="flex justify-end pt-4">
               <UButton
-                  type="submit"
-                  label="Simpan Perubahan"
-                  :loading="loading"
+                type="submit"
+                label="Simpan Perubahan"
+                :loading="loading"
               />
             </div>
           </UForm>
         </UCard>
       </template>
 
-      <template #security="{ item }">
+      <template #security="{  }">
         <UCard class="mt-4">
-           <template #header>
+          <template #header>
             <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
               Keamanan Akun
             </h3>
@@ -293,44 +297,43 @@ function onFileClick() {
 
     <!-- Modal untuk Ubah Password -->
     <UModal v-model="isPasswordModalOpen">
-        <UCard>
-            <template #header>
-                <h3 class="text-base font-semibold">Ubah Password</h3>
-            </template>
-            
-            <form @submit.prevent="onChangePassword" class="space-y-4">
-              <UFormGroup label="Password Saat Ini" name="currentPassword" required>
-                <UInput type="password" v-model="passwordState.currentPassword" />
-              </UFormGroup>
+      <UCard>
+        <template #header>
+            <h3 class="text-base font-semibold">Ubah Password</h3>
+        </template>
+        <form @submit.prevent="onChangePassword" class="space-y-4">
+          <UFormGroup label="Password Saat Ini" name="currentPassword" required>
+            <UInput type="password" v-model="passwordState.currentPassword" />
+          </UFormGroup>
 
-              <UFormGroup label="Password Baru" name="newPassword" required>
-                <UInput type="password" v-model="passwordState.newPassword" />
-              </UFormGroup>
+          <UFormGroup label="Password Baru" name="newPassword" required>
+            <UInput type="password" v-model="passwordState.newPassword" />
+          </UFormGroup>
 
-              <UFormGroup label="Konfirmasi Password Baru" name="confirmPassword" required>
-                <UInput type="password" v-model="passwordState.confirmPassword" />
-              </UFormGroup>
-              
-              <div class="flex justify-end pt-4">
-                <UButton
-                  type="submit"
-                  label="Ganti Password"
-                  :loading="loading"
-                  :disabled="!passwordState.currentPassword || !passwordState.newPassword || passwordState.newPassword !== passwordState.confirmPassword"
-                />
-              </div>
-            </form>
-        </UCard>
+          <UFormGroup label="Konfirmasi Password Baru" name="confirmPassword" required>
+            <UInput type="password" v-model="passwordState.confirmPassword" />
+          </UFormGroup>
+          
+          <div class="flex justify-end pt-4">
+            <UButton
+              type="submit"
+              label="Ganti Password"
+              :loading="loading"
+              :disabled="!passwordState.currentPassword || !passwordState.newPassword || passwordState.newPassword !== passwordState.confirmPassword"
+            />
+          </div>
+        </form>
+      </UCard>
     </UModal>
 
     <!-- Modal untuk Aktifkan 2FA -->
     <UModal v-model="isTwoFactorModalOpen">
-        <UCard>
-            <template #header>
-                <h3 class="text-base font-semibold">Aktifkan Autentikasi Dua Faktor</h3>
-            </template>
-            <p>Langkah-langkah untuk mengaktifkan 2FA akan muncul di sini.</p>
-        </UCard>
+      <UCard>
+        <template #header>
+          <h3 class="text-base font-semibold">Aktifkan Autentikasi Dua Faktor</h3>
+        </template>
+        <p>Langkah-langkah untuk mengaktifkan 2FA akan muncul di sini.</p>
+      </UCard>
     </UModal>
   </div>
 </template>
