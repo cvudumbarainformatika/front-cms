@@ -21,9 +21,7 @@ const schema = z.object({
   name: z.string().min(3, 'Nama lengkap harus diisi (min 3 karakter)'),
   email: z.string().email('Format email tidak valid'),
   phone: z.string().min(10, 'Nomor WhatsApp minimal 10 digit'),
-  // Validation for Select Menu (Object) - Gunakan z.any() agar tidak crash dengan object binding
-  category: z.any().refine(val => val && (val.value || val), 'Pilih kategori keanggotaan'),
-  branchId: z.any().refine(val => val && (val.value || val), 'Pilih cabang asal'),
+  cabang: z.any().refine(val => val && (val.value || val), 'Pilih asal cabang/provinsi'),
   password: z.string().min(8, 'Password minimal 8 karakter'),
   passwordConfirm: z.string()
 }).refine((data) => data.password === data.passwordConfirm, {
@@ -37,24 +35,50 @@ const state = reactive({
   name: undefined as string | undefined,
   email: undefined as string | undefined,
   phone: undefined as string | undefined,
-  category: undefined as any,
-  branchId: undefined as any,
+  cabang: undefined as any,
   password: undefined as string | undefined,
   passwordConfirm: undefined as string | undefined
 })
 
-const categories = ref([
-  { label: 'Anggota Biasa (Dokter Paru)', value: 'biasa' },
-  { label: 'Anggota Muda (Residen)', value: 'muda' },
-  { label: 'Anggota Luar Biasa', value: 'luar_biasa' }
-])
-
+// Dummy branches berdasarkan provinsi Indonesia
 const branches = ref([
-  { label: 'Pusat (Jakarta)', value: 1 },
-  { label: 'Cabang Jawa Barat', value: 2 },
-  { label: 'Cabang Jawa Timur', value: 3 },
-  { label: 'Cabang Jawa Tengah', value: 4 },
-  { label: 'Cabang Sumatera Utara', value: 5 }
+  { label: 'Pusat (Jakarta)', value: 'pusat' },
+  { label: 'Sumatera Utara', value: 'sumatera_utara' },
+  { label: 'Sumatera Barat', value: 'sumatera_barat' },
+  { label: 'Riau', value: 'riau' },
+  { label: 'Jambi', value: 'jambi' },
+  { label: 'Sumatera Selatan', value: 'sumatera_selatan' },
+  { label: 'Bengkulu', value: 'bengkulu' },
+  { label: 'Lampung', value: 'lampung' },
+  { label: 'Bangka Belitung', value: 'bangka_belitung' },
+  { label: 'Riau Islands', value: 'riau_islands' },
+  { label: 'DKI Jakarta', value: 'jakarta' },
+  { label: 'Jawa Barat', value: 'jawa_barat' },
+  { label: 'Jawa Tengah', value: 'jawa_tengah' },
+  { label: 'DI Yogyakarta', value: 'yogyakarta' },
+  { label: 'Jawa Timur', value: 'jawa_timur' },
+  { label: 'Banten', value: 'banten' },
+  { label: 'Bali', value: 'bali' },
+  { label: 'Nusa Tenggara Barat', value: 'nusa_tenggara_barat' },
+  { label: 'Nusa Tenggara Timur', value: 'nusa_tenggara_timur' },
+  { label: 'Kalimantan Barat', value: 'kalimantan_barat' },
+  { label: 'Kalimantan Tengah', value: 'kalimantan_tengah' },
+  { label: 'Kalimantan Selatan', value: 'kalimantan_selatan' },
+  { label: 'Kalimantan Timur', value: 'kalimantan_timur' },
+  { label: 'Kalimantan Utara', value: 'kalimantan_utara' },
+  { label: 'Sulawesi Utara', value: 'sulawesi_utara' },
+  { label: 'Sulawesi Tengah', value: 'sulawesi_tengah' },
+  { label: 'Sulawesi Selatan', value: 'sulawesi_selatan' },
+  { label: 'Sulawesi Tenggara', value: 'sulawesi_tenggara' },
+  { label: 'Gorontalo', value: 'gorontalo' },
+  { label: 'Sulawesi Barat', value: 'sulawesi_barat' },
+  { label: 'Maluku', value: 'maluku' },
+  { label: 'Maluku Utara', value: 'maluku_utara' },
+  { label: 'Papua', value: 'papua' },
+  { label: 'Papua Barat', value: 'papua_barat' },
+  { label: 'Papua Tengah', value: 'papua_tengah' },
+  { label: 'Papua Pegunungan', value: 'papua_pegunungan' },
+  { label: 'Papua Selatan', value: 'papua_selatan' }
 ])
 
 function onError(event: any) {
@@ -68,10 +92,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   isLoading.value = true
 
   try {
-    // Extract values directly from state (Object binding defensive)
-    // Handle possibility of value being object or primitive (jika user switch methods)
-    const categoryValue = state.category?.value || state.category
-    const branchValue = state.branchId?.value || state.branchId
+    // Extract cabang value from state (Object binding defensive)
+    const cabangValue = state.cabang?.value || state.cabang
 
     // Simulasi register
     await register({
@@ -79,20 +101,22 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       email: state.email!,
       password: state.password!,
       phone: state.phone!,
-      category: categoryValue,
-      branchId: branchValue
+      cabang: cabangValue
     })
     
     toast.add({
       title: 'Pendaftaran Berhasil',
-      description: 'Selamat datang di Portal Anggota PDPI',
+      description: 'Silakan tunggu verifikasi dari admin',
       color: 'success',
       icon: 'i-lucide-check-circle'
     })
 
-    // Redirect ke dashboard
+    // Redirect ke halaman verifikasi pending dengan email sebagai query param
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push({
+        path: '/verifikasi-pending',
+        query: { email: state.email }
+      })
     }, 1000)
 
   } catch (error: any) {
@@ -112,7 +136,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <div class="sm:mx-auto sm:w-full">
       <div class="text-center mb-6">
         <div class="flex justify-center mb-4">
-          <OrganizationLogo class="h-10 w-auto text-3xl" />
+          <OrganizationLogo size="2xl" :show-text="false"   />
         </div>
         <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           Pendaftaran Anggota
@@ -164,28 +188,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </UFormField>
         </div>
 
-        <!-- Grid: Kategori & Cabang -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormField label="Kategori Keanggotaan" name="category" required>
-             <USelectMenu
-                v-model="state.category"
-                :items="categories"
-                searchable
-                searchable-placeholder="Cari kategori..."
-                class="w-full"
-             />
-          </UFormField>
-
-          <UFormField label="Asal Cabang" name="branchId" required>
-            <USelectMenu
-              v-model="state.branchId"
-              :items="branches"
-              searchable
-              searchable-placeholder="Cari cabang..."
-              class="w-full"
-            />
-          </UFormField>
-        </div>
+        <!-- Asal Cabang/Provinsi -->
+        <UFormField label="Asal Cabang/Provinsi" name="cabang" required>
+          <USelectMenu
+            v-model="state.cabang"
+            :items="branches"
+            searchable
+            searchable-placeholder="Cari provinsi/cabang..."
+            class="w-full"
+          />
+        </UFormField>
 
         <USeparator />
 

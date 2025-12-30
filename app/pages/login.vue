@@ -55,13 +55,29 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     })
 
     await router.push('/dashboard')
-  } catch (_error) {
+  } catch (_error: any) {
     console.error('Login error:', _error)
-    toast.add({
-      title: 'Gagal masuk',
-      description: 'Email atau password salah atau server tidak tersedia.',
-      color: 'error'
-    })
+    
+    // Handle error response dari backend
+    const errorData = _error?.data || {}
+    const errorCode = errorData.error
+    const errorMessage = errorData.message || 'Email atau password salah atau server tidak tersedia.'
+
+    // Jika user pending verification
+    if (errorCode === 'user_pending') {
+      toast.add({
+        title: 'Akun Menunggu Verifikasi',
+        description: errorMessage + ' Silakan cek email Anda untuk notifikasi dari admin.',
+        color: 'warning',
+        icon: 'i-lucide-clock'
+      })
+    } else {
+      toast.add({
+        title: 'Gagal masuk',
+        description: errorMessage,
+        color: 'error'
+      })
+    }
   } finally {
     loading.value = false
   }

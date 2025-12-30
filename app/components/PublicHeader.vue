@@ -7,6 +7,7 @@
 
 const { data: headerMenus, status } = await useMenu('header')
 const { isAuthenticated, user } = useAuth()
+const { getImageUrl } = useImageUrl()
 
 const route = useRoute()
 const auth = useAuth()
@@ -95,7 +96,7 @@ const navigationItems = computed(() => {
               [{
                 label: 'Keluar',
                 icon: 'i-lucide-log-out',
-                click: () => async () => await auth?.logout()
+                onSelect: async () => await auth?.logout()
               }]
             ]"
           >
@@ -105,7 +106,7 @@ const navigationItems = computed(() => {
               class="p-1"
             >
               <UAvatar
-                :src="user?.avatar"
+                :src="getImageUrl(user?.avatar)"
                 :alt="user?.name"
                 size="sm"
               />

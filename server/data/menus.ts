@@ -140,17 +140,57 @@ export const sidebarMenus: MenuItem[] = [
     isActive: true,
     roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
   },
+  // {
+  //   id: 'member-profile',
+  //   label: 'Profile',
+  //   slug: 'profil-saya',
+  //   to: '/dashboard/profil',
+  //   icon: 'i-lucide-user',
+  //   parentId: null,
+  //   position: 'sidebar',
+  //   order: 2,
+  //   isActive: true,
+  //   roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
+  // },
   {
     id: 'member-profile',
-    label: 'Profil Saya',
-    slug: 'profil-saya',
+    label: 'Profile',
+    slug: 'profile-saya',
     to: '/dashboard/profil',
-    icon: 'i-lucide-user',
+    icon: 'i-lucide-file-edit',
     parentId: null,
     position: 'sidebar',
     order: 2,
     isActive: true,
-    roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
+    roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat'],
+    children: [
+      {
+        id: 'profile-saya',
+        label: 'Profile',
+        slug: 'beranda',
+        to: '/dashboard/profil',
+        icon: 'i-lucide-home',
+        parentId: 'admin-content',
+        position: 'sidebar',
+        order: 0,
+        isActive: true,
+        isFixed: true,
+        roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
+      },
+      {
+        id: 'profile-security',
+        label: 'Security',
+        slug: 'berita',
+        to: '/dashboard/profil/security',
+        icon: 'i-lucide-newspaper',
+        parentId: 'admin-content',
+        position: 'sidebar',
+        order: 1,
+        isActive: true,
+        isFixed: true,
+        roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
+      }
+    ]
   },
   {
     id: 'documents',

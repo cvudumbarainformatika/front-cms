@@ -1,13 +1,10 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
 
-definePageMeta({
-  layout: 'dashboard',
-  ssr: false
-})
-
 const { user, updateProfile, isAuthenticated } = useAuth()
+const { getImageUrl } = useImageUrl()
 const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
@@ -22,10 +19,6 @@ onMounted(async () => {
     await router.push('/login')
   }
 })
-
-// Modals state
-const isPasswordModalOpen = ref(false)
-const isTwoFactorModalOpen = ref(false)
 
 const items = [{
   label: 'Data Diri',
@@ -52,8 +45,23 @@ const state = reactive({
   phone: user.value?.phone ?? '',
   address: user.value?.address ?? '',
   bio: user.value?.bio ?? '',
-  avatar: user.value?.avatar ?? ''
+  avatar: getImageUrl(user.value?.avatar) ?? ''
 })
+
+// Track jika ada file avatar baru
+const avatarFile = ref<File | null>(null)
+
+// Watch user data changes dan update state
+watch(() => user.value, (newUser) => {
+  if (newUser) {
+    state.name = newUser.name ?? ''
+    state.email = newUser.email ?? ''
+    state.phone = newUser.phone ?? ''
+    state.address = newUser.address ?? ''
+    state.bio = newUser.bio ?? ''
+    state.avatar = getImageUrl(newUser.avatar) ?? ''
+  }
+}, { deep: true })
 
 // --- Bagian Keamanan ---
 const securityState = reactive({
@@ -70,7 +78,26 @@ const passwordState = reactive({
 async function onSaveProfile(event: FormSubmitEvent<ProfileSchema>) {
   loading.value = true
   try {
-    await updateProfile(event.data)
+    // Jika ada file avatar baru, upload sebagai multipart/form-data
+    if (avatarFile.value) {
+      const formData = new FormData()
+      formData.append('name', event.data.name)
+      formData.append('phone', event.data.phone || '')
+      formData.append('address', event.data.address || '')
+      formData.append('bio', event.data.bio || '')
+      formData.append('avatar', avatarFile.value)
+      
+      await updateProfile(formData as any)
+      avatarFile.value = null // Reset file reference
+    } else {
+      // Jika tidak ada avatar baru, kirim sebagai JSON dengan avatar kosong
+      const profileData = {
+        ...event.data,
+        avatar: '' // Jangan kirim blob URL
+      }
+      await updateProfile(profileData)
+    }
+    
     toast.add({
       title: 'Profil Diperbarui',
       icon: 'i-lucide-check',
@@ -88,264 +115,186 @@ async function onSaveProfile(event: FormSubmitEvent<ProfileSchema>) {
   }
 }
 
-async function onChangePassword() {
-  loading.value = true
-  // Di sini Anda akan memanggil API untuk mengubah password
-  console.log(passwordState)
-  setTimeout(() => {
-    loading.value = false
-    isPasswordModalOpen.value = false
-    toast.add({
-      title: 'Password Berhasil Diubah',
-      icon: 'i-lucide-check',
-      color: 'success'
-    })
-    // Reset state password
-    passwordState.currentPassword = ''
-    passwordState.newPassword = ''
-    passwordState.confirmPassword = ''
-  }, 1500)
-}
-
 function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement
   if (!input.files?.length) {
     return
   }
-  state.avatar = URL.createObjectURL(input.files[0])
-  toast.add({ title: 'Gambar dipilih', description: 'Jangan lupa Simpan Perubahan.' })
+  const file = input.files[0]
+  if (!file) {
+    return
+  }
+  // Validasi ukuran file (max 1MB)
+  if (file.size > 1024 * 1024) {
+    toast.add({
+      title: 'Gagal',
+      description: 'Ukuran file tidak boleh lebih dari 1MB',
+      icon: 'i-lucide-alert-circle',
+      color: 'warning'
+    })
+    return
+  }
+
+  // Simpan file reference
+  avatarFile.value = file
+
+  // Tampilkan preview dengan blob URL (hanya untuk UI preview, tidak dikirim ke server)
+  state.avatar = URL.createObjectURL(file)
+
+  toast.add({
+    title: 'Gambar dipilih',
+    description: 'Jangan lupa Simpan Perubahan.',
+    icon: 'i-lucide-check'
+  })
 }
 
 function onFileClick() {
   fileRef.value?.click()
 }
+
+const links = [[{
+  label: 'Profile',
+  icon: 'i-lucide-user',
+  to: '/dashboard/profil',
+  exact: true
+}, {
+  label: 'Security',
+  icon: 'i-lucide-settings',
+  to: '/dashboard/profil/security'
+}]] satisfies NavigationMenuItem[][]
+
+definePageMeta({
+  layout: 'dashboard'
+})
 </script>
 
 <template>
-  <!-- <div> -->
-    <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold text-highlighted">Profil Saya</h1>
-      <p class="text-muted">Kelola informasi data diri dan keamanan akun</p>
-    </div>
-
-    <UTabs :items="items" class="w-full">
-      <template #personal="{ item }">
-        <UCard class="mt-4">
-          <template #header>
-            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-              Profil Publik
-            </h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Informasi ini akan ditampilkan secara publik.
-            </p>
-          </template>
-
-          <UForm :schema="profileSchema" :state="state" class="space-y-4" @submit="onSaveProfile">
-            <UFormField
-              name="name"
-              label="Nama"
-              description="Nama ini akan muncul di profil publik Anda."
-              class="flex max-sm:flex-col justify-between items-start gap-4"
-            >
-              <UInput
-                v-model="state.name"
-                autocomplete="off"
-                icon="i-lucide-user"
-              />
-            </UFormField>
-            <USeparator />
-            <UFormField
-              name="email"
-              label="Email"
-              description="Digunakan untuk masuk dan notifikasi."
-              class="flex max-sm:flex-col justify-between items-start gap-4"
-            >
-              <UInput
-                v-model="state.email"
-                type="email"
-                autocomplete="off"
-                icon="i-lucide-mail"
-                disabled
-              />
-            </UFormField>
-            <USeparator />
-            <UFormField
-              name="phone"
-              label="Telepon"
-              description="Nomor telepon aktif untuk dihubungi."
-              class="flex max-sm:flex-col justify-between items-start gap-4"
-            >
-              <UInput
-                v-model="state.phone"
-                type="tel"
-                autocomplete="off"
-                icon="i-lucide-phone"
-              />
-            </UFormField>
-            <USeparator />
-            <UFormField
-              name="avatar"
-              label="Avatar"
-              description="JPG, GIF atau PNG. Maks 1MB."
-              class="flex max-sm:flex-col justify-between sm:items-center gap-4"
-            >
-              <div class="flex flex-wrap items-center gap-3">
-                <UAvatar
-                  :src="state.avatar"
-                  :alt="state.name"
-                  size="lg"
-                />
-                <UButton
-                  label="Pilih Gambar"
-                  color="neutral"
-                  @click="onFileClick"
-                />
-                <input
-                  ref="fileRef"
-                  type="file"
-                  class="hidden"
-                  accept=".jpg, .jpeg, .png, .gif"
-                  @change="onFileChange"
-                >
-              </div>
-            </UFormField>
-            <USeparator />
-            <UFormField
-              name="address"
-              label="Alamat"
-              description="Alamat domisili Anda."
-              class="flex max-sm:flex-col justify-between items-start gap-4"
-              :ui="{ container: 'w-full' }"
-            >
-              <UTextarea
-                v-model="state.address"
-                :rows="3"
-                autoresize
-                class="w-full"
-              />
-            </UFormField>
-            <USeparator />
-            <UFormField
-              name="bio"
-              label="Bio"
-              description="Deskripsi singkat tentang diri Anda."
-              class="flex max-sm:flex-col justify-between items-start gap-4"
-              :ui="{ container: 'w-full' }"
-            >
-              <UTextarea
-                v-model="state.bio"
-                :rows="5"
-                autoresize
-                class="w-full"
-              />
-            </UFormField>
-
-            <div class="flex justify-end pt-4">
-              <UButton
-                type="submit"
-                label="Simpan Perubahan"
-                :loading="loading"
-              />
-            </div>
-          </UForm>
-        </UCard>
-      </template>
-
-      <template #security="{  }">
-        <UCard class="mt-4">
-          <template #header>
-            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-              Keamanan Akun
-            </h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Ubah password dan kelola sesi Anda.
-            </p>
-          </template>
-
-          <div class="space-y-4">
-            <UFormField
-              label="Password"
-              description="Kelola dan ubah password Anda."
-              class="flex items-center justify-between not-last:pb-4 gap-2"
-            >
-              <UButton label="Ubah Password" color="gray" variant="outline" @click="isPasswordModalOpen = true" />
-            </UFormField>
-
-            <USeparator />
-
-            <UFormField
-              label="Autentikasi Dua Faktor"
-              description="Tambahkan lapisan keamanan ekstra ke akun Anda."
-              class="flex items-center justify-between not-last:pb-4 gap-2"
-            >
-              <UButton label="Aktifkan 2FA" color="gray" variant="outline" @click="isTwoFactorModalOpen = true" />
-            </UFormField>
-
-            <USeparator />
-
-            <UFormField
-              label="Ingat Saya"
-              description="Biarkan saya tetap login selama 30 hari."
-              class="flex items-center justify-between not-last:pb-4 gap-2"
-            >
-              <USwitch v-model="securityState.ingat_saya" />
-            </UFormField>
-
-            <USeparator />
-
-            <UFormField
-              label="Logout Otomatis"
-              description="Logout otomatis setelah 30 menit tidak aktif."
-              class="flex items-center justify-between not-last:pb-4 gap-2"
-            >
-              <USwitch v-model="securityState.logout_otomatis" />
-            </UFormField>
-          </div>
-        </UCard>
-      </template>
-    </UTabs>
-
-    <!-- Modal untuk Ubah Password -->
-    <UModal v-model="isPasswordModalOpen">
-      <UCard>
+  <div class="space-y-4">
+    <UDashboardToolbar>
+      <!-- NOTE: The `-mx-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
+      <UNavigationMenu :items="links" highlight class="-mx-1 flex-1" />
+    </UDashboardToolbar>
+    <div class="flex flex-center justify-center">
+      <UCard class=" max-w-xl flex-center justify-center">
         <template #header>
-            <h3 class="text-base font-semibold">Ubah Password</h3>
+          <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+            Profil Publik
+          </h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Informasi ini akan ditampilkan secara publik.
+          </p>
         </template>
-        <form @submit.prevent="onChangePassword" class="space-y-4">
-          <UFormField label="Password Saat Ini" name="currentPassword" required>
-            <UInput type="password" v-model="passwordState.currentPassword" />
+
+        <UForm :schema="profileSchema" :state="state" class="space-y-4" @submit="onSaveProfile">
+          <UFormField
+            name="name"
+            label="Nama"
+            description="Nama ini akan muncul di profil publik Anda."
+            class="flex max-sm:flex-col justify-between items-start gap-4"
+          >
+            <UInput
+              v-model="state.name"
+              autocomplete="off"
+              icon="i-lucide-user"
+            />
+          </UFormField>
+          <USeparator />
+          <UFormField
+            name="email"
+            label="Email"
+            description="Digunakan untuk masuk dan notifikasi."
+            class="flex max-sm:flex-col justify-between items-start gap-4"
+          >
+            <UInput
+              v-model="state.email"
+              type="email"
+              autocomplete="off"
+              icon="i-lucide-mail"
+              disabled
+            />
+          </UFormField>
+          <USeparator />
+          <UFormField
+            name="phone"
+            label="Telepon"
+            description="Nomor telepon aktif untuk dihubungi."
+            class="flex max-sm:flex-col justify-between items-start gap-4"
+          >
+            <UInput
+              v-model="state.phone"
+              type="tel"
+              autocomplete="off"
+              icon="i-lucide-phone"
+            />
+          </UFormField>
+          <USeparator />
+          <UFormField
+            name="avatar"
+            label="Avatar"
+            description="JPG, GIF atau PNG. Maks 1MB."
+            class="flex max-sm:flex-col justify-between sm:items-center gap-4"
+          >
+            <div class="flex flex-wrap items-center gap-3">
+              <UAvatar
+                :src="state.avatar"
+                :alt="state.name"
+                size="xl"
+                
+              />
+              <UButton
+                label="Pilih Gambar"
+                color="neutral"
+                @click="onFileClick"
+              />
+              <input
+                ref="fileRef"
+                type="file"
+                class="hidden"
+                accept=".jpg, .jpeg, .png, .gif"
+                @change="onFileChange"
+              >
+            </div>
+          </UFormField>
+          <USeparator />
+          <UFormField
+            name="address"
+            label="Alamat"
+            description="Alamat domisili Anda."
+            class="flex max-sm:flex-col justify-between items-start gap-4"
+            :ui="{ container: 'w-full' }"
+          >
+            <UTextarea
+              v-model="state.address"
+              :rows="3"
+              autoresize
+              class="w-full"
+            />
+          </UFormField>
+          <USeparator />
+          <UFormField
+            name="bio"
+            label="Bio"
+            description="Deskripsi singkat tentang diri Anda."
+            class="flex max-sm:flex-col justify-between items-start gap-4"
+            :ui="{ container: 'w-full' }"
+          >
+            <UTextarea
+              v-model="state.bio"
+              :rows="5"
+              autoresize
+              class="w-full"
+            />
           </UFormField>
 
-          <UFormField label="Password Baru" name="newPassword" required>
-            <UInput type="password" v-model="passwordState.newPassword" />
-          </UFormField>
-
-          <UFormField label="Konfirmasi Password Baru" name="confirmPassword" required>
-            <UInput type="password" v-model="passwordState.confirmPassword" />
-          </UFormField>
-          
           <div class="flex justify-end pt-4">
             <UButton
               type="submit"
-              label="Ganti Password"
+              label="Simpan Perubahan"
               :loading="loading"
-              :disabled="!passwordState.currentPassword || !passwordState.newPassword || passwordState.newPassword !== passwordState.confirmPassword"
             />
           </div>
-        </form>
+        </UForm>
       </UCard>
-    </UModal>
-
-    <!-- Modal untuk Aktifkan 2FA -->
-    <UModal v-model="isTwoFactorModalOpen">
-      <UCard>
-        <template #header>
-          <h3 class="text-base font-semibold">Aktifkan Autentikasi Dua Faktor</h3>
-        </template>
-        <p>Langkah-langkah untuk mengaktifkan 2FA akan muncul di sini.</p>
-      </UCard>
-    </UModal>
     </div>
-  <!-- </div> -->
+  </div>
 </template>

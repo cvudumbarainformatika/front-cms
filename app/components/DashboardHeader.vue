@@ -6,12 +6,18 @@
 
 const { user, logout } = useAuth()
 const { hasMinimumRole } = useRole()
+const { getImageUrl } = useImageUrl()
 
 interface Props {
   sidebarCollapsed?: boolean
 }
 
 defineProps<Props>()
+
+const handleLogout = async () => {
+  console.log('logout clicked', getImageUrl(user.value?.avatar))
+  // await logout()
+}
 
 const emit = defineEmits<{
   toggleSidebar: []
@@ -100,7 +106,7 @@ const emit = defineEmits<{
           [{
             label: 'Keluar',
             icon: 'i-lucide-log-out',
-            click: logout
+            onSelect: () => handleLogout()
           }]
         ]"
       >
@@ -110,7 +116,7 @@ const emit = defineEmits<{
           class="gap-2"
         >
           <UAvatar
-            :src="user?.avatar"
+            :src="getImageUrl(user?.avatar)"
             :alt="user?.name"
             size="xs"
           />

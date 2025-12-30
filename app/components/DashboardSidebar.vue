@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { data: sidebarMenus, status } = await useMenu('sidebar')
 const { userRole } = useAuth()
 
+
 /**
  * Filter menu berdasarkan role user
  */
@@ -36,6 +37,9 @@ const filteredMenus = computed<MenuItem[]>(() => {
 
   return filterByRole(sidebarMenus.value)
 })
+
+console.log(filteredMenus);
+
 </script>
 
 <template>

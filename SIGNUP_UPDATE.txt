@@ -1,0 +1,123 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    SIGNUP FORM UPDATE - COMPLETE                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+CHANGES MADE:
+════════════════════════════════════════════════════════════════════════════
+
+1. FILE: app/pages/daftar.vue
+   ✅ Removed category field from form
+   ✅ Removed category from state
+   ✅ Removed category from schema validation
+   ✅ Removed category from form submit
+   ✅ Removed category from template
+   
+2. FILE: app/composables/useAuth.ts
+   ✅ Updated RegisterData interface - removed category field
+   
+3. BRANCHES UPDATED:
+   ✅ Changed from 5 dummy branches to 34 Indonesian provinces
+   ✅ Branch values changed from numbers (1,2,3...) to slugs (pusat, sumatera_utara, etc)
+   ✅ Added all provinces:
+      - Sumatera (6 provinces)
+      - Java (6 provinces)
+      - Bali & Nusa Tenggara (3 provinces)
+      - Kalimantan (5 provinces)
+      - Sulawesi (6 provinces)
+      - Maluku (2 provinces)
+      - Papua (4 provinces)
+
+FORM FIELDS NOW:
+════════════════════════════════════════════════════════════════════════════
+
+✅ Nama Lengkap (with gelar) - required
+✅ Email - required
+✅ Nomor WhatsApp - required (min 10 digit)
+✅ Asal Cabang/Provinsi - required (34 provinces to choose from)
+✅ Password - required (min 8 chars)
+✅ Konfirmasi Password - required (must match)
+
+REMOVED FIELDS:
+════════════════════════════════════════════════════════════════════════════
+
+❌ Kategori Keanggotaan (removed - will be added to backend later)
+
+BRANCHES/PROVINCES LIST:
+════════════════════════════════════════════════════════════════════════════
+
+Pusat (Jakarta)
+Sumatera Utara
+Sumatera Barat
+Riau
+Jambi
+Sumatera Selatan
+Bengkulu
+Lampung
+Bangka Belitung
+Riau Islands
+DKI Jakarta
+Jawa Barat
+Jawa Tengah
+DI Yogyakarta
+Jawa Timur
+Banten
+Bali
+Nusa Tenggara Barat
+Nusa Tenggara Timur
+Kalimantan Barat
+Kalimantan Tengah
+Kalimantan Selatan
+Kalimantan Timur
+Kalimantan Utara
+Sulawesi Utara
+Sulawesi Tengah
+Sulawesi Selatan
+Sulawesi Tenggara
+Gorontalo
+Sulawesi Barat
+Maluku
+Maluku Utara
+Papua
+Papua Barat
+Papua Tengah
+Papua Pegunungan
+Papua Selatan
+
+REGISTER DATA PASSED TO API:
+════════════════════════════════════════════════════════════════════════════
+
+{
+  name: string,           // Nama lengkap
+  email: string,          // Email
+  phone: string,          // WhatsApp number
+  password: string,       // Password
+  branchId: string        // Provinsi/Cabang (e.g. 'jawa_barat')
+}
+
+NOTE: Category field akan ditambahkan ke backend nanti sebagai field tambahan
+
+NEXT STEPS:
+════════════════════════════════════════════════════════════════════════════
+
+1. Backend team akan implement /auth/register endpoint dengan fields:
+   - name
+   - email
+   - phone
+   - password
+   - branchId
+
+2. Later: Tambahkan category field ke backend & update form jika diperlukan
+
+3. Testing:
+   - Test form validation
+   - Test dengan semua provinces
+   - Test register endpoint
+
+STATUS:
+════════════════════════════════════════════════════════════════════════════
+
+✅ FORM COMPLETED
+✅ FIELDS ALIGNED WITH useAuth
+✅ BRANCHES/PROVINCES DUMMY DATA COMPLETE
+✅ READY FOR BACKEND INTEGRATION
+

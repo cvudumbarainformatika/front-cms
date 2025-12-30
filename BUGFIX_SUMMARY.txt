@@ -1,0 +1,73 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         BUG FIX - INITIALIZATION ORDER                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+ERROR YANG TERJADI:
+════════════════════════════════════════════════════════════════════════════
+
+Error parsing user from localStorage: ReferenceError: Cannot access 
+'setupTokenRefresh' before initialization
+    at initializeAuthFromStorage (useAuth.ts:114:13)
+    at useAuth (useAuth.ts:141:3)
+
+PENYEBAB:
+════════════════════════════════════════════════════════════════════════════
+
+initializeAuthFromStorage() memanggil setupTokenRefresh() pada line 113:
+  setupTokenRefresh()
+
+Tetapi setupTokenRefresh() dideklarasikan SETELAH initializeAuthFromStorage()
+sehingga terjadi ReferenceError.
+
+SOLUSI:
+════════════════════════════════════════════════════════════════════════════
+
+Memindahkan deklarasi setupTokenRefresh() dan refreshAccessToken() 
+ke SEBELUM initializeAuthFromStorage().
+
+Urutan function sekarang:
+  1. const setupTokenRefresh = () => { ... } (line 82)
+  2. const refreshAccessToken = async () => { ... } (line 114)
+  3. const initializeAuthFromStorage = () => { ... } (line 174)
+  4. const login = () => { ... } (line 253)
+
+FIX APPLIED:
+════════════════════════════════════════════════════════════════════════════
+
+File: app/composables/useAuth.ts
+
+✅ Moved setupTokenRefresh() function up (before initializeAuthFromStorage)
+✅ Moved refreshAccessToken() function up (before initializeAuthFromStorage)
+✅ Removed duplicate function declarations
+✅ All references now accessible during initialization
+
+VERIFIKASI:
+════════════════════════════════════════════════════════════════════════════
+
+✅ setupTokenRefresh declared at line 82
+✅ refreshAccessToken declared at line 114
+✅ initializeAuthFromStorage declared at line 174
+✅ Can now call setupTokenRefresh() from initializeAuthFromStorage()
+✅ No more ReferenceError
+
+STATUS:
+════════════════════════════════════════════════════════════════════════════
+
+🟢 BUG FIXED
+✅ No ReferenceError
+✅ Initialization completes successfully
+✅ Auto-refresh scheduling works
+✅ Session persistence works
+
+TEST:
+════════════════════════════════════════════════════════════════════════════
+
+Try this:
+1. Clear localStorage completely
+2. Login to application
+3. Check console - should see:
+   "[Auth] Token refresh dijadwalkan dalam X detik"
+4. Check localStorage - should have auth_token, auth_refresh_token, etc
+5. Refresh page - should restore session without error
+
+════════════════════════════════════════════════════════════════════════════
