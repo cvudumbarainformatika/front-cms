@@ -4,14 +4,14 @@
 
 <template>
   <div>
-    <PublicHeader />
+    <LandingHeader />
 
-    <UMain>
+    <UMain class="mt-24">
       <UContainer>
         <slot />
       </UContainer>
     </UMain>
 
-    <PublicFooter />
+    <LandingFooter />
   </div>
 </template>

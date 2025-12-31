@@ -1,7 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'news',
-  ssr: false
+  layout: 'news'
 })
 /**
  * Detail Berita

@@ -2,6 +2,10 @@
 import { computed } from 'vue'
 import { useRoute, useFetch } from '#imports'
 
+definePageMeta({
+  layout: 'news'
+})
+
 /**
  * Catch-all route for dynamic content
  * Displays content from Nuxt Content based on slugs created in menus

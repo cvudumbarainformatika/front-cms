@@ -119,7 +119,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
 </script>
 
 <template>
-  <UPage>
+  <UPage >
     <UPageHeader
       title="Berita"
       description="Update terbaru dari dunia respirologi Indonesia"

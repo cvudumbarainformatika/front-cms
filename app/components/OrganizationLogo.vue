@@ -45,14 +45,14 @@ const textSizeClasses = {
     >
       <!-- Placeholder icon - ganti dengan gambar logo nanti -->
       <UIcon
-        name="i-lucide-wind"
+        name="i-lucide-activity"
         :class="[
           size === 'sm' ? 'w-4 h-4' : '',
           size === 'md' ? 'w-5 h-5' : '',
           size === 'lg' ? 'w-6 h-6' : '',
           size === 'xl' ? 'w-7 h-7' : '',
           size === '2xl' ? 'w-8 h-8' : '',
-          'text-white'
+          'text-white stroke-[1.5]'
         ]"
       />
     </div>
@@ -65,7 +65,7 @@ const textSizeClasses = {
       <span
         :class="[
           textSizeClasses[size],
-          'font-bold text-highlighted leading-tight'
+          'font-bold text-highlighted leading-tight text-primary-600'
         ]"
       >
         PDPI
