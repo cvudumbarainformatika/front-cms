@@ -13,5 +13,6 @@
     </UMain>
 
     <LandingFooter />
+    <ScrollToTop />
   </div>
 </template>

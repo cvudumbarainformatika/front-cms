@@ -98,7 +98,7 @@ useSeoMeta({
                 <div class="whitespace-pre-wrap">{{ dyn.body }}</div>
               </template>
               <template v-else>
-                <p class="text-muted">Konten kosong.</p>
+                <p class="text-muted">Konten kosongan.</p>
               </template>
             </div>
           </UPageBody>
@@ -113,7 +113,7 @@ useSeoMeta({
             </p>
             <div class="mt-12 p-8 border border-dashed border-default rounded-xl text-center">
               <UIcon name="i-lucide-file-text" class="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <h3 class="font-semibold text-highlighted">Konten Dinamis</h3>
+              <h3 class="font-semibold text-highlighted">Konten Dinamisaaaan</h3>
               <p class="text-sm text-muted mt-2">
                 Admin dapat mengelola isi halaman ini melalui menu Manajemen Konten.
               </p>

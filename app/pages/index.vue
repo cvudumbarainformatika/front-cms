@@ -30,6 +30,26 @@ useHead({
             background-color: #10b981;
             animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         }
+
+        /* Scroll Reveal Animations */
+        .reveal-hidden {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        
+        .reveal-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Stagger delay for cards */
+        .reveal-hidden:nth-child(1) { transition-delay: 0ms; }
+        .reveal-hidden:nth-child(2) { transition-delay: 100ms; }
+        .reveal-hidden:nth-child(3) { transition-delay: 200ms; }
+        .reveal-hidden:nth-child(4) { transition-delay: 300ms; }
+        .reveal-hidden:nth-child(5) { transition-delay: 400ms; }
+        .reveal-hidden:nth-child(6) { transition-delay: 500ms; }
       `
     }
   ],
