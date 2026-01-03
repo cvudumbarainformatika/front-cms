@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-slim AS builder
+FROM node:22-alpine AS builder
 
 # Enable pnpm
 ENV PNPM_HOME="/pnpm"
@@ -8,8 +8,8 @@ RUN corepack enable
 
 WORKDIR /app
 
-# Install build dependencies for native modules (Debian-based)
-RUN apt-get update && apt-get install -y python3 make g++ build-essential
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
@@ -24,7 +24,7 @@ COPY . .
 RUN pnpm run build
 
 # Stage 2: Production
-FROM node:20-slim
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -40,3 +40,4 @@ ENV PORT=3000
 
 # Start the application
 CMD ["node", ".output/server/index.mjs"]
+
