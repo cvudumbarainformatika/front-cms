@@ -1,30 +1,25 @@
 # Stage 1: Build
-FROM node:22-slim AS builder
-
-# Enable pnpm
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+FROM node:20 AS builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules (Debian-based)
-RUN apt-get update && apt-get install -y python3 make g++ build-essential
+# Copy package files (use package-lock.json for npm)
+COPY package.json package-lock.json ./
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies using npm (more forgiving of lockfile mismatch)
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
+# Increase memory limit for build (4GB) - Note: Production server requires Swap if RAM < 4GB
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Build the application
-RUN pnpm run build
+RUN npm run build
 
 # Stage 2: Production
-FROM node:22-slim
+FROM node:20-slim
 
 WORKDIR /app
 
