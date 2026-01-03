@@ -11,6 +11,9 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
