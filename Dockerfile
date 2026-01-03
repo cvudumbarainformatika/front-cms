@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 # Enable pnpm
 ENV PNPM_HOME="/pnpm"
@@ -8,8 +8,8 @@ RUN corepack enable
 
 WORKDIR /app
 
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules (Debian-based)
+RUN apt-get update && apt-get install -y python3 make g++ build-essential
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
@@ -24,7 +24,7 @@ COPY . .
 RUN pnpm run build
 
 # Stage 2: Production
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app
 
