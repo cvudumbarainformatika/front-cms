@@ -31,9 +31,10 @@ const { data: beritaData, pending, error } = await useAsyncData(
   {
     watch: [page, category, author, search],
     transform: (data: any) => {
-      console.log('Berita Data:', data)
+      // console.log('Berita Data:', data)
       return data
-    }
+    },
+    server: false // Force fetch on client side only to avoid SSR issues
   }
 )
 
