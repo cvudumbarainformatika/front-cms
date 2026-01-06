@@ -2,15 +2,17 @@
 definePageMeta({
   layout: 'news'
 })
-/**
- * Detail Berita
- */
 
 const route = useRoute()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
 const slug = route.params.slug as string
 
-// Fetch berita detail
-const { data: berita } = await useFetch(`/api/berita/${slug}`)
+// Fetch berita detail from backend
+const { data: berita } = await useAsyncData(
+  `berita-${slug}`,
+  () => $apiFetch(`/berita/${slug}`)
+)
 
 if (!berita.value?.data) {
   throw createError({
@@ -21,8 +23,9 @@ if (!berita.value?.data) {
 
 const item = berita.value.data
 
-// URL saat ini untuk share (hindari SSR ReferenceError)
-const currentUrl = computed(() => (process.client ? window.location.href : ''))
+// URL saat ini untuk share
+const url = useRequestURL()
+const currentUrl = computed(() => url.href)
 const shareUrl = computed(() => encodeURIComponent(currentUrl.value || ''))
 const shareToX = computed(() => `https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${shareUrl.value}`)
 const shareToFacebook = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${shareUrl.value}`)
@@ -37,16 +40,14 @@ useSeoMeta({
   description: item.excerpt,
   ogTitle: item.title,
   ogDescription: item.excerpt,
-  ogImage: item.image,
-  articlePublishedTime: item.publishedAt,
+  ogImage: getImageUrl(item.image_url),
+  articlePublishedTime: item.published_at,
   articleAuthor: [item.author]
 })
 
-// Sanitasi konten HTML tanpa dependensi eksternal (client-only friendly)
+// Sanitasi konten HTML
 function sanitizeHtmlSSR(html: string) {
-  // Hapus tag <script>
   html = html.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-  // Netralisir kombinasi iframe sandbox berbahaya
   html = html.replace(/(<iframe[^>]*sandbox=\"[^\"]*)(allow-same-origin)([^\"]*\"[^>]*>)/gi, (m, p1, _m2, p3) => {
     if (/allow-scripts/i.test(m)) {
       return `${p1}${p3}`.replace(/\s{2,}/g, ' ')
@@ -61,9 +62,7 @@ function sanitizeHtml(html: string) {
     try {
       const parser = new DOMParser()
       const doc = parser.parseFromString(html, 'text/html')
-      // Remove scripts
       doc.querySelectorAll('script').forEach(el => el.remove())
-      // Fix iframe sandbox combinations
       doc.querySelectorAll('iframe').forEach((ifr) => {
         const sandbox = ifr.getAttribute('sandbox') || ''
         if (/allow-scripts/i.test(sandbox) && /allow-same-origin/i.test(sandbox)) {
@@ -81,13 +80,20 @@ function sanitizeHtml(html: string) {
 }
 
 const sanitizedContent = computed(() => sanitizeHtml((item?.content || '').replace(/\n\n/g, '</p><p>')))
-// Related posts fetch (kategori dan penulis)
-const { data: relatedByCategory, pending: pendingCat } = await useFetch('/api/berita', {
-  query: { category: item.category, limit: 6 }
-})
-const { data: relatedByAuthor, pending: pendingAuthor } = await useFetch('/api/berita', {
-  query: { author: item.author, limit: 6 }
-})
+
+// Related posts fetch
+const { data: relatedByCategory, pending: pendingCat } = await useAsyncData(
+  `related-cat-${item.category}`,
+  () => $apiFetch('/berita', {
+    query: { category: item.category, limit: 6, status: 'published' }
+  })
+)
+const { data: relatedByAuthor, pending: pendingAuthor } = await useAsyncData(
+  `related-author-${item.author}`,
+  () => $apiFetch('/berita', {
+    query: { author: item.author, limit: 6, status: 'published' }
+  })
+)
 const related = computed(() => {
   const cat = relatedByCategory.value?.data?.items || []
   const auth = relatedByAuthor.value?.data?.items || []
@@ -97,11 +103,30 @@ const related = computed(() => {
 })
 const relatedPending = computed(() => pendingCat.value || pendingAuthor.value)
 
-// Popular posts (berita terpopuler)
-const { data: popularData, pending: pendingPopular } = await useFetch('/api/berita', {
-  query: { sort: 'popular', limit: 6 }
-})
+// Popular posts
+const { data: popularData, pending: pendingPopular } = await useAsyncData(
+  'popular-berita',
+  () => $apiFetch('/berita', {
+    query: { sort: 'views', order: 'desc', limit: 6, status: 'published' }
+  })
+)
 const popular = computed(() => (popularData.value?.data?.items || []).filter(p => p.slug !== item.slug).slice(0, 6))
+const formatDate = (dateStr: string) => {
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC' // Paksa UTC agar konsisten Server & Client
+  }).format(new Date(dateStr))
+}
+
+const formatDateShort = (dateStr: string) => {
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC'
+  }).format(new Date(dateStr))
+}
 </script>
 
 <template>
@@ -130,12 +155,12 @@ const popular = computed(() => (popularData.value?.data?.items || []).filter(p =
               :key="rb.id"
               class="flex items-start gap-3"
             >
-              <img :src="rb.image" :alt="rb.title" class="w-14 h-14 rounded object-cover" />
+              <img :src="getImageUrl(rb.image_url)" :alt="rb.title" class="w-14 h-14 rounded object-cover" />
               <div class="min-w-0">
                 <NuxtLink :to="`/berita/${rb.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                   {{ rb.title }}
                 </NuxtLink>
-                <p class="text-xs text-muted">{{ new Date(rb.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
+                <p class="text-xs text-muted">{{ formatDateShort(rb.published_at) }}</p>
               </div>
             </div>
           </div>
@@ -171,12 +196,12 @@ const popular = computed(() => (popularData.value?.data?.items || []).filter(p =
               :key="p.id"
               class="flex items-start gap-3"
             >
-              <img :src="p.image" :alt="p.title" class="w-14 h-14 rounded object-cover" />
+              <img :src="getImageUrl(p.image_url)" :alt="p.title" class="w-14 h-14 rounded object-cover" />
               <div class="min-w-0">
                 <NuxtLink :to="`/berita/${p.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                   {{ p.title }}
                 </NuxtLink>
-                <p class="text-xs text-muted">{{ new Date(p.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
+                <p class="text-xs text-muted">{{ formatDateShort(p.published_at) }}</p>
               </div>
             </div>
           </div>
@@ -186,18 +211,18 @@ const popular = computed(() => (popularData.value?.data?.items || []).filter(p =
 
     <UPageBody>
       <div class="overflow-hidden rounded-xl border border-default mb-8">
-        <img :src="item.image" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+        <img :src="getImageUrl(item.image_url)" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
       </div>
 
       <div class="text-sm text-muted mb-6 flex items-center gap-4">
         <span>{{ item.author }}</span>
         <span>•</span>
-        <span>{{ new Date(item.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
+        <span>{{ formatDate(item.published_at) }}</span>
         <span>•</span>
         <span>{{ item.views }} views</span>
       </div>
 
-      <!-- Konten utama rich HTML (disanitasi DOMPurify, client-only) -->
+      <!-- Konten utama rich HTML -->
       <div class="prose prose-lg max-w-none">
         <ClientOnly>
           <div v-html="sanitizedContent"></div>

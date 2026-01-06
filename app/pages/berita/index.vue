@@ -2,12 +2,12 @@
 definePageMeta({
   layout: 'news'
 })
-/**
- * List Berita PDPI
- */
 
 const route = useRoute()
 const router = useRouter()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
+
 
 // Get query params
 const page = computed(() => parseInt(route.query.page as string) || 1)
@@ -15,17 +15,27 @@ const category = computed(() => route.query.category as string || '')
 const author = computed(() => route.query.author as string || '')
 const search = computed(() => route.query.search as string || '')
 
-// Fetch berita
-const { data: beritaData, pending } = await useFetch('/api/berita', {
-  query: {
-    page,
-    limit: 9,
-    category,
-    author,
-    search
-  },
-  watch: [page, category, author, search]
-})
+// Fetch berita from backend
+const { data: beritaData, pending, error } = await useAsyncData(
+  'berita-public-list',
+  () => $apiFetch('/berita', {
+    query: {
+      page: page.value,
+      limit: 9,
+      category: category.value || undefined,
+      author: author.value || undefined,
+      search: search.value || undefined,
+      status: undefined // 'published' // Temporary disable filter
+    }
+  }),
+  {
+    watch: [page, category, author, search],
+    transform: (data: any) => {
+      console.log('Berita Data:', data)
+      return data
+    }
+  }
+)
 
 // Categories
 const categories = [
@@ -37,7 +47,7 @@ const categories = [
   { value: 'prestasi', label: 'Prestasi' }
 ]
 
-// Navigation items ala Docs (Kategori + Arsip)
+// Navigation items
 const navItems = computed(() => {
   const buildToString = (q: Record<string, any>) => {
     const params = new URLSearchParams()
@@ -60,10 +70,21 @@ const navItems = computed(() => {
   const items = beritaData.value?.data?.items || []
   const archivesMap = new Map<string, { title: string, to: string }>()
   for (const it of items) {
-    const d = new Date(it.publishedAt)
-    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!it.published_at) continue
+    const d = new Date(it.published_at)
+    if (isNaN(d.getTime())) continue
+
+    // Gunakan UTC untuk konsistensi server/client
+    const year = d.getUTCFullYear()
+    const month = d.getUTCMonth()
+    const ym = `${year}-${String(month + 1).padStart(2, '0')}`
+    
     if (!archivesMap.has(ym)) {
-      const title = d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
+      // Nama bulan tetap menggunakan locale ID tapi dari tanggal UTC yang sama
+      // Kita buat date baru dari UTC components untuk format nama bulan
+      const dFormat = new Date(Date.UTC(year, month, 1))
+      const title = dFormat.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', timeZone: 'UTC' })
+      
       const q = { ...route.query, month: ym, page: undefined, category: route.query.category || undefined }
       archivesMap.set(ym, {
         title,
@@ -87,7 +108,7 @@ const setCategory = (cat: string) => {
     query: {
       ...route.query,
       category: cat || undefined,
-      page: undefined // Reset page
+      page: undefined
     }
   })
 }
@@ -108,12 +129,21 @@ useSeoMeta({
   description: 'Berita dan update terkini dari Perhimpunan Dokter Paru Indonesia seputar dunia respirologi',
   ogTitle: 'Berita - PDPI'
 })
-// Avatar URL generator berbasis nama (DiceBear Initials)
+
+// Avatar URL generator
 const avatarUrl = (name: string) => `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear`
 
-// Formatter tanggal stabil untuk SSR (hindari mismatch timezone)
-const formatDate = (dateStr: string, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', ...options }).format(new Date(dateStr))
+// Formatter tanggal
+const formatDate = (dateStr: string | null | undefined, options: Intl.DateTimeFormatOptions): string => {
+  if (!dateStr) return '-'
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return '-'
+    return new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', ...options }).format(d)
+  } catch (e) {
+    return '-'
+  }
+}
 const formatDateShort = (dateStr: string) => formatDate(dateStr, { day: 'numeric', month: 'short', year: 'numeric' })
 const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric', month: 'short' })
 </script>
@@ -152,8 +182,8 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :to="`/berita/${beritaData.data.items[0].slug}`"
         :title="beritaData.data.items[0].title"
         :description="beritaData.data.items[0].excerpt"
-        :image="beritaData.data.items[0].image"
-        :date="new Date(beritaData.data.items[0].publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+        :image="getImageUrl(beritaData.data.items[0].image_url)"
+        :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"
         orientation="horizontal"
@@ -170,8 +200,8 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
             :to="`/berita/${berita.slug}`"
             :title="berita.title"
             :description="berita.excerpt"
-            :image="berita.image"
-            :date="new Date(berita.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+            :image="getImageUrl(berita.image_url)"
+            :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
             :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
             :badge="{ label: berita.category }"
             variant="naked"
@@ -194,7 +224,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
 
       <!-- Pagination -->
       <div
-        v-if="beritaData?.data?.pagination && beritaData.data.pagination.totalPages > 1"
+        v-if="beritaData?.data?.pagination && beritaData.data.pagination.total_pages > 1"
         class="flex justify-center mt-8"
       >
         <UPagination
@@ -226,7 +256,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
             highlight
             :ui="{
               link: 'text-sm',
-              linkActive: 'text-primary-600 font-semibold before:content-[\'•\'] before:mr-2 before:text-primary-500 before:text-xs'
+              linkActive: 'text-primary-600 font-semibold before:content-[\'\\2022\'] before:mr-2 before:text-primary-500 before:text-xs'
             }"
           />
           <UContentNavigation
@@ -234,7 +264,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
             highlight
             :ui="{
               link: 'text-sm',
-              linkActive: 'text-primary-500 font-medium before:content-[\'•\'] before:mr-2 before:text-primary-400 before:text-[10px]'
+              linkActive: 'text-primary-500 font-medium before:content-[\'\\2022\'] before:mr-2 before:text-primary-400 before:text-[10px]'
             }"
           />
         </div>
@@ -252,12 +282,12 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
                 :key="`latest-${berita.id}`"
                 class="flex items-start gap-3"
               >
-                <img :src="berita.image" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
+                <img :src="getImageUrl(berita.image_url)" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ berita.title }}
                   </NuxtLink>
-                  <p class="text-xs text-muted">{{ formatDayMonth(berita.publishedAt) }}</p>
+                  <p class="text-xs text-muted">{{ formatDayMonth(berita.published_at) }}</p>
                 </div>
               </div>
             </div>

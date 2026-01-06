@@ -4,20 +4,23 @@ import TiptapEditor from '~/components/editor/TiptapEditor.vue'
 
 const router = useRouter()
 const toast = useToast()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
+
 
 const form = reactive({
   title: '',
-  slug: '',
   excerpt: '',
   content: '<p>Tulis konten disini...</p>',
-  image: '',
+  image_url: '',
   category: '',
   tags: [] as string[],
+  author: 'Admin', // Default author
   status: 'draft' as 'draft'|'published',
-  publishedAt: ''
+  published_at: ''
 })
 
-const activeTab = ref<'konten'|'seo'|'pengaturan'>('konten')
+const activeTab = ref<'konten'|'preview'>('konten')
 
 function slugify (text: string) {
   return (text || '')
@@ -26,28 +29,47 @@ function slugify (text: string) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
-function genSlug() {
-  form.slug = slugify(form.slug || form.title)
-}
 
-const autoSlug = ref('')
-watch(() => form.title, (t) => {
-  const s = slugify(t)
-  if (!form.slug || form.slug === autoSlug.value) {
-    form.slug = s
+// File upload using v-model
+const uploadedFile = ref<File | null>(null)
+const imagePreview = ref<string>('') // untuk preview langsung
+
+watch(uploadedFile, async (newFile) => {
+  if (!newFile) return
+  
+  console.log('File selected:', newFile.name)
+  
+  // Set preview langsung dengan blob URL
+  imagePreview.value = URL.createObjectURL(newFile)
+  
+  const fd = new FormData()
+  fd.append('file', newFile)
+  
+  try {
+    const res = await $apiFetch('/upload?type=berita', { 
+      method: 'POST', 
+      body: fd
+    }) as any
+    
+    console.log('Upload response:', res)
+    if (res?.data?.url) {
+      form.image_url = res.data.url 
+      toast.add({ title: 'Gambar berhasil diupload', color: 'success' })
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error)
+    toast.add({ title: 'Gagal upload', description: error?.data?.message || error.message, color: 'error' })
   }
-  autoSlug.value = s
 })
 
-function onFileUpload (files: File[]|FileList) {
-  const file = Array.isArray(files) ? files[0] : files?.[0]
-  if (!file) return
-  const fd = new FormData()
-  fd.append('file', file)
-  $fetch('/api/upload', { method: 'POST', body: fd })
-    .then((res: any) => { if (res?.url) form.image = res.url })
-    .catch(() => {})
-}
+// Computed untuk mendapatkan URL preview yang tepat
+const displayImageUrl = computed(() => {
+  if (imagePreview.value) return imagePreview.value
+  if (form.image_url) return getImageUrl(form.image_url)
+  return ''
+})
+
+
 
 const saving = ref(false)
 async function save(status?: 'draft'|'published') {
@@ -58,11 +80,11 @@ async function save(status?: 'draft'|'published') {
   }
   saving.value = true
   try {
-    const res = await $fetch('/api/berita', { method: 'POST', body: form })
-    toast.add({ title: 'Tersimpan', color: 'success' })
+    const res = await $apiFetch('/berita', { method: 'POST', body: form })
+    toast.add({ title: 'Berita berhasil dibuat', color: 'success' })
     router.push(`/dashboard/admin/konten/berita/${(res as any).data.id}`)
   } catch (e: any) {
-    toast.add({ title: 'Gagal', description: e?.statusMessage || 'Gagal menyimpan', color: 'error' })
+    toast.add({ title: 'Gagal', description: e?.data?.message || 'Gagal menyimpan', color: 'error' })
   } finally {
     saving.value = false
   }
@@ -79,8 +101,7 @@ const categoryOptions = [
   { label: 'Prestasi', value: 'prestasi' }
 ]
 
-const errors = reactive<{ title?: string; slug?: string; category?: string; tags?: string; content?: string }>({})
-watch(() => form.slug, v => { errors.slug = v ? '' : 'Slug wajib' })
+const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
 watch(() => form.title, v => { errors.title = v ? '' : 'Judul wajib' })
 watch(() => form.category, v => { errors.category = v ? '' : 'Kategori wajib' })
 watch(() => form.tags, v => { errors.tags = (v && v.length) ? '' : 'Tags wajib diisi' }, { deep: true })
@@ -105,41 +126,58 @@ function removeTag (t: string) {
     <UPageHeader title="Berita Baru" description="Tulis berita, simpan sebagai draft atau publish">
       <template #links>
         <div class="flex gap-2">
-          <UButton variant="outline" icon="i-lucide-eye" :disabled="!form.slug" :to="form.slug?`/berita/${form.slug}`:'#'" target="_blank">Preview</UButton>
+          <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
           <UButton :loading="saving" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
         </div>
       </template>
     </UPageHeader>
 
+
     <UCard>
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
         <!-- Kiri: seluruh pengaturan -->
         <div class="md:col-span-3 space-y-4 flex flex-col w-full">
           <UFormField label="Judul" :error="errors.title" required>
-            <UInput v-model="form.title" placeholder="Judul berita" @blur="genSlug" class="w-full" />
-          </UFormField>
-          <UFormField label="Slug" :error="errors.slug" description="Akan tergenerate dari judul, bisa disesuaikan">
-            <div class="flex-colgap-2">
-              <UTextarea v-model="form.slug" placeholder="otomatis dari judul" class="w-full" />
-              <UButton variant="outline" @click="genSlug" icon="i-lucide-refresh-ccw">Generate</UButton>
-            </div>
+            <UInput v-model="form.title" placeholder="Judul berita" class="w-full" />
           </UFormField>
           <UFormField label="Excerpt">
             <UTextarea v-model="form.excerpt" :rows="6" placeholder="Ringkasan singkat yang menarik" class="w-full" />
           </UFormField>
           <UFormField label="Cover Image">
             <UFileUpload
-              icon="i-lucide-image"
-              label="Drop your image here"
-              description="SVG, PNG, JPG or GIF (max. 2MB)"
-              class="w-full min-h-48"
-              @change="onFileUpload"
-            />
-            <img v-if="form.image" :src="form.image" alt="cover" class="mt-2 w-full h-28 object-cover rounded"  />
+              v-slot="{ open, removeFile }"
+              v-model="uploadedFile"
+              accept="image/*"
+            >
+              <div class="w-full min-h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-500 transition-colors" @click="open()">
+                <template v-if="displayImageUrl">
+                  <img 
+                    :src="displayImageUrl" 
+                    alt="cover" 
+                    class="max-h-40 object-contain rounded"
+                  />
+
+                  <div class="flex gap-2">
+                    <UButton label="Change" color="neutral" variant="outline" size="xs" @click.stop="open()" />
+                    <UButton label="Remove" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image_url = ''; imagePreview = ''" />
+                  </div>
+                </template>
+
+                <template v-else>
+                  <UIcon name="i-lucide-image" class="w-10 h-10 text-gray-400" />
+                  <p class="text-sm text-gray-500">Drop your image here or click to browse</p>
+                  <p class="text-xs text-gray-400">PNG, JPG or WEBP (max. 20MB)</p>
+                </template>
+              </div>
+            </UFileUpload>
           </UFormField>
+
           <UFormField label="Kategori" :error="errors.category">
             <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" class="w-full" />
+          </UFormField>
+          <UFormField label="Penulis">
+            <UInput v-model="form.author" placeholder="Nama penulis" class="w-full" />
           </UFormField>
           <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
             <div class="flex flex-wrap gap-1 mb-2">
@@ -153,8 +191,8 @@ function removeTag (t: string) {
               { label: 'Published', value: 'published' }
             ]" />
           </UFormField>
-          <UFormField label="Tanggal Publish">
-            <UInput v-model="form.publishedAt" type="datetime-local" class="w-full" />
+          <UFormField label="Tanggal Publish" hint="Kosongkan untuk otomatis saat publish">
+            <UInput v-model="form.published_at" type="datetime-local" class="w-full" />
           </UFormField>
         </div>
 

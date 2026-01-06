@@ -6,47 +6,114 @@ import { useDebounceFn } from '@vueuse/core'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
+
 
 const id = route.params.id as string
 
-const { data: res, refresh } = await useFetch(`/api/berita`)
-const current = computed(() => (res.value?.data?.items || []).find((x:any)=>x.id===id))
+// Fetch berita by ID - first get slug from list, then fetch detail
+const { data: beritaData, refresh } = await useAsyncData(
+  `berita-edit-${id}`,
+  async () => {
+    try {
+      // First, fetch list to find the slug
+      const listResponse = await $apiFetch('/berita', {
+        query: { limit: 1000 }
+      })
+      const items = listResponse?.data?.items || []
+      const beritaFromList = items.find((b: any) => String(b.id) === String(id))
+      
+      if (!beritaFromList) {
+        console.error('Berita not found in list with ID:', id)
+        return null
+      }
+      
+      // Then fetch detail by slug to get full content
+      const detailResponse = await $apiFetch(`/berita/${beritaFromList.slug}`)
+      return detailResponse
+    } catch (error) {
+      console.error('Error fetching berita:', error)
+      return null
+    }
+  }
+)
+
+const current = computed(() => beritaData.value?.data)
 
 const form = reactive({
-  title: '', slug: '', excerpt: '', content: '', image: '', category: '', tags: [] as string[], status: 'draft' as 'draft'|'published', publishedAt: ''
+  title: '', 
+  excerpt: '', 
+  content: '', 
+  image_url: '', 
+  category: '', 
+  tags: [] as string[], 
+  author: '',
+  status: 'draft' as 'draft'|'published', 
+  published_at: ''
 })
 
 const activeTab = ref<'konten'|'preview'>('konten')
 
 watchEffect(() => {
   if (current.value) {
-    form.title = current.value.title
-    form.slug = current.value.slug
-    form.excerpt = current.value.excerpt
-    form.content = current.value.content
-    form.image = current.value.image
-    form.category = current.value.category
+    form.title = current.value.title || ''
+    form.excerpt = current.value.excerpt || ''
+    form.content = current.value.content || ''
+    form.image_url = current.value.image_url || ''
+    form.category = current.value.category || ''
     form.tags = current.value.tags || []
+    form.author = current.value.author || ''
     form.status = (current.value.status || 'draft')
-    form.publishedAt = current.value.publishedAt || ''
+    // Convert published_at from backend format
+    if (current.value.published_at) {
+      const date = new Date(current.value.published_at)
+      form.published_at = date.toISOString().slice(0, 16)
+    }
   }
 })
 
-function slugify (text: string) {
-  return (text || '')
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
-function genSlug() { form.slug = slugify(form.slug || form.title) }
 
-const autoSlug = ref('')
-watch(() => form.title, (t) => {
-  const s = slugify(t)
-  if (!form.slug || form.slug === autoSlug.value) form.slug = s
-  autoSlug.value = s
+// File upload using v-model
+const uploadedFile = ref<File | null>(null)
+const imagePreview = ref<string>('') // untuk preview langsung
+
+watch(uploadedFile, async (newFile) => {
+  if (!newFile) return
+  
+  console.log('File selected:', newFile.name)
+  
+  // Set preview langsung dengan blob URL
+  imagePreview.value = URL.createObjectURL(newFile)
+  
+  const fd = new FormData()
+  fd.append('file', newFile)
+  
+  try {
+    const res = await $apiFetch('/upload?type=berita', { 
+      method: 'POST', 
+      body: fd
+    }) as any
+    
+    console.log('Upload response:', res)
+    if (res?.data?.url) {
+      form.image_url = res.data.url 
+      toast.add({ title: 'Gambar berhasil diupload', color: 'success' })
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error)
+    toast.add({ title: 'Gagal upload', description: error?.data?.message || error.message, color: 'error' })
+  }
 })
+
+// Computed untuk mendapatkan URL preview yang tepat
+const displayImageUrl = computed(() => {
+  if (imagePreview.value) return imagePreview.value
+  if (form.image_url) return getImageUrl(form.image_url)
+  return ''
+})
+
+
 
 const saving = ref(false)
 async function save(status?: 'draft'|'published') {
@@ -57,11 +124,11 @@ async function save(status?: 'draft'|'published') {
   }
   saving.value = true
   try {
-    await $fetch(`/api/berita/${id}`, { method: 'PUT', body: form })
-    toast.add({ title: 'Tersimpan', color: 'success' })
+    await $apiFetch(`/berita/${id}`, { method: 'PUT', body: form })
+    toast.add({ title: 'Berita berhasil diupdate', color: 'success' })
     refresh()
   } catch (e: any) {
-    toast.add({ title: 'Gagal', description: e?.statusMessage || 'Gagal menyimpan', color: 'error' })
+    toast.add({ title: 'Gagal', description: e?.data?.message || 'Gagal menyimpan', color: 'error' })
   } finally {
     saving.value = false
   }
@@ -69,30 +136,24 @@ async function save(status?: 'draft'|'published') {
 
 async function toggleStatus() {
   const next = form.status === 'published' ? 'draft' : 'published'
-  await $fetch(`/api/berita/${id}`, { method: 'PATCH', body: { status: next } })
-  toast.add({ title: next==='published'?'Dipublish':'Kembali draft', color: 'success' })
-  refresh()
+  try {
+    await $apiFetch(`/berita/${id}`, { method: 'PATCH', body: { status: next } })
+    toast.add({ title: next==='published'?'Dipublish':'Kembali draft', color: 'success' })
+    refresh()
+  } catch (error: any) {
+    toast.add({ title: 'Gagal', description: error.message, color: 'error' })
+  }
 }
 
 // Autosave (debounce)
 const doAutosave = useDebounceFn(async () => {
   if (!form.title || !form.content) return
   try {
-    await $fetch(`/api/berita/${id}`, { method: 'PUT', body: form })
+    await $apiFetch(`/berita/${id}`, { method: 'PUT', body: form })
   } catch (e) { /* ignore autosave error */ }
 }, 1200)
 
 watch(form, () => doAutosave(), { deep: true })
-
-function onFileUpload (files: File[]|FileList) {
-  const file = Array.isArray(files) ? files[0] : files?.[0]
-  if (!file) return
-  const fd = new FormData()
-  fd.append('file', file)
-  $fetch('/api/upload', { method: 'POST', body: fd })
-    .then((res: any) => { if (res?.url) form.image = res.url })
-    .catch(() => {})
-}
 
 const previewHtml = computed(() => (form.content || '').toString())
 
@@ -105,8 +166,7 @@ const categoryOptions = [
   { label: 'Prestasi', value: 'prestasi' }
 ]
 
-const errors = reactive<{ title?: string; slug?: string; category?: string; tags?: string; content?: string }>({})
-watch(() => form.slug, v => { errors.slug = v ? '' : 'Slug wajib' })
+const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
 watch(() => form.title, v => { errors.title = v ? '' : 'Judul wajib' })
 watch(() => form.category, v => { errors.category = v ? '' : 'Kategori wajib' })
 watch(() => form.tags, v => { errors.tags = (v && v.length) ? '' : 'Tags wajib diisi' }, { deep: true })
@@ -120,14 +180,18 @@ function addTag () {
   tagInput.value = ''
   errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
 }
+function removeTag (t: string) {
+  form.tags = form.tags.filter(x => x !== t)
+  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
+}
 </script>
 
 <template>
   <div class="space-y-6">
-    <UPageHeader :title="`Edit Berita`" :description="`ID: ${id} | /berita/${form.slug}`">
-      <template #right>
+    <UPageHeader :title="`Edit Berita`" :description="`ID: ${id}`">
+      <template #links>
         <div class="flex gap-2">
-          <UButton variant="outline" icon="i-lucide-eye" :disabled="!form.slug" :to="form.slug?`/berita/${form.slug}`:'#'" target="_blank">Preview</UButton>
+          <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" icon="i-lucide-save" @click="save()">Simpan</UButton>
           <UButton :loading="saving" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
             {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
@@ -136,34 +200,52 @@ function addTag () {
       </template>
     </UPageHeader>
 
+
+
     <UCard>
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <!-- Kiri: seluruh pengaturan (span 3) -->
         <div class="xl:col-span-3 space-y-4">
           <UFormField label="Judul" :error="errors.title" required>
-            <UInput v-model="form.title" placeholder="Judul berita" @blur="genSlug" />
-          </UFormField>
-          <UFormField label="Slug" :error="errors.slug" hint="Akan tergenerate dari judul, bisa disesuaikan">
-            <div class="flex gap-2">
-              <UInput v-model="form.slug" placeholder="otomatis dari judul" />
-              <UButton variant="outline" @click="genSlug" icon="i-lucide-refresh-ccw">Generate</UButton>
-            </div>
+            <UInput v-model="form.title" placeholder="Judul berita" />
           </UFormField>
           <UFormField label="Excerpt">
             <UTextarea v-model="form.excerpt" :rows="6" placeholder="Ringkasan singkat yang menarik" />
           </UFormField>
           <UFormField label="Cover Image">
             <UFileUpload
-              icon="i-lucide-image"
-              label="Drop your image here"
-              description="SVG, PNG, JPG or GIF (max. 2MB)"
-              class="w-full min-h-48"
-              @change="onFileUpload"
-            />
-            <img v-if="form.image" :src="form.image" alt="cover" class="mt-2 w-full h-28 object-cover rounded" />
+              v-slot="{ open, removeFile }"
+              v-model="uploadedFile"
+              accept="image/*"
+            >
+              <div class="w-full min-h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-500 transition-colors" @click="open()">
+                <template v-if="displayImageUrl">
+                  <img 
+                    :src="displayImageUrl" 
+                    alt="cover" 
+                    class="max-h-40 object-contain rounded"
+                  />
+                  <div class="flex gap-2">
+                    <UButton label="Change" color="neutral" variant="outline" size="xs" @click.stop="open()" />
+                    <UButton label="Remove" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image_url = ''; imagePreview = ''" />
+                  </div>
+                </template>
+
+                <template v-else>
+                  <UIcon name="i-lucide-image" class="w-10 h-10 text-gray-400" />
+                  <p class="text-sm text-gray-500">Drop your image here or click to browse</p>
+                  <p class="text-xs text-gray-400">PNG, JPG or WEBP (max. 20MB)</p>
+                </template>
+              </div>
+            </UFileUpload>
           </UFormField>
+
+
           <UFormField label="Kategori" :error="errors.category">
             <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" />
+          </UFormField>
+          <UFormField label="Penulis">
+            <UInput v-model="form.author" placeholder="Nama penulis" />
           </UFormField>
           <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
             <div class="flex flex-wrap gap-1 mb-2">
@@ -175,7 +257,7 @@ function addTag () {
             <UBadge :label="form.status.toUpperCase()" :color="form.status==='published'?'primary':'neutral'" />
           </UFormField>
           <UFormField label="Tanggal Publish">
-            <UInput v-model="form.publishedAt" type="datetime-local" />
+            <UInput v-model="form.published_at" type="datetime-local" />
           </UFormField>
         </div>
 

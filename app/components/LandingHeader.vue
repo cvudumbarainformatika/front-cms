@@ -58,69 +58,71 @@ const navigationItems = computed(() => {
 
       <!-- CTA & User Menu (Preserved Auth Logic) -->
       <div class="hidden md:flex items-center gap-3">
-        <!-- Guest -->
-        <template v-if="!isAuthenticated">
-          <UTooltip text="Masuk">
-            <UButton
-              icon="i-lucide-log-in"
-              color="neutral"
-              variant="ghost"
-              to="/login"
-              aria-label="Masuk"
-              class="text-slate-600 hover:text-primary-600 hover:bg-primary-50"
-            />
-          </UTooltip>
-
-          <UTooltip text="Daftar Anggota">
-            <UButton
-              to="/daftar"
-              class="rounded-full transition-all shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40"
-              color="primary"
-              icon="i-lucide-user-plus"
-            >
-              Daftar
-            </UButton>
-          </UTooltip>
-        </template>
-        
-        <!-- Authenticated User Menu -->
-        <template v-else>
-          <UDropdownMenu
-            :items="[
-              [{
-                label: user?.name || 'User',
-                slot: 'header',
-                disabled: true
-              }],
-              [{
-                label: 'Dashboard',
-                icon: 'i-lucide-layout-dashboard',
-                to: '/dashboard'
-              }, {
-                label: 'Profil Saya',
-                icon: 'i-lucide-user',
-                to: '/dashboard/profil'
-              }],
-              [{
-                label: 'Keluar',
-                icon: 'i-lucide-log-out',
-                onSelect: async () => await logout()
-              }]
-            ]"
-          >
-            <UButton
-              color="white"
-              variant="ghost"
-              class="p-1 rounded-full ring-1 ring-slate-200"
-            >
-              <UAvatar
-                :src="getImageUrl(user?.avatar)"
-                :alt="user?.name"
-                size="sm"
+        <ClientOnly>
+          <!-- Guest -->
+          <template v-if="!isAuthenticated">
+            <UTooltip text="Masuk">
+              <UButton
+                icon="i-lucide-log-in"
+                color="neutral"
+                variant="ghost"
+                to="/login"
+                aria-label="Masuk"
+                class="text-slate-600 hover:text-primary-600 hover:bg-primary-50"
               />
-            </UButton>
-          </UDropdownMenu>
-        </template>
+            </UTooltip>
+
+            <UTooltip text="Daftar Anggota">
+              <UButton
+                to="/daftar"
+                class="rounded-full transition-all shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40"
+                color="primary"
+                icon="i-lucide-user-plus"
+              >
+                Daftar
+              </UButton>
+            </UTooltip>
+          </template>
+          
+          <!-- Authenticated User Menu -->
+          <template v-else>
+            <UDropdownMenu
+              :items="[
+                [{
+                  label: user?.name || 'User',
+                  slot: 'header',
+                  disabled: true
+                }],
+                [{
+                  label: 'Dashboard',
+                  icon: 'i-lucide-layout-dashboard',
+                  to: '/dashboard'
+                }, {
+                  label: 'Profil Saya',
+                  icon: 'i-lucide-user',
+                  to: '/dashboard/profil'
+                }],
+                [{
+                  label: 'Keluar',
+                  icon: 'i-lucide-log-out',
+                  onSelect: async () => await logout()
+                }]
+              ]"
+            >
+              <UButton
+                color="white"
+                variant="ghost"
+                class="p-1 rounded-full ring-1 ring-slate-200"
+              >
+                <UAvatar
+                  :src="getImageUrl(user?.avatar)"
+                  :alt="user?.name"
+                  size="sm"
+                />
+              </UButton>
+            </UDropdownMenu>
+          </template>
+        </ClientOnly>
       </div>
 
       <!-- Mobile Menu (UDrawer) - Hidden on desktop -->
@@ -162,75 +164,77 @@ const navigationItems = computed(() => {
                 @click="isMenuOpen = false"
               />
 
-              <UDivider class="my-4" />
+              <USeparator class="my-4" />
 
               <!-- Mobile Auth Buttons -->
               <div class="space-y-2">
-                <template v-if="!isAuthenticated">
-                  <UButton
-                    to="/login"
-                    block
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-log-in"
-                    @click="isMenuOpen = false"
-                  >
-                    Masuk
-                  </UButton>
-                  <UButton
-                    to="/daftar"
-                    block
-                    color="primary"
-                    icon="i-lucide-user-plus"
-                    @click="isMenuOpen = false"
-                  >
-                    Daftar Anggota
-                  </UButton>
-                </template>
+                <ClientOnly>
+                  <template v-if="!isAuthenticated">
+                    <UButton
+                      to="/login"
+                      block
+                      color="neutral"
+                      variant="outline"
+                      icon="i-lucide-log-in"
+                      @click="isMenuOpen = false"
+                    >
+                      Masuk
+                    </UButton>
+                    <UButton
+                      to="/daftar"
+                      block
+                      color="primary"
+                      icon="i-lucide-user-plus"
+                      @click="isMenuOpen = false"
+                    >
+                      Daftar Anggota
+                    </UButton>
+                  </template>
 
-                <template v-else>
-                  <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg mb-3">
-                    <UAvatar
-                      :src="getImageUrl(user?.avatar)"
-                      :alt="user?.name"
-                      size="md"
-                    />
-                    <div class="flex-1 min-w-0">
-                      <p class="font-semibold text-slate-900 truncate">{{ user?.name }}</p>
-                      <p class="text-xs text-slate-500 truncate">{{ user?.email }}</p>
+                  <template v-else>
+                    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg mb-3">
+                      <UAvatar
+                        :src="getImageUrl(user?.avatar)"
+                        :alt="user?.name"
+                        size="md"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-slate-900 truncate">{{ user?.name }}</p>
+                        <p class="text-xs text-slate-500 truncate">{{ user?.email }}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <UButton
-                    to="/dashboard"
-                    block
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-layout-dashboard"
-                    @click="isMenuOpen = false"
-                  >
-                    Dashboard
-                  </UButton>
-                  <UButton
-                    to="/dashboard/profil"
-                    block
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-user"
-                    @click="isMenuOpen = false"
-                  >
-                    Profil Saya
-                  </UButton>
-                  <UButton
-                    block
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-log-out"
-                    @click="async () => { await logout(); isMenuOpen = false }"
-                  >
-                    Keluar
-                  </UButton>
-                </template>
+                    <UButton
+                      to="/dashboard"
+                      block
+                      color="neutral"
+                      variant="outline"
+                      icon="i-lucide-layout-dashboard"
+                      @click="isMenuOpen = false"
+                    >
+                      Dashboard
+                    </UButton>
+                    <UButton
+                      to="/dashboard/profil"
+                      block
+                      color="neutral"
+                      variant="outline"
+                      icon="i-lucide-user"
+                      @click="isMenuOpen = false"
+                    >
+                      Profil Saya
+                    </UButton>
+                    <UButton
+                      block
+                      color="neutral"
+                      variant="outline"
+                      icon="i-lucide-log-out"
+                      @click="async () => { await logout(); isMenuOpen = false }"
+                    >
+                      Keluar
+                    </UButton>
+                  </template>
+                </ClientOnly>
               </div>
             </div>
           </div>

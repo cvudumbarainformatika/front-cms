@@ -1,15 +1,18 @@
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
+  // Di server, gunakan internal URL jika ada, atau fallback ke apiBase
   const apiBase = config.public.apiBase || '/backend'
 
   let isRefreshing = false
   let refreshPromise: Promise<string | null> | null = null
 
-  // Buat instance $fetch dengan baseURL dan header Authorization otomatis
+  // Buat instance $fetch dengan baseURL
   const apiFetch = $fetch.create({
     baseURL: apiBase,
     onRequest({ options }) {
       try {
+        // Coba ambil token dari state auth
+        // Pastikan useAuth handles SSR gracefully (useState is used there)
         const { authState } = useAuth()
         const token = authState.value.token
         const headers = new Headers(options.headers as HeadersInit)
@@ -17,14 +20,17 @@ export default defineNuxtPlugin(() => {
           headers.set('Authorization', `Bearer ${token}`)
         }
         options.headers = headers
-      } catch {
-        // abaikan jika composable belum siap
+      } catch (e) {
+        // Skip auth header on error (or if useAuth fails on server)
       }
     },
     async onResponseError({ response, request }) {
+      // Refresh logic hanya relevan di client side biasanya untuk interactive session
+      // Di server side, jika 401, kita return error saja
+      if (process.server) return
+
       // Jangan handle error untuk auth endpoints (login, register, dll)
       if (request.url?.includes('/auth/')) {
-        // Biarkan error di-handle oleh component
         return
       }
 
@@ -37,7 +43,6 @@ export default defineNuxtPlugin(() => {
           if (isRefreshing && refreshPromise) {
             const newToken = await refreshPromise
             if (newToken) {
-              // Retry request dengan token baru
               const headers = new Headers(request.headers as HeadersInit)
               headers.set('Authorization', `Bearer ${newToken}`)
               return apiFetch(request.url || '', { 
@@ -82,23 +87,17 @@ export default defineNuxtPlugin(() => {
           // Logout jika refresh gagal
           try {
             const { authState } = useAuth()
-            
-            // Clear auth state
             authState.value = {
               isAuthenticated: false,
               user: null,
               token: null
             }
-            
-            // Clear localStorage
             if (typeof localStorage !== 'undefined') {
               localStorage.removeItem('auth_token')
               localStorage.removeItem('auth_user')
               localStorage.removeItem('auth_refresh_token')
               localStorage.removeItem('auth_expires_at')
             }
-            
-            // Redirect ke login
             await navigateTo('/login')
           } catch {
             // ignore

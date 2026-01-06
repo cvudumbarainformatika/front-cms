@@ -7,15 +7,27 @@ import type { TableColumn } from '@nuxt/ui'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { $apiFetch } = useNuxtApp()
 
 const page = computed(() => parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 const status = computed(() => (route.query.status as string) || 'all')
 
-const { data, refresh, pending } = await useFetch('/api/berita', {
-  query: { page, limit: 10, search, status },
-  watch: [page, search, status]
-})
+// Fetch data from backend Go API
+const { data, refresh, pending } = await useAsyncData(
+  'berita-list',
+  () => $apiFetch('/berita', {
+    query: { 
+      page: page.value, 
+      limit: 10, 
+      search: search.value, 
+      status: status.value === 'all' ? undefined : status.value 
+    }
+  }),
+  { 
+    watch: [page, search, status]
+  }
+)
 
 const rows = computed(() => [...(data.value?.data?.items || [])])
 
@@ -24,9 +36,9 @@ const columns: TableColumn<any>[] = [
   { accessorKey: 'category', header: 'Kategori' },
   { accessorKey: 'status', header: 'Status' },
   {
-    accessorKey: 'publishedAt',
+    accessorKey: 'published_at',
     header: 'Dipublish',
-    cell: ({ row }) => row.original.publishedAt ? new Date(row.original.publishedAt).toLocaleString('id-ID') : '-'
+    cell: ({ row }) => row.original.published_at ? new Date(row.original.published_at).toLocaleString('id-ID') : '-'
   },
   {
     id: 'actions',
@@ -34,32 +46,37 @@ const columns: TableColumn<any>[] = [
     cell: ({ row }) => {
       const UButton = resolveComponent('UButton')
       return h('div', { class: 'flex justify-end' }, [
-        !row.original.deletedAt && h(UButton, { to: `/dashboard/admin/konten/berita/${row.original.id}`, icon: 'i-lucide-pencil', color: 'neutral', variant: 'ghost' }),
-        !row.original.deletedAt && h(UButton, { icon: 'i-lucide-trash', color: 'error', variant: 'ghost', onClick: () => onDelete(row.original.id) }),
-        row.original.deletedAt && h(UButton, { icon: 'i-lucide-rotate-ccw', color: 'primary', variant: 'ghost', onClick: () => onRestore(row.original.id) })
+        !row.original.deleted_at && h(UButton, { to: `/dashboard/admin/konten/berita/${row.original.id}`, icon: 'i-lucide-pencil', color: 'neutral', variant: 'ghost' }),
+        !row.original.deleted_at && h(UButton, { icon: 'i-lucide-trash', color: 'error', variant: 'ghost', onClick: () => onDelete(row.original.id) }),
+        row.original.deleted_at && h(UButton, { icon: 'i-lucide-rotate-ccw', color: 'primary', variant: 'ghost', onClick: () => onRestore(row.original.id) })
       ])
     }
   }
 ]
 
-// console.log('rows', rows.value);
-
-
 function setStatus(s: string) {
   router.push({ query: { ...route.query, status: s || undefined, page: undefined } })
 }
 
-async function onDelete(id: string) {
+async function onDelete(id: number) {
   if (!confirm('Hapus berita ini?')) return
-  await $fetch(`/api/berita/${id}`, { method: 'DELETE' })
-  toast.add({ title: 'Terhapus', color: 'success' })
-  refresh()
+  try {
+    await $apiFetch(`/berita/${id}`, { method: 'DELETE' })
+    toast.add({ title: 'Berita berhasil dihapus', color: 'success' })
+    refresh()
+  } catch (error: any) {
+    toast.add({ title: 'Gagal menghapus berita', description: error.message, color: 'error' })
+  }
 }
 
-async function onRestore(id: string) {
-  await $fetch(`/api/berita/${id}`, { method: 'PATCH', body: { deletedAt: '' } })
-  toast.add({ title: 'Dipulihkan', color: 'success' })
-  refresh()
+async function onRestore(id: number) {
+  try {
+    await $apiFetch(`/berita/${id}`, { method: 'PATCH', body: { deleted_at: '' } })
+    toast.add({ title: 'Berita berhasil dipulihkan', color: 'success' })
+    refresh()
+  } catch (error: any) {
+    toast.add({ title: 'Gagal memulihkan berita', description: error.message, color: 'error' })
+  }
 }
 </script>
 
@@ -95,13 +112,13 @@ async function onRestore(id: string) {
                 <p class="text-xs text-muted line-clamp-1">/berita/{{ row.slug }}</p>
               </div>
             </template>
-            <template #publishedAt-data="{ row }">
-              <span class="text-xs">{{ row.publishedAt ? new Date(row.publishedAt).toLocaleString('id-ID') : '-' }}</span>
+            <template #published_at-data="{ row }">
+              <span class="text-xs">{{ row.published_at ? new Date(row.published_at).toLocaleString('id-ID') : '-' }}</span>
             </template>
             <template #actions-data="{ row }">
               <div class="flex gap-2">
-                <UButton v-if="!row.deletedAt" :to="`/dashboard/admin/konten/berita/${row.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" />
-                <UButton v-if="!row.deletedAt" icon="i-lucide-trash" color="error" variant="ghost" @click="onDelete(row.id)" />
+                <UButton v-if="!row.deleted_at" :to="`/dashboard/admin/konten/berita/${row.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" />
+                <UButton v-if="!row.deleted_at" icon="i-lucide-trash" color="error" variant="ghost" @click="onDelete(row.id)" />
                 <UButton v-else icon="i-lucide-rotate-ccw" color="primary" variant="ghost" @click="onRestore(row.id)" />
               </div>
             </template>
