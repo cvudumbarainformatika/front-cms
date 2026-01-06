@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true
   },
-  
+
   sourcemap: {
     client: false,
     server: false
@@ -34,7 +34,7 @@ export default defineNuxtConfig({
     '/docs': { redirect: '/docs/getting-started', prerender: false },
     '/dashboard/**': { ssr: false },
     // Proxy ke backend Go saat development: /backend/** -> http://localhost:8080/api/v1/**
-    '/backend/**': { proxy: 'http://localhost:8080/api/v1/**' }
+    // '/backend/**': { proxy: 'http://localhost:8080/api/v1/**' }
   },
   compatibilityDate: '2024-07-11',
   nitro: {
@@ -44,6 +44,13 @@ export default defineNuxtConfig({
       ],
       crawlLinks: false,
       failOnError: false
+    },
+    devProxy: {
+      '/backend': {
+        target: 'http://localhost:8080/api/v1', // Alamat backend di laptop Anda
+        changeOrigin: true,
+        prependPath: true,
+      }
     }
   },
   vite: {
