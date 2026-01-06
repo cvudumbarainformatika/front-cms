@@ -7,15 +7,40 @@ export const useImageUrl = () => {
   const runtimeConfig = useRuntimeConfig()
 
   /**
+   * Get placeholder berdasarkan tipe
+   * @param type - 'avatar' | 'banner' | 'news' | 'default'
+   * @returns URL placeholder
+   */
+  const getPlaceholder = (type: 'avatar' | 'banner' | 'news' | 'default' = 'default'): string => {
+    const placeholders: Record<string, string> = {
+      // Avatar default
+      avatar: 'https://ui-avatars.com/api/?name=User&background=eff6ff&color=0f172a&bold=true',
+      // Banner landscape
+      banner: 'https://placehold.co/1200x400/f8fafc/94a3b8?text=Banner',
+      // Berita / Artikel (4:3 or 16:9)
+      news: 'https://placehold.co/800x600/f8fafc/94a3b8?text=No+Image',
+      // Default
+      default: 'https://placehold.co/600x400/f8fafc/94a3b8?text=No+Image'
+    }
+    return placeholders[type] || placeholders.default || ''
+  }
+
+  /**
    * Convert image path menjadi accessible URL
    * @param path - Image path dari backend (full URL, relative path, atau undefined)
-   * @param placeholder - Default placeholder jika path kosong
+   * @param placeholderOrType - URL placeholder manual ATAU tipe placeholder ('news', 'avatar', etc). Default: 'default'
    * @returns Full URL yang siap digunakan di img src
    */
-  const getImageUrl = (path?: string, placeholder: string = '/placeholder-avatar.png'): string => {
+  const getImageUrl = (path?: string, placeholderOrType: string = 'default'): string => {
+    // Deteksi apakah argument ke-2 adalah tipe placeholder
+    const types = ['avatar', 'banner', 'news', 'default']
+    const fallback = types.includes(placeholderOrType) 
+      ? getPlaceholder(placeholderOrType as any) 
+      : placeholderOrType
+
     // Jika path kosong atau undefined
     if (!path || path.trim() === '') {
-      return placeholder
+      return fallback
     }
 
     // Jika sudah full URL (http:// atau https://), return as-is
@@ -58,19 +83,6 @@ export const useImageUrl = () => {
     }
   }
 
-  /**
-   * Get placeholder berdasarkan tipe
-   * @param type - 'avatar' | 'banner' | 'default'
-   * @returns URL placeholder
-   */
-  const getPlaceholder = (type: 'avatar' | 'banner' | 'default' = 'default'): string => {
-    const placeholders: Record<string, string> = {
-      avatar: '/placeholder-avatar.png',
-      banner: '/placeholder-banner.png',
-      default: '/placeholder.png'
-    }
-    return placeholders[type] || placeholders.default
-  }
 
   /**
    * Format image URL dengan optional width/height (jika backend support image optimization)

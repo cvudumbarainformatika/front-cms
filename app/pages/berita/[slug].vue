@@ -185,7 +185,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="rb.id"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(rb.image_url)" :alt="rb.title" class="w-14 h-14 rounded object-cover" />
+                <img :src="getImageUrl(rb.image_url, 'news')" :alt="rb.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${rb.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ rb.title }}
@@ -231,7 +231,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="p.id"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(p.image_url)" :alt="p.title" class="w-14 h-14 rounded object-cover" />
+                <img :src="getImageUrl(p.image_url, 'news')" :alt="p.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${p.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ p.title }}
@@ -279,7 +279,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
         
         <div v-else-if="item">
           <div class="overflow-hidden rounded-xl border border-default mb-8">
-            <img :src="getImageUrl(item.image_url)" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+            <img :src="getImageUrl(item.image_url, 'banner')" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
           </div>
 
           <div class="text-sm text-muted mb-6 flex items-center gap-4">

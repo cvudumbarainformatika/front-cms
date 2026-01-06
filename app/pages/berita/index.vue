@@ -183,7 +183,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :to="`/berita/${beritaData.data.items[0].slug}`"
         :title="beritaData.data.items[0].title"
         :description="beritaData.data.items[0].excerpt"
-        :image="getImageUrl(beritaData.data.items[0].image_url)"
+        :image="getImageUrl(beritaData.data.items[0].image_url, 'banner')"
         :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"
@@ -192,51 +192,86 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :ui="{ description: 'line-clamp-3' }"
         class="mb-8"
       />
-      <!-- Berita Grid -->
-      <div v-if="beritaData?.data?.items.length">
-        <UBlogPosts class="grid md:grid-cols-2 xl:grid-cols-2 gap-8">
-          <UBlogPost
-            v-for="berita in beritaData.data.items.slice(1)"
-            :key="berita.id"
-            :to="`/berita/${berita.slug}`"
-            :title="berita.title"
-            :description="berita.excerpt"
-            :image="getImageUrl(berita.image_url)"
-            :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
-            :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
-            :badge="{ label: berita.category }"
-            variant="naked"
-            orientation="vertical"
-            :ui="{ image: 'h-56 object-cover', description: 'line-clamp-2' }"
+      <!-- Berita Grid Section -->
+      <ClientOnly>
+        <template #fallback>
+          <div class="grid md:grid-cols-2 xl:grid-cols-2 gap-8 mb-8">
+            <div v-for="i in 4" :key="i" class="space-y-4">
+              <USkeleton class="h-56 w-full rounded-lg" />
+              <div class="space-y-3">
+                <div class="flex gap-2">
+                  <USkeleton class="h-4 w-20" />
+                  <USkeleton class="h-4 w-24" />
+                </div>
+                <USkeleton class="h-6 w-11/12" />
+                <USkeleton class="h-4 w-full" />
+                <USkeleton class="h-4 w-2/3" />
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <div v-if="pending" class="grid md:grid-cols-2 xl:grid-cols-2 gap-8 mb-8">
+          <div v-for="i in 4" :key="i" class="space-y-4">
+            <USkeleton class="h-56 w-full rounded-lg" />
+            <div class="space-y-3">
+              <div class="flex gap-2">
+                <USkeleton class="h-4 w-20" />
+                <USkeleton class="h-4 w-24" />
+              </div>
+              <USkeleton class="h-6 w-11/12" />
+              <USkeleton class="h-4 w-full" />
+              <USkeleton class="h-4 w-2/3" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Berita Grid Real -->
+        <div v-else-if="beritaData?.data?.items.length">
+          <UBlogPosts class="grid md:grid-cols-2 xl:grid-cols-2 gap-8">
+            <UBlogPost
+              v-for="berita in beritaData.data.items.slice(1)"
+              :key="berita.id"
+              :to="`/berita/${berita.slug}`"
+              :title="berita.title"
+              :description="berita.excerpt"
+              :image="getImageUrl(berita.image_url, 'news')"
+              :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+              :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
+              :badge="{ label: berita.category }"
+              variant="naked"
+              orientation="vertical"
+              :ui="{ image: 'h-56 object-cover', description: 'line-clamp-2' }"
+            />
+          </UBlogPosts>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-12">
+          <UIcon
+            name="i-lucide-newspaper"
+            class="w-16 h-16 mx-auto text-muted mb-4"
           />
-        </UBlogPosts>
-      </div>
+          <p class="text-lg text-muted">
+            Tidak ada berita ditemukan
+          </p>
+        </div>
 
-      <!-- Empty State -->
-      <div v-else class="text-center py-12">
-        <UIcon
-          name="i-lucide-newspaper"
-          class="w-16 h-16 mx-auto text-muted mb-4"
-        />
-        <p class="text-lg text-muted">
-          Tidak ada berita ditemukan
-        </p>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        v-if="beritaData?.data?.pagination && beritaData.data.pagination.total_pages > 1"
-        class="flex justify-center mt-8"
-      >
-        <UPagination
-          :model-value="page"
-          :total="beritaData.data.pagination.total"
-          :page-count="beritaData.data.pagination.limit"
-          show-first
-          show-last
-          @update:model-value="(newPage: number) => router.push({ query: { ...route.query, page: newPage } })"
-        />
-      </div>
+        <!-- Pagination -->
+        <div
+          v-if="beritaData?.data?.pagination && beritaData.data.pagination.total_pages > 1"
+          class="flex justify-center mt-8"
+        >
+          <UPagination
+            :model-value="page"
+            :total="beritaData.data.pagination.total"
+            :page-count="beritaData.data.pagination.limit"
+            show-first
+            show-last
+            @update:model-value="(newPage: number) => router.push({ query: { ...route.query, page: newPage } })"
+          />
+        </div>
+      </ClientOnly>
     </UPageBody>
 
     <template #left>
@@ -283,7 +318,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
                 :key="`latest-${berita.id}`"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(berita.image_url)" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
+                <img :src="getImageUrl(berita.image_url, 'avatar')" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ berita.title }}
