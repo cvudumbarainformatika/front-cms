@@ -45,9 +45,9 @@ const homeData = computed(() => home.value?.data)
             <UButton
               to="#profil"
               size="xl"
-              color="white"
+              color="gray"
               variant="solid"
-              class="rounded-full hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-primary-200 hover:text-primary-600 px-8 py-3.5 ring-0"
+              class="rounded-full !bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-primary-200 hover:text-primary-600 px-8 py-3.5 ring-0"
               trailing-icon="i-lucide-arrow-down-right"
             >
               Tentang Kami
@@ -75,26 +75,31 @@ const homeData = computed(() => home.value?.data)
         <div class="relative">
           <div class="relative rounded-[2.5rem] overflow-hidden shadow-2xl group shadow-primary-900/10">
             <!-- Carousel -->
-            <UCarousel
-              v-slot="{ item }"
-              :items="homeData?.hero.images || []"
-              :ui="{
-                item: 'h-[600px] basis-full',
-                container: 'h-[600px]'
-              }"
-              indicators
-              autoplay
-              :interval="4000"
-              loop
-              class="w-full max-w-xl mx-auto"
-            >
-              <img
-                :src="item"
-                :alt="`Hero Image`"
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 rounded-lg"
-                draggable="false"
+            <ClientOnly>
+              <template #fallback>
+                 <div class="h-[600px] w-full bg-slate-200 animate-pulse rounded-lg"></div>
+              </template>
+              <UCarousel
+                v-slot="{ item }"
+                :items="homeData?.hero.images || []"
+                :ui="{
+                  item: 'h-[600px] basis-full',
+                  container: 'h-[600px]'
+                }"
+                indicators
+                autoplay
+                :interval="4000"
+                loop
+                class="w-full max-w-xl mx-auto"
               >
-            </UCarousel>
+                <img
+                  :src="item"
+                  :alt="`Hero Image`"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 rounded-lg"
+                  draggable="false"
+                >
+              </UCarousel>
+            </ClientOnly>
             
             <div class="absolute inset-0 bg-gradient-to-t via-transparent to-transparent from-primary-950/80 pointer-events-none"></div>
 
