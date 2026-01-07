@@ -25,7 +25,7 @@ const { data: beritaData, pending, error } = await useAsyncData(
       category: category.value || undefined,
       author: author.value || undefined,
       search: search.value || undefined,
-      status: undefined // 'published' // Temporary disable filter
+      status: 'published'
     }
   }),
   {
@@ -37,6 +37,23 @@ const { data: beritaData, pending, error } = await useAsyncData(
     server: false // Force fetch on client side only to avoid SSR issues
   }
 )
+
+// Fetch popular berita
+const { data: popularData, pending: pendingPopular } = await useAsyncData(
+  'berita-public-popular',
+  () => $apiFetch('/berita', {
+    query: {
+      sort: 'views',
+      order: 'desc',
+      limit: 5,
+      status: 'published'
+    }
+  }),
+  {
+    server: false
+  }
+)
+const popularBerita = computed(() => popularData.value?.data?.items || [])
 
 // Categories
 const categories = [
@@ -310,15 +327,24 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
     <template #right>
       <UPageAside>
         <div class="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-auto pr-1">
-          <h3 class="text-sm font-medium text-muted">Berita Terbaru</h3>
+          <h3 class="text-sm font-medium text-muted">Berita Terpopuler</h3>
           <ClientOnly>
-            <div class="space-y-3">
+            <div v-if="pendingPopular" class="space-y-3">
+              <div v-for="i in 5" :key="i" class="flex items-start gap-3">
+                <USkeleton class="w-14 h-14 rounded" />
+                <div class="flex-1 space-y-2">
+                  <USkeleton class="h-4 w-4/5" />
+                  <USkeleton class="h-3 w-1/3" />
+                </div>
+              </div>
+            </div>
+            <div v-else class="space-y-3">
               <div
-                v-for="berita in (beritaData?.data?.items || []).slice(0, 5)"
-                :key="`latest-${berita.id}`"
+                v-for="berita in popularBerita"
+                :key="`popular-${berita.id}`"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(berita.image_url, 'avatar')" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
+                <img :src="getImageUrl(berita.image_url, 'news')" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ berita.title }}

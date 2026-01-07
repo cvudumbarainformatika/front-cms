@@ -9,22 +9,31 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
 
 // Get query params
 const page = computed(() => parseInt(route.query.page as string) || 1)
 const type = computed(() => route.query.type as string || '')
-const upcoming = computed(() => route.query.upcoming !== 'false')
+const upcoming = computed(() => route.query.upcoming === 'true') // Default false to show all events
 
 // Fetch agenda
-const { data: agendaData } = await useFetch('/api/agenda', {
-  query: {
-    page,
-    limit: 12,
-    type,
-    upcoming: upcoming.value.toString()
-  },
-  watch: [page, type, upcoming]
-})
+const { data: agendaData, pending } = await useAsyncData(
+  'agenda-public-list',
+  () => $apiFetch('/agenda', {
+    query: {
+      page: page.value,
+      limit: 12,
+      type: type.value || undefined,
+      upcoming: upcoming.value.toString(),
+      status: 'published'
+    }
+  }),
+  {
+    watch: [page, type, upcoming],
+    server: false
+  }
+)
 
 // Types
 const types = [
@@ -55,6 +64,9 @@ const toggleUpcoming = () => {
     }
   })
 }
+
+// Helper to strip HTML
+const stripHtml = (html: string) => (html || '').replace(/<[^>]*>/g, '')
 
 // SEO
 useSeoMeta({
@@ -100,74 +112,83 @@ useSeoMeta({
       </div>
 
       <!-- Agenda Grid -->
-      <div v-if="agendaData?.data?.items.length" >
-        <UBlogPosts class="contents">
-          <UBlogPost
-            v-for="agenda in agendaData.data.items"
-            :key="agenda.id"
-            :to="`/agenda/${agenda.slug}`"
-            :title="agenda.title"
-            :description="agenda.description"
-            :image="agenda.image"
-            :date="new Date(agenda.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
-            :authors="[{ name: agenda.isOnline ? 'Online' : 'Luring', avatar: { src: agenda.image || 'https://api.dicebear.com/8.x/initials/svg?seed=AG&backgroundType=gradientLinear' } }]"
-            :badge="{ label: `${agenda.skp} SKP` }"
-            variant="naked"
-            orientation="vertical"
-            :ui="{ image: 'h-48 object-cover', description: 'line-clamp-2' }"
+      <ClientOnly>
+        <div v-if="pending" class="grid grid-cols-1 gap-8">
+           <div v-for="i in 3" :key="i" class="flex gap-4">
+             <USkeleton class="h-48 w-full rounded" />
+           </div>
+        </div>
+        <div v-else-if="agendaData?.data?.items.length" >
+          <UBlogPosts class="contents">
+            <UBlogPost
+              v-for="agenda in agendaData.data.items"
+              :key="agenda.id"
+              :to="`/agenda/${agenda.slug}`"
+              :title="agenda.title"
+              :description="stripHtml(agenda.description)"
+              :image="getImageUrl(agenda.image_url, 'banner')"
+              :date="new Date(agenda.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+              :authors="[{ name: agenda.is_online ? 'Online' : 'Luring', avatar: { src: getImageUrl(agenda.image_url, 'avatar') || 'https://api.dicebear.com/8.x/initials/svg?seed=AG&backgroundType=gradientLinear' } }]"
+              :badge="{ label: `${agenda.skp} SKP` }"
+              variant="naked"
+              orientation="vertical"
+              :ui="{ image: 'h-48 object-cover', description: 'line-clamp-2' }"
+            />
+          </UBlogPosts>
+        </div>
+
+        <!-- Empty State -->
+        <div
+          v-else
+          class="text-center py-12"
+        >
+          <UIcon
+            name="i-lucide-calendar-x"
+            class="w-16 h-16 mx-auto text-muted mb-4"
           />
-        </UBlogPosts>
-      </div>
+          <p class="text-lg text-muted">
+            Tidak ada agenda ditemukan
+          </p>
+        </div>
 
-      <!-- Empty State -->
-      <div
-        v-else
-        class="text-center py-12"
-      >
-        <UIcon
-          name="i-lucide-calendar-x"
-          class="w-16 h-16 mx-auto text-muted mb-4"
-        />
-        <p class="text-lg text-muted">
-          Tidak ada agenda ditemukan
-        </p>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        v-if="agendaData?.data?.pagination && agendaData.data.pagination.totalPages > 1"
-        class="flex justify-center"
-      >
-        <UPagination
-          :model-value="page"
-          :total="agendaData.data.pagination.total"
-          :page-count="agendaData.data.pagination.limit"
-          show-first
-          show-last
-          @update:model-value="(newPage: number) => router.push({ query: { ...route.query, page: newPage } })"
-        />
-      </div>
+        <!-- Pagination -->
+        <div
+          v-if="agendaData?.data?.pagination && agendaData.data.pagination.total_pages > 1"
+          class="flex justify-center mt-8"
+        >
+          <UPagination
+            :model-value="page"
+            :total="agendaData.data.pagination.total"
+            :page-count="agendaData.data.pagination.limit"
+            show-first
+            show-last
+            @update:model-value="(newPage: number) => router.push({ query: { ...route.query, page: newPage } })"
+          />
+        </div>
+      </ClientOnly>
     </UPageBody>
 
     <template #right>
       <UPageAside>
         <div class="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-auto pr-1">
           <h3 class="text-sm font-medium text-muted">Agenda Terbaru</h3>
-          <div class="space-y-3">
-            <div
-              v-for="ag in (agendaData?.data?.items || []).slice(0, 6)"
-              :key="`ag-${ag.id}`"
-              class="flex items-start gap-3"
-            >
-              <img :src="ag.image" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
-              <div class="min-w-0">
-                <NuxtLink :to="ag.registrationUrl || '#'" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                  {{ ag.title }}
-                </NuxtLink>
-                <p class="text-xs text-muted">{{ new Date(ag.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
+          <ClientOnly>
+            <div class="space-y-3">
+              <div
+                v-for="ag in (agendaData?.data?.items || []).slice(0, 6)"
+                :key="`ag-${ag.id}`"
+                class="flex items-start gap-3"
+              >
+                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <div class="min-w-0">
+                  <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
+                    {{ ag.title }}
+                  </NuxtLink>
+                  <p class="text-xs text-muted">{{ new Date(ag.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
+                </div>
               </div>
             </div>
-          </div>
+          </ClientOnly>
         </div>
       </UPageAside>
     </template>

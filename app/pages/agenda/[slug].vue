@@ -5,23 +5,29 @@ definePageMeta({
 
 const route = useRoute()
 const slug = route.params.slug as string
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
 
 // Fetch agenda detail
-const { data: res } = await useFetch(`/api/agenda/${slug}`)
-if (!res.value?.data) {
+const { data: res, pending, error } = await useAsyncData(
+  `agenda-detail-${slug}`,
+  () => $apiFetch(`/agenda/${slug}`)
+)
+
+if (error.value || !res.value?.data) {
   throw createError({ statusCode: 404, statusMessage: 'Agenda tidak ditemukan', fatal: true })
 }
 
-const item = res.value.data
+const item = computed(() => res.value?.data)
 
 // SEO
 useSeoMeta({
-  title: `${item.title} - Agenda PDPI`,
-  description: item.description,
-  ogTitle: item.title,
-  ogDescription: item.description,
-  ogImage: item.image,
-  articlePublishedTime: item.date
+  title: () => `${item.value?.title || 'Agenda'} - Agenda PDPI`,
+  description: () => item.value?.description?.replace(/<[^>]*>/g, '').slice(0, 160) || '',
+  ogTitle: () => item.value?.title || 'Agenda PDPI',
+  ogDescription: () => item.value?.description?.replace(/<[^>]*>/g, '').slice(0, 160) || '',
+  ogImage: () => item.value ? getImageUrl(item.value.image_url, 'banner') : '',
+  articlePublishedTime: () => item.value?.date
 })
 
 // Helper date format
@@ -59,61 +65,67 @@ function sanitizeHtml(html: string) {
   }
   return sanitizeHtmlSSR(html)
 }
-const sanitizedDesc = computed(() => sanitizeHtml((item?.description || '').replace(/\n\n/g, '</p><p>')))
+const sanitizedDesc = computed(() => sanitizeHtml((item.value?.description || '').replace(/\n\n/g, '</p><p>')))
 
 // Share
 const currentUrl = computed(() => (process.client ? window.location.href : ''))
-const shareToX = computed(() => `https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(currentUrl.value)}`)
+const shareToX = computed(() => `https://twitter.com/intent/tweet?text=${encodeURIComponent(item.value?.title || '')}&url=${encodeURIComponent(currentUrl.value)}`)
 const shareToFacebook = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl.value)}`)
 function copyLink () { if (process.client) navigator.clipboard.writeText(currentUrl.value || '') }
 
 // Related & Latest
-const { data: relatedByType, pending: pendingRelated } = await useFetch('/api/agenda', {
-  query: { type: item.type, limit: 6 }
-})
-const related = computed(() => (relatedByType.value?.data?.items || []).filter((a: any) => a.slug !== item.slug).slice(0, 6))
+const { data: relatedData } = await useAsyncData(
+  `agenda-related-${slug}`,
+  () => $apiFetch('/agenda', {
+    query: { type: item.value?.type, limit: 6 }
+  }),
+  {
+    watch: [() => item.value?.type],
+    server: false
+  }
+)
+const related = computed(() => (relatedData.value?.data?.items || []).filter((a: any) => a.slug !== slug).slice(0, 6))
 
-const { data: latestData, pending: pendingLatest } = await useFetch('/api/agenda', {
-  query: { limit: 6 }
-})
-const latest = computed(() => (latestData.value?.data?.items || []).filter((a: any) => a.slug !== item.slug).slice(0, 6))
+const { data: latestData } = await useAsyncData(
+  'agenda-latest-sidebar',
+  () => $apiFetch('/agenda', {
+    query: { limit: 6 }
+  }),
+  {
+    server: false
+  }
+)
+const latest = computed(() => (latestData.value?.data?.items || []).filter((a: any) => a.slug !== slug).slice(0, 6))
 </script>
 
 <template>
-  <UPage>
-    <UPageHeader :title="item.title" :description="item.description" />
+  <UPage v-if="item">
+    <UPageHeader :title="item.title" :description="item.description.replace(/<[^>]*>/g, '').slice(0, 100) + '...'" />
 
     <template #left>
       <UPageAside>
         <div class="sticky top-20 space-y-4">
           <h3 class="text-sm font-medium text-muted">Agenda Terkait</h3>
-          <div v-if="pendingRelated" class="space-y-3">
-            <div v-for="i in 6" :key="i" class="flex items-start gap-3">
-              <USkeleton class="w-14 h-14 rounded" />
-              <div class="flex-1 space-y-2">
-                <USkeleton class="h-4 w-4/5" />
-                <USkeleton class="h-3 w-1/3" />
+          <ClientOnly>
+            <div class="space-y-3">
+              <div v-for="ag in related" :key="ag.id" class="flex items-start gap-3">
+                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <div class="min-w-0">
+                  <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
+                    {{ ag.title }}
+                  </NuxtLink>
+                  <p class="text-xs text-muted">{{ fmtShort(ag.date) }}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div v-else class="space-y-3">
-            <div v-for="ag in related" :key="ag.id" class="flex items-start gap-3">
-              <img :src="ag.image" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
-              <div class="min-w-0">
-                <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                  {{ ag.title }}
-                </NuxtLink>
-                <p class="text-xs text-muted">{{ fmtShort(ag.date) }}</p>
-              </div>
-            </div>
-          </div>
+          </ClientOnly>
         </div>
       </UPageAside>
     </template>
 
     <UPageBody>
       <div class="overflow-hidden rounded-xl border border-default mb-8">
-        <img :src="item.image" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+        <img :src="getImageUrl(item.image_url, 'banner')" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
       </div>
 
       <!-- Meta -->
@@ -122,11 +134,11 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <UIcon name="i-lucide-calendar" />
           <span>
             {{ fmtLong(item.date) }}
-            <template v-if="item.endDate"> - {{ fmtLong(item.endDate) }}</template>
+            <template v-if="item.end_date"> - {{ fmtLong(item.end_date) }}</template>
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <UIcon :name="item.isOnline ? 'i-lucide-video' : 'i-lucide-map-pin'" />
+          <UIcon :name="item.is_online ? 'i-lucide-video' : 'i-lucide-map-pin'" />
           <span>{{ item.location }}</span>
         </div>
         <div class="flex items-center gap-2">
@@ -135,13 +147,13 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
         </div>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-users" />
-          <span>{{ item.registered }}/{{ item.quota }}</span>
+          <span>Kuota: {{ item.quota }}</span>
         </div>
       </div>
 
       <div class="flex flex-wrap gap-3 mb-6">
         <UBadge :label="item.type" variant="outline" />
-        <UBadge v-if="item.isOnline" label="Online" variant="outline" />
+        <UBadge v-if="item.is_online" label="Online" variant="outline" />
       </div>
 
       <div class="prose prose-lg max-w-none">
@@ -151,7 +163,7 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
       </div>
 
       <div class="mt-8">
-        <UButton v-if="item.registrationUrl" :to="item.registrationUrl" external size="lg" trailing-icon="i-lucide-external-link">
+        <UButton v-if="item.registration_url" :to="item.registration_url" external size="lg" trailing-icon="i-lucide-external-link">
           Daftar Sekarang
         </UButton>
       </div>
@@ -162,7 +174,7 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
         <div class="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-auto pr-1">
           <h3 class="text-sm font-medium text-muted">Bagikan</h3>
           <div class="flex gap-2">
-            <UButton icon="i-lucide-share-2" color="neutral" variant="ghost" :to="shareToX" external aria-label="Bagikan ke X" />
+            <UButton icon="i-simple-icons-x" color="neutral" variant="ghost" :to="shareToX" external aria-label="Bagikan ke X" />
             <UButton icon="i-simple-icons-facebook" color="neutral" variant="ghost" :to="shareToFacebook" external aria-label="Bagikan ke Facebook" />
             <UButton icon="i-lucide-link" color="neutral" variant="ghost" @click="copyLink" aria-label="Salin tautan" />
           </div>
@@ -170,26 +182,19 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <USeparator class="my-4" />
 
           <h3 class="text-sm font-medium text-muted">Agenda Terbaru</h3>
-          <div v-if="pendingLatest" class="space-y-3">
-            <div v-for="i in 6" :key="i" class="flex items-start gap-3">
-              <USkeleton class="w-14 h-14 rounded" />
-              <div class="flex-1 space-y-2">
-                <USkeleton class="h-4 w-4/5" />
-                <USkeleton class="h-3 w-1/3" />
+          <ClientOnly>
+            <div class="space-y-3">
+              <div v-for="ag in latest" :key="ag.id" class="flex items-start gap-3">
+                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <div class="min-w-0">
+                  <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
+                    {{ ag.title }}
+                  </NuxtLink>
+                  <p class="text-xs text-muted">{{ fmtShort(ag.date) }}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div v-else class="space-y-3">
-            <div v-for="ag in latest" :key="ag.id" class="flex items-start gap-3">
-              <img :src="ag.image" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
-              <div class="min-w-0">
-                <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                  {{ ag.title }}
-                </NuxtLink>
-                <p class="text-xs text-muted">{{ fmtShort(ag.date) }}</p>
-              </div>
-            </div>
-          </div>
+          </ClientOnly>
         </div>
       </UPageAside>
     </template>
