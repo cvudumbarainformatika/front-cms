@@ -16,7 +16,7 @@ const status = computed(() => (route.query.status as string) || 'all')
 // Fetch data from backend Go API
 const { data, refresh, pending } = await useAsyncData(
   'berita-list',
-  () => $apiFetch('/berita', {
+  () => $apiFetch<{ success: boolean, data: { items: any[], total: number }, message: string }>('/berita', {
     query: { 
       page: page.value, 
       limit: 10, 
@@ -30,28 +30,17 @@ const { data, refresh, pending } = await useAsyncData(
 )
 
 const rows = computed(() => [...(data.value?.data?.items || [])])
+const total = computed(() => data.value?.data?.total || 0)
 
-const columns: TableColumn<any>[] = [
-  { accessorKey: 'title', header: 'Judul' },
-  { accessorKey: 'category', header: 'Kategori' },
-  { accessorKey: 'status', header: 'Status' },
-  {
-    accessorKey: 'published_at',
-    header: 'Dipublish',
-    cell: ({ row }) => row.original.published_at ? new Date(row.original.published_at).toLocaleString('id-ID') : '-'
-  },
-  {
-    id: 'actions',
-    header: 'Aksi',
-    cell: ({ row }) => {
-      const UButton = resolveComponent('UButton')
-      return h('div', { class: 'flex justify-end' }, [
-        !row.original.deleted_at && h(UButton, { to: `/dashboard/admin/konten/berita/${row.original.id}`, icon: 'i-lucide-pencil', color: 'neutral', variant: 'ghost' }),
-        !row.original.deleted_at && h(UButton, { icon: 'i-lucide-trash', color: 'error', variant: 'ghost', onClick: () => onDelete(row.original.id) }),
-        row.original.deleted_at && h(UButton, { icon: 'i-lucide-rotate-ccw', color: 'primary', variant: 'ghost', onClick: () => onRestore(row.original.id) })
-      ])
-    }
-  }
+const { getImageUrl } = useImageUrl()
+
+const columns = [
+  { accessorKey: 'image', id: 'image', header: 'Gambar', meta: { class: { th: 'w-16', td: 'w-16' } } },
+  { accessorKey: 'title', id: 'title', header: 'Judul Berita', meta: { class: { th: 'min-w-[300px]', td: 'min-w-[300px]' } } },
+  { accessorKey: 'category', id: 'category', header: 'Kategori' },
+  { accessorKey: 'status', id: 'status', header: 'Status' },
+  { accessorKey: 'published_at', id: 'published_at', header: 'Tanggal Publish' },
+  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'text-right', td: 'text-right' } } }
 ]
 
 function setStatus(s: string) {
@@ -84,48 +73,118 @@ async function onRestore(id: number) {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Kelola Berita</h1>
-        <p class="text-muted">Buat, edit, dan publish berita</p>
+        <h1 class="text-2xl font-bold text-highlighted">Kelola Berita</h1>
+        <p class="text-muted">Buat, edit, dan publikasikan artikel berita</p>
       </div>
-      <UButton to="/dashboard/admin/konten/berita/baru" icon="i-lucide-plus" label="Berita Baru" />
+      <UButton to="/dashboard/admin/konten/berita/baru" icon="i-lucide-plus" label="Berita Baru" size="lg" />
     </div>
 
-    <UCard>
+    <UCard :ui="{ body: { padding: 'p-0 sm:p-0' }, header: { padding: 'p-4 sm:p-6' } }">
       <template #header>
-        <div class="flex flex-wrap gap-3 items-center justify-between">
-          <div class="flex gap-2">
-            <UButton :variant="status==='all'?'solid':'outline'" size="sm" @click="setStatus('all')">Semua</UButton>
-            <UButton :variant="status==='draft'?'solid':'outline'" size="sm" @click="setStatus('draft')">Draft</UButton>
-            <UButton :variant="status==='published'?'solid':'outline'" size="sm" @click="setStatus('published')">Published</UButton>
-            <UButton :variant="status==='deleted'?'solid':'outline'" size="sm" color="neutral" @click="setStatus('deleted')">Deleted</UButton>
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+            <UButton :variant="status==='all'?'solid':'soft'" :color="status==='all'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('all')">Semua</UButton>
+            <UButton :variant="status==='draft'?'solid':'soft'" :color="status==='draft'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('draft')">Draft</UButton>
+            <UButton :variant="status==='published'?'solid':'soft'" :color="status==='published'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('published')">Published</UButton>
+            <UButton :variant="status==='deleted'?'solid':'soft'" :color="status==='deleted'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('deleted')">Deleted</UButton>
           </div>
-          <UInput :model-value="search" placeholder="Cari..." icon="i-lucide-search" size="sm" @update:model-value="v=>router.push({ query: { ...route.query, search: v||undefined, page: undefined } })" />
+          <div class="w-full sm:w-72 text-right">
+             <UInput :model-value="search" placeholder="Cari judul..." icon="i-lucide-search" :ui="{ icon: { trailing: { pointer: '' } } }" @update:model-value="v=>router.push({ query: { ...route.query, search: v||undefined, page: undefined } })">
+                <template #trailing v-if="search">
+                  <UButton
+                    color="neutral"
+                    variant="link"
+                    size="xs"
+                    icon="i-lucide-x"
+                    :padded="false"
+                    @click="router.push({ query: { ...route.query, search: undefined } })"
+                  />
+                </template>
+             </UInput>
+          </div>
         </div>
       </template>
 
       <ClientOnly>
         <div>
-          <UTable :key="`${page}-${status}-${search}`" v-if="rows.length" :data="rows" :columns="columns">
-            <template #title-data="{ row }">
+          <UTable 
+            :key="`${page}-${status}-${search}`" 
+            :loading="pending"
+            :data="rows" 
+            :columns="columns"
+            class="w-full"
+            
+          >
+            <!-- Image Slot -->
+            <template #image-cell="{ row }">
+               <UAvatar :src="getImageUrl(row.original.image_url)" size="md" :alt="row.original.title" class="bg-gray-100" />
+            </template>
+
+            <!-- Title Slot -->
+            <template #title-cell="{ row }">
               <div class="min-w-0">
-                <p class="font-medium line-clamp-1">{{ row.title }}</p>
-                <p class="text-xs text-muted line-clamp-1">/berita/{{ row.slug }}</p>
+                <p class="font-semibold text-highlighted line-clamp-2 leading-snug">{{ row.original.title }}</p>
+                <div class="flex items-center gap-2 mt-1">
+                   <UBadge color="neutral" variant="subtle" size="xs" class="capitalize">{{ row.original.slug.slice(0, 20) }}...</UBadge>
+                </div>
               </div>
             </template>
-            <template #published_at-data="{ row }">
-              <span class="text-xs">{{ row.published_at ? new Date(row.published_at).toLocaleString('id-ID') : '-' }}</span>
+
+            <!-- Status Slot -->
+            <template #status-cell="{ row }">
+               <UBadge 
+                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'draft' ? 'warning' : 'neutral'" 
+                 variant="subtle"
+                 size="sm"
+                 class="capitalize font-semibold"
+               >
+                 {{ row.original.status }}
+               </UBadge>
             </template>
-            <template #actions-data="{ row }">
-              <div class="flex gap-2">
-                <UButton v-if="!row.deleted_at" :to="`/dashboard/admin/konten/berita/${row.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" />
-                <UButton v-if="!row.deleted_at" icon="i-lucide-trash" color="error" variant="ghost" @click="onDelete(row.id)" />
-                <UButton v-else icon="i-lucide-rotate-ccw" color="primary" variant="ghost" @click="onRestore(row.id)" />
+
+            <!-- Published At Slot -->
+            <template #published_at-cell="{ row }">
+              <span class="text-sm text-muted">{{ row.original.published_at ? new Date(row.original.published_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' }}</span>
+            </template>
+
+            <!-- Actions Slot -->
+            <template #actions-cell="{ row }">
+              <div class="flex items-center justify-end gap-2">
+                <UTooltip text="Edit">
+                  <UButton v-if="!row.original.deleted_at" :to="`/dashboard/admin/konten/berita/${row.original.id}`" icon="i-lucide-pencil" color="gray" variant="ghost" size="sm" />
+                </UTooltip>
+                <UTooltip text="Hapus" v-if="!row.original.deleted_at">
+                  <UButton icon="i-lucide-trash" color="error" variant="ghost" size="sm" @click="onDelete(row.original.id)" />
+                </UTooltip>
+                <UTooltip text="Pulihkan" v-if="row.original.deleted_at">
+                  <UButton icon="i-lucide-rotate-ccw" color="primary" variant="ghost" size="sm" @click="onRestore(row.original.id)" />
+                </UTooltip>
               </div>
             </template>
           </UTable>
-          <div v-else class="p-6 text-sm text-muted">Tidak ada data. Coba ubah filter Status (Semua/Draft/Published/Deleted) atau kosongkan pencarian.</div>
+
+          <div v-if="!pending && !rows.length" class="p-12 text-center">
+             <div class="rounded-full bg-gray-50 p-4 inline-flex mb-4">
+               <UIcon name="i-lucide-file-x" class="w-8 h-8 text-gray-400" />
+             </div>
+             <p class="text-muted font-medium">Tidak ada berita ditemukan</p>
+             <p class="text-xs text-muted mt-1">Coba ubah filter atau kata kunci pencarian</p>
+          </div>
         </div>
       </ClientOnly>
+      
+      <template #footer>
+         <div class="flex items-center justify-between py-2">
+           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data</span>
+           <UPagination 
+             :model-value="page" 
+             :total="total" 
+             :page-count="10" 
+             size="sm"
+             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
+           />
+         </div>
+      </template>
     </UCard>
   </div>
 </template>

@@ -7,7 +7,14 @@
 import type { HomepageData } from '~/types/content'
 
 // Fetch homepage data untuk carousel images
-const { data: home } = await useFetch<{ success: boolean, data: HomepageData, message: string }>('/api/homepage')
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
+
+const { data: home } = await useAsyncData('home-hero', 
+  () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
+  { server: false, lazy: true }
+)
+
 const homeData = computed(() => home.value?.data)
 </script>
 
@@ -23,7 +30,7 @@ const homeData = computed(() => home.value?.data)
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
             </span>
-            {{ homeData?.hero.title || 'Leading Respiratory Science' }}
+            {{ (homeData?.hero as any)?.label || 'Leading Respiratory Science' }}
           </div>
           <div class="text-5xl lg:text-7xl font-semibold tracking-tighter leading-[1.1] text-slate-900">
             <span class="text-transparent bg-clip-text bg-gradient-to-r to-neutral-900 from-primary">{{ homeData?.hero.title || 'Kesehatan Respirasi' }}</span>.
@@ -42,7 +49,7 @@ const homeData = computed(() => home.value?.data)
             >
               Lihat Agenda
             </UButton>
-            <UButton
+            <!-- <UButton
               to="#profil"
               size="xl"
               color="gray"
@@ -51,23 +58,26 @@ const homeData = computed(() => home.value?.data)
               trailing-icon="i-lucide-arrow-down-right"
             >
               Tentang Kami
-            </UButton>
+            </UButton> -->
           </div>
 
           <!-- Stats Row -->
-          <div class="flex items-center gap-8 pt-4 border-t border-slate-100">
-            <div>
-              <p class="text-3xl font-semibold tracking-tight text-slate-900">2.500+</p>
-              <p class="text-sm font-medium text-slate-500">Anggota Dokter</p>
+          <div v-if="homeData?.stats?.length" class="flex flex-wrap items-center gap-8 pt-4 border-t border-slate-100">
+            <div v-for="(stat, idx) in homeData.stats" :key="idx">
+              <p class="text-3xl font-semibold tracking-tight text-slate-900">{{ stat.value }}</p>
+              <p class="text-sm font-medium text-slate-500">{{ stat.label }}</p>
             </div>
-            <div>
-              <p class="text-3xl font-semibold tracking-tight text-slate-900">50+</p>
-              <p class="text-sm font-medium text-slate-500">Cabang Daerah</p>
-            </div>
-            <div>
-              <p class="text-3xl font-semibold tracking-tight text-slate-900">120+</p>
-              <p class="text-sm font-medium text-slate-500">Jurnal Ilmiah</p>
-            </div>
+          </div>
+          <div v-else class="flex items-center gap-8 pt-4 border-t border-slate-100">
+             <!-- Fallback Stats if none -->
+             <div>
+               <p class="text-3xl font-semibold tracking-tight text-slate-900">2.500+</p>
+               <p class="text-sm font-medium text-slate-500">Anggota Dokter</p>
+             </div>
+             <div>
+               <p class="text-3xl font-semibold tracking-tight text-slate-900">50+</p>
+               <p class="text-sm font-medium text-slate-500">Cabang Daerah</p>
+             </div>
           </div>
         </div>
 
@@ -93,7 +103,7 @@ const homeData = computed(() => home.value?.data)
                 class="w-full max-w-xl mx-auto"
               >
                 <img
-                  :src="item"
+                  :src="getImageUrl(item)"
                   :alt="`Hero Image`"
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 rounded-lg"
                   draggable="false"
@@ -106,15 +116,20 @@ const homeData = computed(() => home.value?.data)
             <!-- Floating Tags -->
             <div class="absolute top-8 left-8 flex flex-col gap-3 z-10">
               <span class="inline-flex items-center gap-1.5 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg bg-white/90 text-primary-800">
-                <UIcon name="i-lucide-stethoscope" class="w-3.5 h-3.5" /> Clinical Excellence
+                <UIcon name="i-lucide-stethoscope" class="w-3.5 h-3.5" /> 
+                {{ (homeData?.hero as any)?.event_tag || 'Clinical Excellence' }}
               </span>
             </div>
 
             <!-- Bottom Card -->
             <div class="absolute bottom-8 left-8 right-8 backdrop-blur-xl p-6 rounded-2xl shadow-xl flex items-center justify-between bg-white/95 z-10">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wider mb-1 text-primary-600">Simposium Nasional 2024</p>
-                <p class="font-medium text-slate-900">Inovasi Penanganan PPOK & Asma</p>
+                <p class="text-xs font-bold uppercase tracking-wider mb-1 text-primary-600">
+                  {{ (homeData?.hero as any)?.event_title || 'Simposium Nasional 2024' }}
+                </p>
+                <p class="font-medium text-slate-900">
+                  {{ (homeData?.hero as any)?.event_desc || 'Inovasi Penanganan PPOK & Asma' }}
+                </p>
               </div>
               <div class="p-3 rounded-full bg-primary-100 text-primary-600">
                 <UIcon name="i-lucide-arrow-right" class="w-6 h-6" />

@@ -31,8 +31,8 @@ const newsItems = computed(() => {
     date: new Date(item.published_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
     vol: new Date(item.published_at).toLocaleDateString('id-ID', { month: '2-digit', year: '2-digit' }), // Dummy vol/no based on date
     category: item.category || 'Berita',
-    image: getImageUrl(item.image_url, 'banner'),
-    thumbnail: getImageUrl(item.image_url, 'thumbnail')
+    image: getImageUrl(item.image_url, 'news'),
+    thumbnail: getImageUrl(item.image_url, 'news')
   }))
 })
 
@@ -55,53 +55,63 @@ const subNews = computed(() => newsItems.value.slice(1, 3))
       </NuxtLink>
     </div>
 
-    <!-- Loading -->
-    <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <div class="lg:col-span-2 h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
-      <div v-for="i in 2" :key="i" class="h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
-    </div>
+    <!-- Dynamic Content -->
+    <ClientOnly>
+      <template #fallback>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div class="lg:col-span-2 h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
+          <div v-for="i in 2" :key="i" class="h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
+        </div>
+      </template>
 
-    <!-- Empty -->
-    <div v-else-if="!newsItems.length" class="text-center py-12 text-muted">
-       <p>Belum ada berita terbaru</p>
-    </div>
+      <!-- Loading -->
+      <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-2 h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
+        <div v-for="i in 2" :key="i" class="h-96 bg-gray-100 rounded-3xl animate-pulse"></div>
+      </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <!-- Highlighted Article -->
-      <ScrollReveal v-if="highlight" animation="slide-up" class="lg:col-span-2">
-        <NuxtLink :to="`/berita/${highlight.slug}`" class="group cursor-pointer h-full block">
-          <div class="relative rounded-3xl overflow-hidden mb-4 aspect-video shadow-sm">
-            <img :src="highlight.image" :alt="highlight.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-            <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ highlight.category }}</div>
-          </div>
-          <div class="space-y-2">
-            <div class="flex items-center gap-3 text-sm text-slate-400 font-medium">
-              <span class="flex items-center gap-1"><UIcon name="i-lucide-calendar" class="w-3.5 h-3.5" /> {{ highlight.date }}</span>
+      <!-- Empty -->
+      <div v-else-if="!newsItems.length" class="text-center py-12 text-muted">
+         <p>Belum ada berita terbaru</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Highlighted Article -->
+        <ScrollReveal v-if="highlight" animation="slide-up" class="lg:col-span-2">
+          <NuxtLink :to="`/berita/${highlight.slug}`" class="group cursor-pointer h-full block">
+            <div class="relative rounded-3xl overflow-hidden mb-4 aspect-video shadow-sm">
+              <img :src="highlight.image" :alt="highlight.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ highlight.category }}</div>
             </div>
-            <h3 class="text-2xl font-semibold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2">{{ highlight.title }}</h3>
-            <p class="text-slate-500 line-clamp-2">{{ highlight.excerpt }}</p>
-          </div>
-        </NuxtLink>
-      </ScrollReveal>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 text-sm text-slate-400 font-medium">
+                <span class="flex items-center gap-1"><UIcon name="i-lucide-calendar" class="w-3.5 h-3.5" /> {{ highlight.date }}</span>
+              </div>
+              <h3 class="text-2xl font-semibold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2">{{ highlight.title }}</h3>
+              <p class="text-slate-500 line-clamp-2">{{ highlight.excerpt }}</p>
+            </div>
+          </NuxtLink>
+        </ScrollReveal>
 
-      <!-- Small Articles -->
-      <ScrollReveal 
-        v-for="(news, idx) in subNews" 
-        :key="news.id" 
-        animation="slide-up" 
-        :delay="(Number(idx) + 1) * 200"
-      >
-        <NuxtLink :to="`/berita/${news.slug}`" class="group cursor-pointer h-full block">
-          <div class="relative rounded-3xl overflow-hidden mb-4 aspect-[4/3] shadow-sm">
-            <img :src="news.thumbnail" :alt="news.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-            <div class="absolute top-4 left-4 bg-primary-100/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ news.category }}</div>
-          </div>
-          <div class="space-y-2">
-            <span class="text-xs font-medium text-slate-400">{{ news.date }}</span>
-            <h3 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-3">{{ news.title }}</h3>
-          </div>
-        </NuxtLink>
-      </ScrollReveal>
-    </div>
+        <!-- Small Articles -->
+        <ScrollReveal 
+          v-for="(news, idx) in subNews" 
+          :key="news.id" 
+          animation="slide-up" 
+          :delay="(Number(idx) + 1) * 200"
+        >
+          <NuxtLink :to="`/berita/${news.slug}`" class="group cursor-pointer h-full block">
+            <div class="relative rounded-3xl overflow-hidden mb-4 aspect-4/3 shadow-sm">
+              <img :src="news.thumbnail" :alt="news.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              <div class="absolute top-4 left-4 bg-primary-100/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ news.category }}</div>
+            </div>
+            <div class="space-y-2">
+              <span class="text-xs font-medium text-slate-400">{{ news.date }}</span>
+              <h3 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-3">{{ news.title }}</h3>
+            </div>
+          </NuxtLink>
+        </ScrollReveal>
+      </div>
+    </ClientOnly>
   </UPageSection>
 </template>

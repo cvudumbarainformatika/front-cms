@@ -1,87 +1,67 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', ssr: false })
-import type { TableColumn } from '@nuxt/ui'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
 
 const page = computed(() => parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 const status = computed(() => (route.query.status as string) || 'all')
 
-// Fetch API
-const { data, refresh, status: fetchStatus } = await useAsyncData(
-  'admin-agenda-list',
+const { data, refresh, pending } = await useAsyncData(
+  'agenda-list',
   () => $apiFetch('/agenda', {
-    query: {
-      page: page.value,
-      limit: 10,
-      search: search.value || undefined,
-      status: status.value !== 'all' ? status.value : undefined
+    query: { 
+      page: page.value, 
+      limit: 10, 
+      search: search.value || undefined, 
+      status: status.value === 'all' ? undefined : status.value 
     }
   }),
-  {
+  { 
     watch: [page, search, status],
     server: false
   }
 )
 
+console.log('data.value', data.value?.data?.items)
 const rows = computed(() => data.value?.data?.items || [])
 const total = computed(() => data.value?.data?.pagination?.total || 0)
 
-const columns: TableColumn<any>[] = [
-  { accessorKey: 'title', header: 'Judul' },
-  { accessorKey: 'type', header: 'Jenis' },
-  { 
-    accessorKey: 'date', 
-    header: 'Tanggal', 
-    cell: ({ row }: any) => new Date(row.original.date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) 
-  },
-  { 
-    accessorKey: 'status', 
-    header: 'Status',
-    cell: ({ row }: any) => h('span', { class: row.original.status === 'published' ? 'text-green-600' : 'text-gray-500' }, row.original.status)
-  },
-  { 
-    id: 'actions', 
-    header: 'Aksi', 
-    cell: ({ row }: any) => {
-      const UButton = resolveComponent('UButton')
-      return h('div', { class: 'flex justify-end gap-2' }, [
-        !row.original.deleted_at && h(UButton, { to: `/dashboard/admin/konten/agenda/${row.original.id}`, icon: 'i-lucide-pencil', color: 'neutral', variant: 'ghost' }),
-        !row.original.deleted_at && h(UButton, { icon: 'i-lucide-trash', color: 'error', variant: 'ghost', onClick: () => onDelete(row.original.id) }),
-        row.original.deleted_at && h(UButton, { icon: 'i-lucide-rotate-ccw', color: 'primary', variant: 'ghost', onClick: () => onRestore(row.original.id) }),
-      ])
-    }
-  }
+const columns = [
+  { accessorKey: 'image', id: 'image', header: 'Gambar', meta: { class: { th: 'w-16', td: 'w-16' } } },
+  { accessorKey: 'title', id: 'title', header: 'Nama Agenda', meta: { class: { th: 'min-w-[300px]', td: 'min-w-[300px]' } } },
+  { accessorKey: 'type', id: 'type', header: 'Jenis' },
+  { accessorKey: 'status', id: 'status', header: 'Status' },
+  { accessorKey: 'date', id: 'date', header: 'Tanggal' },
+  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'text-right', td: 'text-right' } } }
 ]
 
-function setStatus(s: string) { 
-  router.push({ query: { ...route.query, status: s || undefined, page: undefined } }) 
+function setStatus(s: string) {
+  router.push({ query: { ...route.query, status: s || undefined, page: undefined } })
 }
 
-async function onDelete(id: string) { 
-  if (!confirm('Hapus agenda ini?')) return; 
+async function onDelete(id: number) {
+  if (!confirm('Hapus agenda ini?')) return
   try {
-    await $apiFetch(`/agenda/${id}`, { method: 'DELETE' }); 
-    toast.add({ title: 'Terhapus', color: 'success' }); 
+    await $apiFetch(`/agenda/${id}`, { method: 'DELETE' })
+    toast.add({ title: 'Agenda berhasil dihapus', color: 'success' })
     refresh()
-  } catch (e: any) {
-    toast.add({ title: 'Gagal menghapus', description: e.message, color: 'error' })
+  } catch (error: any) {
+    toast.add({ title: 'Gagal menghapus agenda', description: error.message, color: 'error' })
   }
 }
 
-async function onRestore(id: string) { 
+async function onRestore(id: number) {
   try {
-    // Backend restore logic usually involves PATCH with specific intent, or we might need to implement /restore endpoint.
-    // Based on BeritaController, PATCH with deleted_at = "" restores it.
-    await $apiFetch(`/agenda/${id}`, { method: 'PATCH', body: { deleted_at: '' } }); 
-    toast.add({ title: 'Dipulihkan', color: 'success' }); 
-    refresh() 
-  } catch (e: any) {
-    toast.add({ title: 'Gagal memulihkan', description: e.message, color: 'error' })
+    await $apiFetch(`/agenda/${id}`, { method: 'PATCH', body: { deleted_at: '' } })
+    toast.add({ title: 'Agenda berhasil dipulihkan', color: 'success' })
+    refresh()
+  } catch (error: any) {
+    toast.add({ title: 'Gagal memulihkan agenda', description: error.message, color: 'error' })
   }
 }
 </script>
@@ -90,44 +70,117 @@ async function onRestore(id: string) {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Kelola Agenda</h1>
-        <p class="text-muted">Buat, edit, dan publish agenda</p>
+        <h1 class="text-2xl font-bold text-highlighted">Kelola Agenda</h1>
+        <p class="text-muted">Buat, edit, dan publikasikan agenda</p>
       </div>
-      <UButton to="/dashboard/admin/konten/agenda/baru" icon="i-lucide-plus" label="Agenda Baru" />
+      <UButton to="/dashboard/admin/konten/agenda/baru" icon="i-lucide-plus" label="Agenda Baru" size="lg" />
     </div>
 
-    <UCard>
+    <UCard :ui="{ body: { padding: 'p-0 sm:p-0' }, header: { padding: 'p-4 sm:p-6' } }">
       <template #header>
-        <div class="flex flex-wrap gap-3 items-center justify-between">
-          <div class="flex gap-2">
-            <UButton :variant="status==='all'?'solid':'outline'" size="sm" @click="setStatus('all')">Semua</UButton>
-            <UButton :variant="status==='draft'?'solid':'outline'" size="sm" @click="setStatus('draft')">Draft</UButton>
-            <UButton :variant="status==='published'?'solid':'outline'" size="sm" @click="setStatus('published')">Published</UButton>
-            <!-- Backend might filter 'deleted' via status or extra param. BeritaController shows 'deleted_at IS NULL' by default. 
-                 To see deleted, we might need to adjust backend. For now, standard filter. -->
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+            <UButton :variant="status==='all'?'solid':'soft'" :color="status==='all'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('all')">Semua</UButton>
+            <UButton :variant="status==='draft'?'solid':'soft'" :color="status==='draft'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('draft')">Draft</UButton>
+            <UButton :variant="status==='published'?'solid':'soft'" :color="status==='published'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('published')">Published</UButton>
+            <UButton :variant="status==='deleted'?'solid':'soft'" :color="status==='deleted'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('deleted')">Deleted</UButton>
           </div>
-          <UInput :model-value="search" placeholder="Cari..." icon="i-lucide-search" size="sm" @update:model-value="v=>router.push({ query: { ...route.query, search: v||undefined, page: undefined } })" />
+          <div class="w-full sm:w-72">
+             <UInput :model-value="search" placeholder="Cari judul..." icon="i-lucide-search" :ui="{ icon: { trailing: { pointer: '' } } }" @update:model-value="v=>router.push({ query: { ...route.query, search: v||undefined, page: undefined } })">
+                <template #trailing v-if="search">
+                  <UButton
+                    color="gray"
+                    variant="link"
+                    size="xs"
+                    icon="i-lucide-x"
+                    :padded="false"
+                    @click="router.push({ query: { ...route.query, search: undefined } })"
+                  />
+                </template>
+             </UInput>
+          </div>
         </div>
       </template>
 
       <ClientOnly>
         <div>
           <UTable 
-            :loading="fetchStatus === 'pending'"
+            :key="`${page}-${status}-${search}`" 
+            :loading="pending"
             :data="rows" 
-            :columns="columns" 
-          />
-          <div class="flex justify-center mt-4 border-t pt-4">
-            <UPagination
-              v-if="total > 0"
-              :model-value="page"
-              :total="total"
-              :page-count="10"
-              @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
-            />
+            :columns="columns"
+            class="w-full"
+          >
+            <!-- Image Slot -->
+            <template #image-cell="{ row }">
+               <UAvatar :src="getImageUrl(row.original.image_url)" size="md" :alt="row.original.title" class="bg-gray-100" />
+            </template>
+
+            <!-- Title Slot -->
+            <template #title-cell="{ row }">
+              <div class="min-w-0">
+                <p class="font-semibold text-highlighted line-clamp-2 leading-snug">{{ row.original.title }}</p>
+                <div class="flex items-center gap-2 mt-1">
+                   <UBadge color="gray" variant="subtle" size="xs" class="capitalize">{{ row.original.slug?.slice(0, 20) || '...' }}...</UBadge>
+                </div>
+              </div>
+            </template>
+
+            <!-- Status Slot -->
+            <template #status-cell="{ row }">
+               <UBadge 
+                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'draft' ? 'orange' : 'gray'" 
+                 variant="subtle"
+                 size="xs"
+                 class="capitalize font-semibold"
+               >
+                 {{ row.original.status }}
+               </UBadge>
+            </template>
+
+            <!-- Date Slot -->
+            <template #date-cell="{ row }">
+              <span class="text-sm text-muted">{{ row.original.date ? new Date(row.original.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' }}</span>
+            </template>
+
+            <!-- Actions Slot -->
+            <template #actions-cell="{ row }">
+              <div class="flex items-center justify-end gap-2">
+                <UTooltip text="Edit">
+                  <UButton v-if="!row.original.deleted_at" :to="`/dashboard/admin/konten/agenda/${row.original.id}`" icon="i-lucide-pencil" color="gray" variant="ghost" size="sm" />
+                </UTooltip>
+                <UTooltip text="Hapus" v-if="!row.original.deleted_at">
+                  <UButton icon="i-lucide-trash" color="error" variant="ghost" size="sm" @click="onDelete(row.original.id)" />
+                </UTooltip>
+                <UTooltip text="Pulihkan" v-if="row.original.deleted_at">
+                  <UButton icon="i-lucide-rotate-ccw" color="primary" variant="ghost" size="sm" @click="onRestore(row.original.id)" />
+                </UTooltip>
+              </div>
+            </template>
+          </UTable>
+
+          <div v-if="!pending && !rows.length" class="p-12 text-center">
+             <div class="rounded-full bg-gray-50 p-4 inline-flex mb-4">
+               <UIcon name="i-lucide-file-x" class="w-8 h-8 text-gray-400" />
+             </div>
+             <p class="text-muted font-medium">Tidak ada agenda ditemukan</p>
+             <p class="text-xs text-muted mt-1">Coba ubah filter atau kata kunci pencarian</p>
           </div>
         </div>
       </ClientOnly>
+      
+      <template #footer>
+         <div class="flex items-center justify-between py-2">
+           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data</span>
+           <UPagination 
+             :model-value="page" 
+             :total="total" 
+             :page-count="10" 
+             size="sm"
+             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
+           />
+         </div>
+      </template>
     </UCard>
   </div>
 </template>
