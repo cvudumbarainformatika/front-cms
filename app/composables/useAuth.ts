@@ -100,11 +100,11 @@ export const useAuth = () => {
     const delayMs = Math.max(0, timeUntilExpiry - refreshBeforeExpiry)
 
     tokenState.value.refreshTimeout = setTimeout(() => {
-      console.log('[Auth] Token akan segera expired, melakukan refresh...')
+      // console.log('[Auth] Token akan segera expired, melakukan refresh...')
       refreshAccessToken()
     }, delayMs)
 
-    console.log(`[Auth] Token refresh dijadwalkan dalam ${Math.round(delayMs / 1000)} detik`)
+    // console.log(`[Auth] Token refresh dijadwalkan dalam ${Math.round(delayMs / 1000)} detik`)
   }
 
   /**

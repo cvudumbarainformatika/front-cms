@@ -38,7 +38,7 @@ const filteredMenus = computed<MenuItem[]>(() => {
   return filterByRole(sidebarMenus.value)
 })
 
-console.log(filteredMenus);
+// console.log(filteredMenus);
 
 </script>
 

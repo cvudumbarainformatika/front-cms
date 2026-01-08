@@ -73,9 +73,7 @@ onMounted(() => {
 async function fetchHome() {
   loading.value = true
   try {
-    console.log('[Beranda] Fetching homepage data...')
     const res = await $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage')
-    console.log('[Beranda] Response:', res)
     
     if (res?.data) {
       const data = res.data
@@ -99,7 +97,6 @@ async function fetchHome() {
       state.seo.description = data.seo?.description || ''
     }
   } catch (error) {
-    console.error('[Beranda] Fetch error:', error)
     toast.add({
       title: 'Gagal Memuat Data',
       description: 'Terjadi kesalahan saat memuat data beranda.',

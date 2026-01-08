@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useFetch } from '#imports'
+import { useImageUrl } from '~/composables/useImageUrl'
 
 definePageMeta({
   layout: 'news'
@@ -12,33 +13,18 @@ definePageMeta({
  */
 
 const route = useRoute()
+const { getImageUrl } = useImageUrl()
+
 const slug = computed(() => {
   const path = route.params.slug
   return Array.isArray(path) ? path.join('/') : path
 })
 
-// Check if this slug is a dynamic menu
-const { data: menuResponse } = await useFetch<any>('/api/menus')
-const dynamicMenu = computed(() => {
-  if (!menuResponse.value?.data) return null
-  
-  // Flatten menus to check slugs
-  const flattenMenus = (items: any[]): any[] => {
-    return items.reduce((acc, item) => {
-      acc.push(item)
-      if (item.children) acc.push(...flattenMenus(item.children))
-      return acc
-    }, [] as any[])
-  }
-
-  const allMenus = flattenMenus(menuResponse.value.data)
-  return allMenus.find(m => m.isDynamic && (m.to === `/${slug.value}` || m.slug === slug.value))
+// Fetch dynamic content
+const { data: dynContentRes, error } = await useFetch<any>(`/backend/dynamic-content/${slug.value}`, {
+  key: `content-view-${slug.value}`
 })
 
-const isDynamicPage = computed(() => !!dynamicMenu.value)
-
-// Fetch dynamic content
-const { data: dynContentRes } = await useFetch<any>(`/api/dynamic-content/${slug.value}`)
 const dyn = computed(() => dynContentRes.value?.data || null)
 
 const title = computed(() => dyn.value?.title || (slug.value as string))
@@ -64,7 +50,9 @@ useSeoMeta({
           <template v-if="dyn.badge?.label || dyn.date" #headline>
             <UBadge v-if="dyn.badge?.label" :label="dyn.badge.label" variant="subtle" />
             <span v-if="dyn.badge?.label && dyn.date" class="text-muted">&middot;</span>
-            <time v-if="dyn.date" class="text-muted">{{ new Date(dyn.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
+            <ClientOnly>
+              <time v-if="dyn.date" class="text-muted">{{ new Date(dyn.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</time>
+            </ClientOnly>
           </template>
 
           <div v-if="dyn.authors && dyn.authors.length > 0" class="flex flex-wrap items-center gap-3 mt-4">
@@ -90,6 +78,10 @@ useSeoMeta({
 
         <UPage>
           <UPageBody>
+            <div v-if="dyn.image?.src" class="overflow-hidden rounded-xl border border-default mb-8">
+              <img :src="getImageUrl(dyn.image.src)" :alt="dyn.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+            </div>
+
             <div class="dynamic-content prose prose-primary dark:prose-invert max-w-none">
               <template v-if="dyn.html">
                 <div v-html="dyn.html"></div>

@@ -551,8 +551,8 @@ const getRoleLabel = (role: string) => {
       <!-- Clear Filters -->
       <div class="flex gap-2">
         <UButton
-          variant="ghost"
-          color="neutral"
+          variant="outline"
+          color="primary"
           icon="i-lucide-x"
           @click="() => {
             filters.search = ''

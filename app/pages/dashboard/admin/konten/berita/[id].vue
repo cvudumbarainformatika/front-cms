@@ -25,7 +25,6 @@ const { data: beritaData, refresh } = await useAsyncData(
       const beritaFromList = items.find((b: any) => String(b.id) === String(id))
       
       if (!beritaFromList) {
-        console.error('Berita not found in list with ID:', id)
         return null
       }
       
@@ -33,7 +32,6 @@ const { data: beritaData, refresh } = await useAsyncData(
       const detailResponse = await $apiFetch(`/berita/${beritaFromList.slug}`)
       return detailResponse
     } catch (error) {
-      console.error('Error fetching berita:', error)
       return null
     }
   }
@@ -81,8 +79,6 @@ const imagePreview = ref<string>('') // untuk preview langsung
 watch(uploadedFile, async (newFile) => {
   if (!newFile) return
   
-  console.log('File selected:', newFile.name)
-  
   // Set preview langsung dengan blob URL
   imagePreview.value = URL.createObjectURL(newFile)
   
@@ -95,13 +91,11 @@ watch(uploadedFile, async (newFile) => {
       body: fd
     }) as any
     
-    console.log('Upload response:', res)
     if (res?.data?.url) {
       form.image_url = res.data.url 
       toast.add({ title: 'Gambar berhasil diupload', color: 'success' })
     }
   } catch (error: any) {
-    console.error('Upload error:', error)
     toast.add({ title: 'Gagal upload', description: error?.data?.message || error.message, color: 'error' })
   }
 })
@@ -191,6 +185,7 @@ function removeTag (t: string) {
     <UPageHeader :title="`Edit Berita`" :description="`ID: ${id}`">
       <template #links>
         <div class="flex gap-2">
+           <UButton v-if="current?.slug" :to="`/berita/${current.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
           <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" icon="i-lucide-save" @click="save()">Simpan</UButton>
           <UButton :loading="saving" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">

@@ -181,6 +181,7 @@ const displayImageUrl = computed(() => {
     <UPageHeader :title="`Edit Agenda`" :description="`ID: ${id} | type: ${form.type}`">
       <template #links>
         <div class="flex gap-2">
+          <UButton v-if="form.slug" :to="`/agenda/${form.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
           <UButton to="/dashboard/admin/konten/agenda" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" icon="i-lucide-save" @click="save()">Simpan</UButton>
           <UButton :loading="saving" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">

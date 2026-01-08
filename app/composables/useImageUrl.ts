@@ -57,11 +57,8 @@ export const useImageUrl = () => {
       // Replace /api/v1 dengan apiBase (e.g. /backend)
       const relativeUrl = path.replace('/api/v1', apiBase)
       
-      // Jika di client side, return absolute URL agar dianggap remote image oleh NuxtImg/IPX
-      if (import.meta.client) {
-        return `${window.location.origin}${relativeUrl}`
-      }
-      
+      // Hapus logic client-side absolute URL untuk mencegah Hydration Mismatch
+      // Browser bisa handle relative path dengan baik
       return relativeUrl
     }
 

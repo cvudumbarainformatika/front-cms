@@ -27,7 +27,6 @@ const { data, refresh, pending } = await useAsyncData(
   }
 )
 
-console.log('data.value', data.value?.data?.items)
 const rows = computed(() => data.value?.data?.items || [])
 const total = computed(() => data.value?.data?.pagination?.total || 0)
 

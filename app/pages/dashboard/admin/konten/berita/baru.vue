@@ -37,8 +37,6 @@ const imagePreview = ref<string>('') // untuk preview langsung
 watch(uploadedFile, async (newFile) => {
   if (!newFile) return
   
-  console.log('File selected:', newFile.name)
-  
   // Set preview langsung dengan blob URL
   imagePreview.value = URL.createObjectURL(newFile)
   
@@ -51,13 +49,11 @@ watch(uploadedFile, async (newFile) => {
       body: fd
     }) as any
     
-    console.log('Upload response:', res)
     if (res?.data?.url) {
       form.image_url = res.data.url 
       toast.add({ title: 'Gambar berhasil diupload', color: 'success' })
     }
   } catch (error: any) {
-    console.error('Upload error:', error)
     toast.add({ title: 'Gagal upload', description: error?.data?.message || error.message, color: 'error' })
   }
 })
