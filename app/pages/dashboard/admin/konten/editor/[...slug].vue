@@ -23,7 +23,9 @@ const slug = computed(() => {
   return s.replace(/^\/+/, '')
 })
 
-const { data: contentRes, pending } = await useFetch<any>(`/api/dynamic-content/${slug.value}`)
+const { data: contentRes, pending } = await useFetch<any>(`/backend/dynamic-content/${slug.value}`, {
+  key: `content-${slug.value}`
+})
 
 // Editor state
 const editorMode = ref<'wysiwyg' | 'markdown'>('wysiwyg')
@@ -44,8 +46,9 @@ if (contentRes.value?.data) {
   const d = contentRes.value.data
   form.value.title = d.title || ''
   form.value.description = d.description || ''
-  form.value.body = d.body || ''
-  form.value.html = d.html || ''
+  form.value.body = d.body || '# Tulis konten di sini\n'
+  form.value.html = d.html || '<h1>Tulis konten di sini</h1>'
+  // Handle date formatting if needed
   form.value.date = d.date || new Date().toISOString()
   form.value.image = d.image || { src: '' }
   form.value.authors = d.authors || []
@@ -60,20 +63,23 @@ async function onSave() {
   }
   saving.value = true
   try {
-    await $fetch('/api/dynamic-content', {
+    const { $apiFetch } = useNuxtApp()
+    await $apiFetch('/dynamic-content', { 
+      // Note: $apiFetch uses baseURL from config, so use /dynamic-content NOT /backend/...
+      // WAIT! I defined $apiFetch to use /backend in client side in api-fetch.ts.
+      // But verify if apiFetch adds /backend automatically.
+      // Yes, apiBase is /backend.
       method: 'POST',
       body: {
         slug: slug.value,
         ...form.value
       },
-      headers: {
-        Authorization: `Bearer ${authState.value.token}`,
-        'x-user-role': userRole.value
-      }
+      // Authorization header added automatically by $apiFetch plugin
     })
+    console.log('Content saved successfully')
     toast.add({ title: 'Tersimpan', description: 'Konten berhasil disimpan', color: 'success' })
   } catch (e: any) {
-    toast.add({ title: 'Gagal', description: e?.statusMessage || 'Gagal menyimpan konten', color: 'error' })
+    toast.add({ title: 'Gagal', description: e?.data?.message || e?.message || 'Gagal menyimpan konten', color: 'error' })
   } finally {
     saving.value = false
   }

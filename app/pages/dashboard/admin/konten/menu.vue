@@ -33,18 +33,41 @@ const positions = [
 const currentPosition = ref('header')
 const saving = ref(false)
 
-// Fetch menus
-const { data: menuResponse, refresh, pending } = await useFetch<any>('/api/menus', {
-  query: { position: currentPosition }
-})
+const { $apiFetch } = useNuxtApp()
+
+// Fetch menus with dynamic key based on position
+const { data: menuResponse, refresh, pending } = await useAsyncData(
+  () => `admin-menus-${currentPosition.value}`,
+  () => $apiFetch('/menus', {
+    query: { position: currentPosition.value }
+  }),
+  {
+    watch: [currentPosition],
+    server: false
+  }
+)
 
 const menus = ref<any[]>([])
+const shouldSyncFromServer = ref(true)
 
-// Initialize local state
+// Delete confirmation modal state
+const isDeleteModalOpen = ref(false)
+const menuToDelete = ref<any>(null)
+
+// Initialize local state from server data
 watchEffect(() => {
-  if (menuResponse.value?.data) {
+  // Only sync from server when explicitly allowed
+  if (shouldSyncFromServer.value && menuResponse.value?.data) {
     menus.value = JSON.parse(JSON.stringify(menuResponse.value.data))
+    shouldSyncFromServer.value = false // Prevent auto-sync until next explicit refresh
+  } else if (!menuResponse.value?.data) {
+    menus.value = []
   }
+})
+
+// Watch position changes to trigger sync
+watch(currentPosition, () => {
+  shouldSyncFromServer.value = true
 })
 
 // Methods
@@ -93,8 +116,7 @@ function addMenu(parentId: string | null = null) {
     position: currentPosition.value,
     order: parentId ? (menus.value.find(m => m.id === parentId)?.children?.length || 0) : menus.value.length,
     isActive: true,
-    isFixed: false,
-    isDynamic: false,
+    is_fixed: false,
     roles: ['public', 'member', 'admin_cabang', 'admin_wilayah', 'admin_pusat'],
     children: []
   }
@@ -104,9 +126,12 @@ function addMenu(parentId: string | null = null) {
     if (parent) {
       if (!parent.children) parent.children = []
       parent.children.push(newItem)
+      // Force reactivity by reassigning
+      menus.value = [...menus.value]
     }
   } else {
-    menus.value.push(newItem)
+    // Add to root menus
+    menus.value = [...menus.value, newItem]
   }
 }
 
@@ -121,20 +146,66 @@ function findMenuById(items: any[], id: string): any {
   return null
 }
 
-function removeMenu(id: string) {
-  const item = findMenuById(menus.value, id)
-  if (item?.isFixed) {
+function removeMenu(id: string | number) {
+  const item = findMenuById(menus.value, String(id))
+  if (item?.is_fixed) {
     toast.add({ title: 'Dilarang', description: 'Menu sistem tidak dapat dihapus', color: 'error' })
     return
   }
 
-  // Recursive removal from local state
-  menus.value = removeFromList(menus.value, id)
+  // Show confirmation modal
+  menuToDelete.value = { id, label: item?.label || 'Menu' }
+  isDeleteModalOpen.value = true
+}
+
+async function confirmDelete() {
+  if (!menuToDelete.value) return
+  
+  const { id } = menuToDelete.value
+  
+  // Check if this is an existing menu (numeric ID) or new menu (string ID)
+  const isExistingMenu = typeof id === 'number' || !String(id).startsWith('menu-')
+  
+  if (isExistingMenu) {
+    // Call API to delete from database
+    try {
+      await $apiFetch(`/menus/${id}`, {
+        method: 'DELETE'
+      })
+      
+      toast.add({
+        title: 'Berhasil',
+        description: 'Menu berhasil dihapus',
+        color: 'success'
+      })
+      
+      // Remove from local state
+      menus.value = removeFromList(menus.value, String(id))
+    } catch (error: any) {
+      toast.add({
+        title: 'Gagal',
+        description: error?.data?.message || 'Gagal menghapus menu',
+        color: 'error'
+      })
+    }
+  } else {
+    // New menu (not yet in database), just remove from local state
+    menus.value = removeFromList(menus.value, String(id))
+    toast.add({
+      title: 'Berhasil',
+      description: 'Menu berhasil dihapus',
+      color: 'success'
+    })
+  }
+  
+  // Close modal
+  isDeleteModalOpen.value = false
+  menuToDelete.value = null
 }
 
 function removeFromList(items: any[], id: string) {
   return items.filter(item => {
-    if (item.id === id) return false
+    if (String(item.id) === id) return false
     if (item.children) {
       item.children = removeFromList(item.children, id)
     }
@@ -145,27 +216,31 @@ function removeFromList(items: any[], id: string) {
 async function onSave() {
   saving.value = true
   try {
-    await $fetch('/api/menus', {
+    const response = await $apiFetch('/menus', {
       method: 'POST',
       body: {
         position: currentPosition.value,
         menus: menus.value
-      },
-      headers: {
-        'Authorization': `Bearer ${authState.value.token}`,
-        'x-user-role': userRole.value
       }
     })
+    
+    // Directly update menus from response for immediate UI update
+    if (response?.data) {
+      menus.value = JSON.parse(JSON.stringify(response.data))
+    }
+    
     toast.add({
       title: 'Berhasil',
       description: 'Struktur menu telah diperbarui.',
       color: 'success'
     })
-    await refresh()
-  } catch (error) {
+    
+    // Don't call refresh() - it causes stale data to overwrite our fresh data
+    // The response already contains the latest data, so no need to fetch again
+  } catch (error: any) {
     toast.add({
       title: 'Gagal',
-      description: 'Gagal menyimpan perubahan menu.',
+      description: error?.data?.message || error?.message || 'Gagal menyimpan perubahan menu.',
       color: 'error'
     })
   } finally {
@@ -224,14 +299,14 @@ async function onSave() {
               <UIcon :name="item.icon || 'i-lucide-link'" class="w-5 h-5 text-muted" />
               <div class="flex-1 grid grid-cols-2 gap-4">
                 <UInput v-model="item.label" placeholder="Label Menu" size="sm" />
-                <UInput v-model="item.to" placeholder="Path / URL" size="sm" :disabled="item.isFixed" />
+                <UInput v-model="item.to" placeholder="Path / URL" size="sm" :disabled="item.is_fixed" />
               </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              <UFormField label="Dinamis" size="xs" class="flex flex-col items-center">
-                <USwitch v-model="item.isDynamic" size="sm" />
-              </UFormField>
-              <div class="flex items-center gap-1 border-l border-default pl-2 ml-2">
+              <UBadge v-if="item.is_fixed" color="primary" variant="soft" size="xs">
+                Fixed Menu
+              </UBadge>
+              <div v-if="!item.is_fixed" class="flex items-center gap-1 border-l border-default pl-2 ml-2">
                 <UButton 
                   icon="i-lucide-plus" 
                   variant="ghost" 
@@ -251,7 +326,7 @@ async function onSave() {
                   
                 />
                 <UButton 
-                  v-if="!item.isFixed"
+                  v-if="!item.is_fixed"
                   icon="i-lucide-trash" 
                   variant="ghost" 
                   size="xs" 
@@ -274,10 +349,11 @@ async function onSave() {
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <UFormField label="Dinamis" size="xs" class="flex flex-col items-center">
-                  <USwitch v-model="child.isDynamic" size="xs" />
-                </UFormField>
+                <UBadge v-if="child.is_fixed" color="primary" variant="soft" size="sm">
+                  Fixed Menu
+                </UBadge>
                 <UButton
+                  v-if="!child.is_fixed"
                   :disabled="!isValidInternalPath(child.to || child.slug)"
                   icon="i-lucide-file-pen"
                   variant="ghost"
@@ -287,7 +363,7 @@ async function onSave() {
                   title="Buat/Edit Konten"
                 />
                 <UButton 
-                  v-if="!child.isFixed"
+                  v-if="!child.is_fixed"
                   icon="i-lucide-trash" 
                   variant="ghost" 
                   size="xs" 
@@ -300,6 +376,30 @@ async function onSave() {
         </div>
       </div>
     </UCard>
+    
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="isDeleteModalOpen" title="Konfirmasi Hapus" description="">
+      <template #header>
+        <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-error" />
+        <span class="font-semibold text-lg">Konfirmasi Hapus</span>
+      </template>
+      
+      <template #body>
+        <div class="space-y-3">
+          <p>
+            Apakah Anda yakin ingin menghapus menu <strong>{{ menuToDelete?.label }}</strong>?
+          </p>
+          <p class="text-sm text-muted">
+            Menu ini dan semua submenu di dalamnya akan dihapus secara permanen.
+          </p>
+        </div>
+      </template>
+
+      <template #footer="{ close }">
+        <UButton label="Batal" color="neutral" variant="outline" @click="close" />
+        <UButton label="Hapus" color="error" icon="i-lucide-trash" @click="confirmDelete" />
+      </template>
+    </UModal>
     </div>
   </ClientOnly>
 </template>

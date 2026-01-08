@@ -55,10 +55,14 @@ export const useImageUrl = () => {
     if (path.startsWith('/api/v1/')) {
       const apiBase = runtimeConfig.public.apiBase
       // Replace /api/v1 dengan apiBase (e.g. /backend)
-      // /api/v1/files/img.png -> /backend/files/img.png
-      // Proxy: /backend -> http://localhost:8080/api/v1
-      // Result: http://localhost:8080/api/v1/files/img.png
-      return path.replace('/api/v1', apiBase)
+      const relativeUrl = path.replace('/api/v1', apiBase)
+      
+      // Jika di client side, return absolute URL agar dianggap remote image oleh NuxtImg/IPX
+      if (import.meta.client) {
+        return `${window.location.origin}${relativeUrl}`
+      }
+      
+      return relativeUrl
     }
 
     // Jika path sudah dimulai dengan /backend, return as-is

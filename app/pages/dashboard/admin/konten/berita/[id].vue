@@ -167,10 +167,10 @@ const categoryOptions = [
 ]
 
 const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
-watch(() => form.title, v => { errors.title = v ? '' : 'Judul wajib' })
-watch(() => form.category, v => { errors.category = v ? '' : 'Kategori wajib' })
-watch(() => form.tags, v => { errors.tags = (v && v.length) ? '' : 'Tags wajib diisi' }, { deep: true })
-watch(() => form.content, v => { errors.content = v ? '' : 'Konten wajib' })
+watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
+watch(() => form.category, v => { errors.category = v ? undefined : 'Kategori wajib' })
+watch(() => form.tags, v => { errors.tags = (v && v.length) ? undefined : 'Tags wajib diisi' }, { deep: true })
+watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib' })
 
 const tagInput = ref('')
 function addTag () {
@@ -178,11 +178,11 @@ function addTag () {
   if (!val) return
   if (!form.tags.includes(val)) form.tags = [...form.tags, val]
   tagInput.value = ''
-  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
+  errors.tags = form.tags.length ? undefined : 'Tags wajib diisi'
 }
 function removeTag (t: string) {
   form.tags = form.tags.filter(x => x !== t)
-  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
+  errors.tags = form.tags.length ? undefined : 'Tags wajib diisi'
 }
 </script>
 

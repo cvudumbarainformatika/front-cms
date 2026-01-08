@@ -13,14 +13,28 @@ export const useMenu = (position: MenuPosition) => {
   return useAsyncData<MenuItem[]>(
     `menu-${position}`,
     async () => {
-      const response = await $fetch<MenuApiResponse>(`/api/menus/${position}`)
+      // Jika sidebar (Admin), gunakan data statis internal
+      if (position === 'sidebar') {
+        const response = await $fetch<MenuApiResponse>(`/api/menus/${position}`)
+        return response.data
+      }
+
+      // Jika header (Public), gunakan data dari Backend
+      console.log(`[useMenu] Fetching ${position} from Backend...`)
+      const { $apiFetch } = useNuxtApp()
+      const response = await $apiFetch<MenuApiResponse>('/menus', {
+        query: { position }
+      })
+      
+      // Return raw data, let component handle filtering
       return response.data
     },
     {
       // Cache di client selama 5 menit
       getCachedData: (key, nuxtApp) => {
         return nuxtApp.payload.data[key] || nuxtApp.static.data[key]
-      }
+      },
+      server: true // Enable SSR
     }
   )
 }
@@ -44,15 +58,40 @@ export const useAllMenus = () => {
  * @param userRole - Role user saat ini
  */
 export const filterMenusByRole = (menus: MenuItem[], userRole: string = 'public'): MenuItem[] => {
+  if (!menus) return []
+
+  const normalizedUserRole = userRole.toLowerCase()
+
   return menus
-    .filter(menu => menu.isActive && menu.roles.includes(userRole as any))
+    .filter(menu => {
+      // Parse roles if it's a JSON string
+      let roles: string[] = []
+      try {
+        roles = typeof menu.roles === 'string' 
+          ? JSON.parse(menu.roles) 
+          : (menu.roles || [])
+      } catch (e) {
+        console.error('Error parsing roles for menu:', menu.label, e)
+        roles = []
+      }
+      
+      // Normalize roles for comparison
+      const normalizedRoles = roles.map(r => r.toLowerCase())
+      
+      return menu.is_active && normalizedRoles.includes(normalizedUserRole)
+    })
     .map(menu => ({
       ...menu,
-      children: menu.children
+      children: (menu.children && menu.children.length > 0)
         ? filterMenusByRole(menu.children, userRole)
         : undefined
     }))
-    .filter(menu => !menu.children || menu.children.length > 0 || menu.to)
+    .filter(menu => {
+      // Keep menu if it has children OR it has a destination (leaf node)
+      const hasChildren = menu.children && menu.children.length > 0
+      const hasDestination = !!menu.to
+      return hasChildren || hasDestination
+    })
 }
 
 /**

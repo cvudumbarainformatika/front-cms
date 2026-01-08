@@ -22,21 +22,23 @@ export type UserRole =
  * Single menu item
  */
 export interface MenuItem {
-  id: string;
+  id: number | string;
   label: string;
   slug: string;
   to?: string;
   href?: string;
   icon?: string;
-  parentId?: string | null;
+  parent_id?: number | null;
   position: MenuPosition;
   order: number;
-  isActive: boolean;
-  isFixed?: boolean;
-  isDynamic?: boolean;
-  roles: UserRole[];
+  is_active: boolean;
+  is_fixed?: boolean;
+  roles: UserRole[] | string; // Can be array or JSON string from backend
+  description?: string;
   target?: "_blank" | "_self";
   children?: MenuItem[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**

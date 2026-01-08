@@ -11,18 +11,25 @@ const { getImageUrl } = useImageUrl()
 // Mobile menu state
 const isMenuOpen = ref(false)
 
+// Filter menus by user role
+const filteredMenus = computed(() => {
+  if (!headerMenus.value) return []
+  
+  const userRole = user.value?.role || 'public'
+  return filterMenusByRole(headerMenus.value, userRole)
+})
+
 // Transform menu items for UNavigationMenu
 const navigationItems = computed(() => {
-  if (!headerMenus.value) return []
-
-  return headerMenus.value.map(item => ({
+  return filteredMenus.value.map(item => ({
     label: item.label,
-    to: item.to,
-    children: item.children?.map(child => ({
+    to: item.children?.length ? undefined : item.to,
+    children: item.children?.length ? item.children.map(child => ({
       label: child.label,
       to: child.to,
-      icon: child.icon
-    }))
+      icon: child.icon || 'i-lucide-file-text',
+      description: child.description || 'Informasi lengkap terkait halaman ini tersedia di sini.'
+    })) : undefined
   }))
 })
 
@@ -46,12 +53,8 @@ const navigationItems = computed(() => {
           :items="navigationItems" 
           variant="link"
           :ui="{
-            wrapper: 'gap-1',
-            link: {
-              base: 'px-3 py-2 text-sm font-medium transition-colors hover:text-primary-600',
-              active: 'text-primary-600 font-bold',
-              inactive: 'text-slate-600'
-            }
+            list: 'gap-1',
+            link: 'px-3 py-2 text-sm font-medium transition-colors hover:text-primary-600'
           }"
         />
       </div>
@@ -110,7 +113,7 @@ const navigationItems = computed(() => {
               ]"
             >
               <UButton
-                color="white"
+                color="neutral"
                 variant="ghost"
                 class="p-1 rounded-full ring-1 ring-slate-200"
               >
@@ -154,12 +157,8 @@ const navigationItems = computed(() => {
                 orientation="vertical"
                 variant="link"
                 :ui="{
-                  wrapper: 'flex flex-col gap-1',
-                  link: {
-                    base: 'w-full px-3 py-2.5 text-base font-medium transition-colors hover:text-primary-600 hover:bg-primary-50 rounded-lg',
-                    active: 'text-primary-600 bg-primary-50 font-bold',
-                    inactive: 'text-slate-700'
-                  }
+                  list: 'flex flex-col gap-1',
+                  link: 'w-full px-3 py-2.5 text-base font-medium transition-colors hover:text-primary-600 hover:bg-primary-50 rounded-lg'
                 }"
                 @click="isMenuOpen = false"
               />

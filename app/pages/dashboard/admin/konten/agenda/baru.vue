@@ -33,11 +33,11 @@ const typeOptions = [
 ]
 
 const errors = reactive<{ title?: string; slug?: string; type?: string; date?: string; location?: string; description?: string }>({})
-watch(() => form.title, v => { errors.title = v ? '' : 'Judul wajib' })
-watch(() => form.slug, v => { errors.slug = v ? '' : 'Slug wajib' })
-watch(() => form.type, v => { errors.type = v ? '' : 'Jenis wajib' })
-watch(() => form.date, v => { errors.date = v ? '' : 'Tanggal wajib' })
-watch(() => form.description, v => { errors.description = v ? '' : 'Deskripsi wajib' })
+watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
+watch(() => form.slug, v => { errors.slug = v ? undefined : 'Slug wajib' })
+watch(() => form.type, v => { errors.type = v ? undefined : 'Jenis wajib' })
+watch(() => form.date, v => { errors.date = v ? undefined : 'Tanggal wajib' })
+watch(() => form.description, v => { errors.description = v ? undefined : 'Deskripsi wajib' })
 
 function genSlug() { 
   form.slug = (form.slug || form.title).toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-') 

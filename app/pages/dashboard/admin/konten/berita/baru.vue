@@ -102,10 +102,10 @@ const categoryOptions = [
 ]
 
 const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
-watch(() => form.title, v => { errors.title = v ? '' : 'Judul wajib' })
-watch(() => form.category, v => { errors.category = v ? '' : 'Kategori wajib' })
-watch(() => form.tags, v => { errors.tags = (v && v.length) ? '' : 'Tags wajib diisi' }, { deep: true })
-watch(() => form.content, v => { errors.content = v ? '' : 'Konten wajib' })
+watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
+watch(() => form.category, v => { errors.category = v ? undefined : 'Kategori wajib' })
+watch(() => form.tags, v => { errors.tags = (v && v.length) ? undefined : 'Tags wajib diisi' }, { deep: true })
+watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib' })
 
 const tagInput = ref('')
 function addTag () {

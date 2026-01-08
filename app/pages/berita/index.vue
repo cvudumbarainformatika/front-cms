@@ -200,7 +200,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :to="`/berita/${beritaData.data.items[0].slug}`"
         :title="beritaData.data.items[0].title"
         :description="beritaData.data.items[0].excerpt"
-        :image="getImageUrl(beritaData.data.items[0].image_url, 'banner')"
+        :image="getImageUrl(beritaData.data?.items[0].image_url, 'banner')"
         :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"

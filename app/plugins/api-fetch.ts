@@ -1,7 +1,10 @@
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  // Di server, gunakan internal URL jika ada, atau fallback ke apiBase
-  const apiBase = config.public.apiBase || '/backend'
+  // Di server, gunakan internal URL langsung untuk hindari masalah proxy/routing
+  // Di client, gunakan apiBase (biasanya /backend) yang akan diproxy
+  const apiBase = process.server 
+    ? 'http://localhost:8080/api/v1' 
+    : (config.public.apiBase || '/backend')
 
   let isRefreshing = false
   let refreshPromise: Promise<string | null> | null = null
