@@ -104,9 +104,8 @@ echo "🚀 Deploying on server..."
 
 ssh $SERVER_USER@$SERVER_IP "cd $APP_DIR && \
     echo '⬇️  Pulling latest image...' && \
-    docker pull $FULL_IMAGE_NAME && \
-    echo '🔄 Restarting containers...' && \
-    docker compose down && \
-    docker compose up -d"
+    docker compose pull front-cms && \
+    echo '🔄 Restarting front-cms container...' && \
+    docker compose up -d front-cms"
 
 echo "✅ Deployment with GitLab Registry Success!"
