@@ -67,6 +67,7 @@ services:
     restart: always
     environment:
       - NUXT_PUBLIC_API_BASE=/backend
+      - NUXT_API_SECRET_TARGET=http://api-go-prod:8080
     networks:
       - app-network
 

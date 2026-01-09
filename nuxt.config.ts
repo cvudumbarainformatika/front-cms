@@ -20,6 +20,10 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
+    // Private keys (Server Side Only)
+    // Dapat di-override saat runtime via env var: NUXT_API_SECRET_TARGET
+    apiSecretTarget: 'http://localhost:8080', 
+
     public: {
       // Prefix backend Go yang akan di-proxy di dev dan diproxy oleh Nginx di prod
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/backend'
@@ -32,9 +36,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/docs': { redirect: '/docs/getting-started', prerender: false },
-    '/dashboard/**': { ssr: false },
-    // Proxy ke backend Go: /backend/** -> http://localhost:8080/api/v1/**
-    '/backend/**': { proxy: 'http://localhost:8080/api/v1/**' }
+    '/dashboard/**': { ssr: false }
   },
   compatibilityDate: '2024-07-11',
   nitro: {
