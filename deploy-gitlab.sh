@@ -31,7 +31,7 @@ fi
 # ==========================================
 echo "🚀 Building Docker image locally (Forcing Platform: linux/amd64)..."
 # Force build for Linux Server Architecture
-docker build --platform linux/amd64 -t $FULL_IMAGE_NAME .
+docker build --no-cache --platform linux/amd64 -t $FULL_IMAGE_NAME .
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed!"
