@@ -1,21 +1,28 @@
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig()
-  // Di server, gunakan internal URL langsung untuk hindari masalah proxy/routing
-  // Di client, gunakan apiBase (biasanya /backend) yang akan diproxy
-  const apiBase = process.server 
-    ? 'http://localhost:8080/api/v1' 
-    : (config.public.apiBase || '/backend')
-
   let isRefreshing = false
   let refreshPromise: Promise<string | null> | null = null
 
-  // Buat instance $fetch dengan baseURL
+  // Buat instance $fetch dengan onRequest dynamic baseURL
   const apiFetch = $fetch.create({
-    baseURL: apiBase,
     onRequest({ options }) {
+      // PENTING: Baca config di sini (runtime), bukan di top-level (build time)
+      const config = useRuntimeConfig()
+      
+      // Set baseURL berdasarkan environment
+      const apiBase = process.server 
+        ? `${config.apiSecretTarget}/api/v1`
+        : (config.public.apiBase || '/backend')
+      
+      // Debug logging
+      if (process.server) {
+        console.log('[api-fetch] Request to:', options.baseURL || '', options.path || '')
+        console.log('[api-fetch] Using apiBase:', apiBase)
+      }
+      
+      options.baseURL = apiBase
+      
       try {
-        // Coba ambil token dari state auth
-        // Pastikan useAuth handles SSR gracefully (useState is used there)
+        // Add auth token if available
         const { authState } = useAuth()
         const token = authState.value.token
         const headers = new Headers(options.headers as HeadersInit)
@@ -24,7 +31,7 @@ export default defineNuxtPlugin(() => {
         }
         options.headers = headers
       } catch (e) {
-        // Skip auth header on error (or if useAuth fails on server)
+        // Skip auth header on error
       }
     },
     async onResponseError({ response, request }) {

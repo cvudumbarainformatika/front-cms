@@ -4,7 +4,7 @@
  * Floating pill navbar dengan dynamic menu dan auth logic
  */
 
-const { data: headerMenus } = await useMenu('header')
+const { data: headerMenus, pending } = await useMenu('header')
 const { isAuthenticated, user, logout } = useAuth()
 const { getImageUrl } = useImageUrl()
 
@@ -13,7 +13,7 @@ const isMenuOpen = ref(false)
 
 // Filter menus by user role
 const filteredMenus = computed(() => {
-  if (!headerMenus.value) return []
+  if (!headerMenus.value || pending.value) return []
   
   const userRole = user.value?.role || 'public'
   return filterMenusByRole(headerMenus.value, userRole)
