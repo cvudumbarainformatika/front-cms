@@ -9,8 +9,8 @@ REGISTRY_URL="registry.gitlab.com/cvudumbarainformatika/nuxt-cms-app"
 IMAGE_TAG="latest"
 FULL_IMAGE_NAME="$REGISTRY_URL:$IMAGE_TAG"
 
-SERVER_USER="sasa"
-SERVER_IP="192.168.33.2"  # IP Server Anda
+SERVER_USER="pdpi"
+SERVER_IP="103.49.239.185"  # IP Server Anda
 APP_DIR="/opt/apps/frontend/gitlab" # Path di server
 
 # ==========================================
@@ -74,6 +74,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx
+    restart: always
     ports:
       - "80:80"
     volumes:
@@ -84,8 +85,10 @@ services:
       - app-network
 
 networks:
+
   app-network:
-    driver: bridge
+    external: true
+    name: gitlab_app-network
 EOF
 
 scp docker-compose.gitlab.yml $SERVER_USER@$SERVER_IP:$APP_DIR/docker-compose.yml
@@ -106,6 +109,6 @@ ssh $SERVER_USER@$SERVER_IP "cd $APP_DIR && \
     echo '⬇️  Pulling latest image...' && \
     docker compose pull front-cms && \
     echo '🔄 Restarting front-cms container...' && \
-    docker compose up -d front-cms"
+    docker compose up -d"
 
 echo "✅ Deployment with GitLab Registry Success!"
