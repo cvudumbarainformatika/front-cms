@@ -67,6 +67,39 @@ async function onRestore(id: number) {
     toast.add({ title: 'Gagal memulihkan berita', description: error.message, color: 'error' })
   }
 }
+
+function getItems(row: any) {
+  const items = [
+    [
+      {
+        label: 'Edit',
+        icon: 'i-lucide-pencil',
+        onSelect: () => router.push(`/dashboard/admin/konten/berita/${row.id}`)
+      }
+    ],
+    [
+      {
+        label: 'Hapus',
+        icon: 'i-lucide-trash',
+        onSelect: () => onDelete(row.id)
+      }
+    ]
+  ]
+
+  if (row.deleted_at) {
+    return [
+      [
+        {
+          label: 'Pulihkan',
+          icon: 'i-lucide-rotate-ccw',
+          onSelect: () => onRestore(row.id)
+        }
+      ]
+    ]
+  }
+
+  return items
+}
 </script>
 
 <template>
@@ -117,7 +150,13 @@ async function onRestore(id: number) {
           >
             <!-- Image Slot -->
             <template #image-cell="{ row }">
-               <UAvatar :src="getImageUrl(row.original.image_url)" size="md" :alt="row.original.title" class="bg-gray-100" />
+               <img 
+                 v-if="row.original.image_url"
+                 :src="getImageUrl(row.original.image_url)" 
+                 :alt="row.original.title" 
+                 class="w-16 h-10 object-cover rounded shadow-sm border border-gray-100"
+               />
+               <UAvatar v-else :src="getImageUrl(row.original.image_url)" size="md" :alt="row.original.title" class="bg-gray-100" />
             </template>
 
             <!-- Title Slot -->
@@ -149,16 +188,10 @@ async function onRestore(id: number) {
 
             <!-- Actions Slot -->
             <template #actions-cell="{ row }">
-              <div class="flex items-center justify-end gap-2">
-                <UTooltip text="Edit">
-                  <UButton v-if="!row.original.deleted_at" :to="`/dashboard/admin/konten/berita/${row.original.id}`" icon="i-lucide-pencil" color="gray" variant="ghost" size="sm" />
-                </UTooltip>
-                <UTooltip text="Hapus" v-if="!row.original.deleted_at">
-                  <UButton icon="i-lucide-trash" color="error" variant="ghost" size="sm" @click="onDelete(row.original.id)" />
-                </UTooltip>
-                <UTooltip text="Pulihkan" v-if="row.original.deleted_at">
-                  <UButton icon="i-lucide-rotate-ccw" color="primary" variant="ghost" size="sm" @click="onRestore(row.original.id)" />
-                </UTooltip>
+              <div class="flex items-center justify-end">
+                <UDropdownMenu :items="getItems(row.original)">
+                  <UButton icon="i-lucide-more-horizontal" color="gray" variant="ghost" size="sm" class="cursor-pointer" />
+                </UDropdownMenu>
               </div>
             </template>
           </UTable>

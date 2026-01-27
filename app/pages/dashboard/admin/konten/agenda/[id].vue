@@ -135,7 +135,7 @@ async function toggleStatus () {
   }
 }
 
-const previewHtml = computed(() => (form.description || '').toString())
+
 
 const { getImageUrl } = useImageUrl()
 
@@ -263,15 +263,11 @@ const displayImageUrl = computed(() => {
           </UFormField>
         </div>
         <div class="md:col-span-9 space-y-4">
-          <UTabs :items="[{ label: 'Deskripsi', value: 'desc' }, { label: 'Preview', value: 'preview' }]" />
           <UFormField label="Deskripsi (WYSIWYG)" :error="errors.description">
             <ClientOnly>
               <TiptapEditor v-model="form.description" />
             </ClientOnly>
           </UFormField>
-          <div class="prose max-w-none border border-default rounded-lg p-4">
-            <div v-html="previewHtml" />
-          </div>
         </div>
       </div>
     </UCard>

@@ -51,7 +51,7 @@ const form = reactive({
   published_at: ''
 })
 
-const activeTab = ref<'konten'|'preview'>('konten')
+
 
 watchEffect(() => {
   if (current.value) {
@@ -140,6 +140,7 @@ async function toggleStatus() {
 }
 
 // Autosave (debounce)
+
 const doAutosave = useDebounceFn(async () => {
   if (!form.title || !form.content) return
   try {
@@ -149,7 +150,6 @@ const doAutosave = useDebounceFn(async () => {
 
 watch(form, () => doAutosave(), { deep: true })
 
-const previewHtml = computed(() => (form.content || '').toString())
 
 // Preset kategori & validasi ringan
 const categoryOptions = [
@@ -258,21 +258,11 @@ function removeTag (t: string) {
 
         <!-- Kanan: WYSIWYG (span 9) -->
         <div class="xl:col-span-9 space-y-4">
-          <UTabs v-model="activeTab" :items="[
-            { label: 'Konten', value: 'konten' },
-            { label: 'Preview', value: 'preview' }
-          ]" />
-
-          <div v-if="activeTab==='konten'" class="space-y-4">
-            <UFormField label="Konten (WYSIWYG)" :error="errors.content">
-              <ClientOnly>
-                <TiptapEditor v-model="form.content" />
-              </ClientOnly>
-            </UFormField>
-          </div>
-          <div v-else class="prose max-w-none border border-default rounded-lg p-4">
-            <div v-html="previewHtml" />
-          </div>
+          <UFormField label="Konten (WYSIWYG)" :error="errors.content">
+            <ClientOnly>
+              <TiptapEditor v-model="form.content" />
+            </ClientOnly>
+          </UFormField>
         </div>
       </div>
     </UCard>

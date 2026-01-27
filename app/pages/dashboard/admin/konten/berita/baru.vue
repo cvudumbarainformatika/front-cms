@@ -20,7 +20,7 @@ const form = reactive({
   published_at: ''
 })
 
-const activeTab = ref<'konten'|'preview'>('konten')
+
 
 function slugify (text: string) {
   return (text || '')
@@ -85,8 +85,6 @@ async function save(status?: 'draft'|'published') {
     saving.value = false
   }
 }
-
-const previewHtml = computed(() => (form.content || '').toString())
 
 // Preset kategori & validasi ringan
 const categoryOptions = [
@@ -194,20 +192,11 @@ function removeTag (t: string) {
 
         <!-- Kanan: WYSIWYG (span 9) -->
         <div class="md:col-span-9 space-y-4">
-          <UTabs v-model="activeTab" :items="[
-            { label: 'Konten', value: 'konten' },
-            { label: 'Preview', value: 'preview' }
-          ]" />
-          <div v-if="activeTab==='konten'" class="space-y-4">
-            <UFormField :error="errors.content">
-              <ClientOnly>
-                <TiptapEditor v-model="form.content" />
-              </ClientOnly>
-            </UFormField>
-          </div>
-          <div v-else class="prose max-w-none border border-default rounded-lg p-4">
-            <div v-html="previewHtml" />
-          </div>
+          <UFormField :error="errors.content">
+            <ClientOnly>
+              <TiptapEditor v-model="form.content" />
+            </ClientOnly>
+          </UFormField>
         </div>
       </div>
     </UCard>
