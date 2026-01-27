@@ -68,6 +68,37 @@ async function onRestore(id: number) {
   }
 }
 
+async function onBroadcast(id: number) {
+  const toastId = 'broadcast-toast-' + id
+  toast.add({
+    id: toastId,
+    title: 'Mengirim Broadcast...',
+    description: 'Mohon tunggu sebentar',
+    loading: true,
+    timeout: 0
+  })
+
+  try {
+    await $apiFetch(`/broadcast/berita/${id}`, {
+      method: 'POST'
+    })
+    
+    toast.remove(toastId)
+    toast.add({
+      title: 'Berhasil',
+      description: 'Broadcast email berhasil dikirim (Cek Log Server untuk Mode Percobaan)',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.remove(toastId)
+    toast.add({
+      title: 'Gagal',
+      description: error.data?.message || 'Gagal mengirim broadcast',
+      color: 'error'
+    })
+  }
+}
+
 function getItems(row: any) {
   const items = [
     [
@@ -85,6 +116,15 @@ function getItems(row: any) {
       }
     ]
   ]
+
+  // Add Share via Email option for published items
+  if (row.status === 'published' && !row.deleted_at) {
+    items[0].push({
+      label: 'Bagikan via Email',
+      icon: 'i-lucide-share-2',
+      onSelect: () => onBroadcast(row.id)
+    })
+  }
 
   if (row.deleted_at) {
     return [
