@@ -7,6 +7,11 @@ import type { TableColumn } from '@nuxt/ui'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+
+// Broadcast modal state
+const isModalOpen = ref(false)
+const selectedBeritaId = ref<number | null>(null)
+const broadcastMode = ref<'test' | 'warmup' | 'all'>('test')
 const { $apiFetch } = useNuxtApp()
 
 const page = computed(() => parseInt(route.query.page as string) || 1)
@@ -68,25 +73,50 @@ async function onRestore(id: number) {
   }
 }
 
-async function onBroadcast(id: number) {
+function onBroadcastClick(id: number) {
+  console.log('onBroadcastClick called with id:', id)
+  selectedBeritaId.value = id
+  broadcastMode.value = 'test' // Reset to test mode
+  isModalOpen.value = true
+  console.log('isModalOpen set to:', isModalOpen.value)
+}
+
+function onModeConfirm(mode: 'test' | 'warmup' | 'all') {
+  if (selectedBeritaId.value) {
+    executeBroadcast(selectedBeritaId.value, mode)
+  }
+  isModalOpen.value = false
+}
+
+async function executeBroadcast(id: number, mode: 'test' | 'warmup' | 'all') {
   const toastId = 'broadcast-toast-' + id
+  const modeLabels = {
+    test: 'Test Mode (7 email)',
+    warmup: 'Warm-up Mode (57 email)',
+    all: 'Full Blast (1800+ email)'
+  }
+  
   toast.add({
     id: toastId,
     title: 'Mengirim Broadcast...',
-    description: 'Mohon tunggu sebentar',
+    description: `Mode: ${modeLabels[mode]}`,
     loading: true,
     timeout: 0
   })
 
   try {
-    await $apiFetch(`/broadcast/berita/${id}`, {
+    const url = mode === 'test' 
+      ? `/broadcast/berita/${id}` 
+      : `/broadcast/berita/${id}?target=${mode}`
+    
+    await $apiFetch(url, {
       method: 'POST'
     })
     
     toast.remove(toastId)
     toast.add({
       title: 'Berhasil',
-      description: 'Broadcast email berhasil dikirim (Cek Log Server untuk Mode Percobaan)',
+      description: `Broadcast email (${modeLabels[mode]}) sedang diproses di background`,
       color: 'success'
     })
   } catch (error: any) {
@@ -122,7 +152,7 @@ function getItems(row: any) {
     items[0].push({
       label: 'Bagikan via Email',
       icon: 'i-lucide-share-2',
-      onSelect: () => onBroadcast(row.id)
+      onSelect: () => onBroadcastClick(row.id)
     })
   }
 
@@ -259,5 +289,11 @@ function getItems(row: any) {
          </div>
       </template>
     </UCard>
+
+    <!-- Broadcast Mode Selection Modal -->
+    <BroadcastModeModal 
+      v-model="isModalOpen" 
+      @confirm="onModeConfirm"
+    />
   </div>
 </template>
