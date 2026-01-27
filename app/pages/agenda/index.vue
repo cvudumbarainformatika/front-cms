@@ -130,10 +130,21 @@ useSeoMeta({
               :date="new Date(agenda.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
               :authors="[{ name: agenda.is_online ? 'Online' : 'Luring', avatar: { src: getImageUrl(agenda.image_url, 'avatar') || 'https://api.dicebear.com/8.x/initials/svg?seed=AG&backgroundType=gradientLinear' } }]"
               :badge="{ label: `${agenda.skp} SKP` }"
-              variant="naked"
+              variant="outline"
               orientation="vertical"
-              :ui="{ image: 'h-48 object-cover', description: 'line-clamp-2' }"
-            />
+              :ui="{ 
+                description: 'line-clamp-2',
+                header: 'mb-6'
+              }"
+            >
+              <template #header>
+                <img 
+                  :src="getImageUrl(agenda.image_url, 'banner')" 
+                  :alt="agenda.title"
+                  class="w-full h-48 object-cover rounded-lg block shadow-sm border border-gray-100"
+                />
+              </template>
+            </UBlogPost>
           </UBlogPosts>
         </div>
 

@@ -315,6 +315,18 @@ export const sidebarMenus: MenuItem[] = [
     order: 13,
     isActive: true,
     roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
+  },
+  {
+    id: 'admin-pdpi-sync',
+    label: 'Sync PDPI',
+    slug: 'pdpi-sync',
+    to: '/dashboard/admin/pdpi-sync',
+    icon: 'i-lucide-refresh-cw',
+    parentId: null,
+    position: 'sidebar',
+    order: 14,
+    isActive: true,
+    roles: ['admin_pusat']
   }
 ]
 

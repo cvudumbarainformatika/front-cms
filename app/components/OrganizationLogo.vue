@@ -37,23 +37,17 @@ const textSizeClasses = {
 <template>
   <div class="flex items-center gap-2">
     <!-- Logo Icon/Image -->
+    <!-- Logo Icon/Image -->
     <div
       :class="[
         sizeClasses[props.size],
-        'aspect-square rounded-lg bg-primary flex items-center justify-center'
+        'aspect-square flex items-center justify-center'
       ]"
     >
-      <!-- Placeholder icon - ganti dengan gambar logo nanti -->
-      <UIcon
-        name="i-lucide-activity"
-        :class="[
-          size === 'sm' ? 'w-4 h-4' : '',
-          size === 'md' ? 'w-5 h-5' : '',
-          size === 'lg' ? 'w-6 h-6' : '',
-          size === 'xl' ? 'w-7 h-7' : '',
-          size === '2xl' ? 'w-8 h-8' : '',
-          'text-white stroke-[1.5]'
-        ]"
+      <img
+        src="/logo_pdpi_official.png"
+        alt="Logo PDPI"
+        class="w-full h-full object-contain"
       />
     </div>
 

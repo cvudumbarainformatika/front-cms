@@ -19,12 +19,14 @@
     "@standard-schema/spec": "^1.1.0",
     "@vueuse/nuxt": "^14.1.0",
     "better-sqlite3": "^12.5.0",
+    "leaflet": "^1.9.4",
     "nuxt": "^4.2.2",
     "nuxt-og-image": "^5.1.13",
     "zod": "^4.2.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.12.1",
+    "@types/leaflet": "^1.9.21",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.1"

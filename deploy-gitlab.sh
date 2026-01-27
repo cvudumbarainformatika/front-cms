@@ -53,10 +53,15 @@ fi
 # 3. PREPARE SERVER & TRANSFER CONFIG
 # ==========================================
 echo "📂 Preparing server configuration..."
-ssh $SERVER_USER@$SERVER_IP "mkdir -p $APP_DIR/nginx"
+ssh $SERVER_USER@$SERVER_IP "mkdir -p $APP_DIR/nginx $APP_DIR/ssl"
 
 # Upload Nginx Config
 scp -r nginx/nginx.conf $SERVER_USER@$SERVER_IP:$APP_DIR/nginx/
+
+# Upload SSL Certificates
+echo "🔒 Uploading SSL certificates..."
+scp ssl/cloudflare-origin.pem $SERVER_USER@$SERVER_IP:$APP_DIR/ssl/
+scp ssl/cloudflare-origin.key $SERVER_USER@$SERVER_IP:$APP_DIR/ssl/
 
 # Create Production Docker Compose (Uses Registry Image)
 cat > docker-compose.gitlab.yml <<EOF
@@ -77,8 +82,10 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - front-cms
     networks:

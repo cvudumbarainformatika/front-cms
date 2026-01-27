@@ -200,15 +200,22 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :to="`/berita/${beritaData.data.items[0].slug}`"
         :title="beritaData.data.items[0].title"
         :description="beritaData.data.items[0].excerpt"
-        :image="getImageUrl(beritaData.data?.items[0].image_url, 'banner')"
         :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"
         orientation="horizontal"
-        variant="naked"
+        variant="outline"
         :ui="{ description: 'line-clamp-3' }"
         class="mb-8"
-      />
+      >
+        <template #header>
+          <img 
+            :src="getImageUrl(beritaData.data?.items[0].image_url, 'banner')" 
+            :alt="beritaData.data.items[0].title"
+            class="w-full h-full object-cover rounded-lg"
+          />
+        </template>
+      </UBlogPost>
       <!-- Berita Grid Section -->
       <ClientOnly>
         <template #fallback>
@@ -252,14 +259,25 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               :to="`/berita/${berita.slug}`"
               :title="berita.title"
               :description="berita.excerpt"
-              :image="getImageUrl(berita.image_url, 'news')"
               :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
               :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
               :badge="{ label: berita.category }"
-              variant="naked"
+              variant="outline"
               orientation="vertical"
-              :ui="{ image: 'h-56 object-cover', description: 'line-clamp-2' }"
-            />
+              :ui="{ 
+                description: 'line-clamp-2',
+                wrapper: 'gap-y-0',
+                header: 'mb-6'
+              }"
+            >
+              <template #header>
+                <img 
+                  :src="getImageUrl(berita.image_url, 'news')" 
+                  :alt="berita.title"
+                  class="w-full h-56 object-cover rounded-lg block shadow-sm border border-gray-100"
+                />
+              </template>
+            </UBlogPost>
           </UBlogPosts>
         </div>
 

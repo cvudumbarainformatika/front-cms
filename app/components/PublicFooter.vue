@@ -52,7 +52,13 @@ const columns = computed(() => [
       { label: 'Pendaftaran Anggota', to: '/daftar' },
       { label: 'Portal Anggota', to: '/login' },
       { label: 'Direktori RS', to: '/direktori' },
-      { label: 'Agenda', to: '/agenda' }
+      { label: 'Agenda', to: '/agenda' },
+      { 
+        label: 'https://www.direktoripdpi.com/', 
+        to: 'https://www.direktoripdpi.com/', 
+        target: '_blank',
+        class: 'text-primary-600 font-bold hover:text-primary-700 transition-colors'
+      }
     ]
   },
   {

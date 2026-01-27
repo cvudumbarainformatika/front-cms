@@ -15,8 +15,8 @@ interface Props {
 defineProps<Props>()
 
 const handleLogout = async () => {
-  console.log('logout clicked', getImageUrl(user.value?.avatar))
-  // await logout()
+  // console.log('logout clicked', getImageUrl(user.value?.avatar))
+  await logout()
 }
 
 const emit = defineEmits<{

@@ -11,18 +11,20 @@ useHead({
     { key: 'theme-color', name: 'theme-color', content: color }
   ],
   link: [
-    { rel: 'icon', href: '/favicon.ico' }
+    { rel: 'icon', href: '/favicon.ico' },
+    { rel: 'icon', type: 'image/png', href: '/favicon.png' }
   ],
   htmlAttrs: {
-    lang: 'en'
+    lang: 'id'
   }
 })
 
 useSeoMeta({
-  titleTemplate: '%s - Nuxt SaaS template',
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/saas-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/saas-light.png',
-  twitterCard: 'summary_large_image'
+  titleTemplate: '%s - PDPI',
+  description: 'Perhimpunan Dokter Paru Indonesia - Majukan Kesehatan Respirasi Indonesia',
+  ogImage: '/logo_pdpi_official.png',
+  twitterImage: '/logo_pdpi_official.png',
+  twitterCard: 'summary'
 })
 
 const { data: navigation } = await useAsyncData('navigation', async () => {

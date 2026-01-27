@@ -29,3 +29,9 @@ logs
 
 # VSC
 .history
+
+# SSL Certificates (jangan commit ke git)
+ssl/cloudflare-origin.pem
+ssl/cloudflare-origin.key
+ssl/*.pem
+ssl/*.key

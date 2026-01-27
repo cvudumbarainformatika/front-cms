@@ -9,9 +9,7 @@
       <!-- Top: Logo -->
       <div class="relative z-10">
         <div class="flex items-center gap-3">
-          <div class="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-            <UIcon name="i-lucide-wind" class="w-8 h-8 text-white" />
-          </div>
+          <img src="/logo_pdpi_official.png" alt="Logo PDPI" class="w-12 h-12 object-contain" />
           <span class="text-xl font-bold tracking-tight">PDPI</span>
         </div>
       </div>

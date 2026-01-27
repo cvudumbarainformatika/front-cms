@@ -199,6 +199,38 @@ export const usePDPI = () => {
     myMemberData.value = null
   }
 
+  /**
+   * Sync ALL members from PDPI to local database (Admin only)
+   * Returns detailed statistics about the sync process
+   */
+  const syncAllMembers = async () => {
+    try {
+      isLoadingMember.value = true
+
+      const res = await $apiFetch<ApiResponse<{
+        total_fetched: number
+        total_synced: number
+        total_failed: number
+        duration_ms: number
+        pages_fetched: number
+        errors?: string[]
+      }>>('/pdpi/sync-all-members', {
+        method: 'POST'
+      })
+
+      if (res?.success && res?.data) {
+        return res.data
+      } else {
+        throw new Error(res?.message || 'Failed to sync all members')
+      }
+    } catch (error) {
+      console.error('Sync all members error:', error)
+      throw error
+    } finally {
+      isLoadingMember.value = false
+    }
+  }
+
   return {
     // State
     myMemberData: readonly(myMemberData),
@@ -206,6 +238,7 @@ export const usePDPI = () => {
 
     // Methods
     syncMember,
+    syncAllMembers,
     getMembers,
     getMemberByNPA,
     getMyMemberData,
