@@ -44,9 +44,45 @@ const form = ref({
   badge: { label: '' }
 })
 
-if (contentRes.value?.data) {
+// Helper function to convert slug to title
+function slugToTitle(slug: string): string {
+  // Get last segment from path
+  const lastSegment = slug.split('/').pop() || ''
+  
+  // Split by dash and capitalize each word
+  const words = lastSegment.split('-')
+  const titleWords = words.map(word => {
+    // Only capitalize if it starts with a letter
+    if (/^[a-zA-Z]/.test(word)) {
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    }
+    return word // Keep numbers as is
+  })
+  
+  return titleWords.join(' ')
+}
+
+// Check if we have valid existing content
+// Backend returns {success: false, error: "content_not_found"} for new content
+const hasValidContent = contentRes.value?.data && 
+                        contentRes.value.data.title !== undefined &&
+                        contentRes.value.success !== false
+
+if (hasValidContent) {
   const d = contentRes.value.data
-  form.value.title = d.title || ''
+  
+  // Check if title is in slug format (contains dashes) and convert it
+  let title = d.title || ''
+  
+  if (title && title.includes('-')) {
+    // Title looks like a slug, convert it to proper title
+    title = slugToTitle(title)
+  } else if (!title) {
+    // No title at all, generate from slug
+    title = slugToTitle(slug.value)
+  }
+  
+  form.value.title = title
   form.value.description = d.description || ''
   form.value.body = d.body || ''
   form.value.html = d.html || '<h1>Tulis konten di sini</h1>'
@@ -57,6 +93,9 @@ if (contentRes.value?.data) {
   
   form.value.authors = d.authors || []
   form.value.badge = d.badge || { label: '' }
+} else {
+  // Auto-fill title from slug for new content
+  form.value.title = slugToTitle(slug.value)
 }
 
 // --- Image Upload Logic ---
@@ -95,9 +134,13 @@ const displayImageUrl = computed(() => {
 })
 // --------------------------
 
+// Computed properties for button states
+const isSaveDisabled = computed(() => !form.value.title || !form.value.title.trim())
+const showViewPageButton = computed(() => hasValidContent)
+
 const saving = ref(false)
 async function onSave() {
-  if (!form.value.title) {
+  if (!form.value.title || !form.value.title.trim()) {
     toast.add({ title: 'Validasi', description: 'Judul wajib diisi', color: 'warning' })
     return
   }
@@ -120,27 +163,42 @@ async function onSave() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
     <UPageHeader :title="`Edit Konten`" :description="`Slug: /${slug}`">
       <template #links>
         <div class="flex gap-2">
-          <UButton :to="`/${slug}`" target="_blank" label="Lihat Halaman" variant="outline" icon="i-lucide-external-link" />
+          <UButton v-if="showViewPageButton" :to="`/${slug}`" target="_blank" label="Lihat Halaman" variant="outline" icon="i-lucide-external-link" />
           <UButton to="/dashboard/admin/konten/menu" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
-          <UButton :loading="saving" icon="i-lucide-save" @click="onSave">Simpan</UButton>
+          <UButton :loading="saving" :disabled="isSaveDisabled" icon="i-lucide-save" @click="onSave">Simpan</UButton>
         </div>
       </template>
     </UPageHeader>
 
     <UCard>
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <!-- Sidebar Kiri: Metadata (span 3/4) -->
-        <div class="xl:col-span-3 space-y-4">
-          <UFormField label="Judul" required>
-            <UInput v-model="form.title" placeholder="Judul halaman" />
+        <!-- Main Content Area (span 9) -->
+        <div class="xl:col-span-9 space-y-4">
+          <!-- Title Field - WordPress Style: Large and Prominent -->
+          <UFormField label="Judul" class="mb-4">
+            <UInput 
+              v-model="form.title" 
+              placeholder="Tambahkan judul" 
+              class="w-full text-2xl font-semibold placeholder:text-gray-400 placeholder:font-normal"
+            />
           </UFormField>
 
+          <!-- Content Editor -->
+          <UFormField label="Konten Halaman" class="h-full flex flex-col">
+            <ClientOnly>
+                <TiptapEditor v-model="form.html" class="min-h-[600px]" />
+            </ClientOnly>
+          </UFormField>
+        </div>
+
+        <!-- Sidebar Kanan: Metadata (span 3) -->
+        <div class="xl:col-span-3 space-y-4 bg-elevated p-4 rounded-lg">
           <UFormField label="Deskripsi (Meta)">
-            <UTextarea v-model="form.description" :rows="5" placeholder="Ringkasan singkat untuk SEO" />
+            <UTextarea v-model="form.description" :rows="5" placeholder="Ringkasan singkat untuk SEO" class="w-full" />
           </UFormField>
 
            <UFormField label="Gambar Utama">
@@ -170,15 +228,15 @@ async function onSave() {
                </div>
              </UFileUpload>
              <!-- Fallback Input URL manual jika needed -->
-             <UInput v-model="form.image.src" placeholder="https://..." icon="i-lucide-link" class="mt-2" />
+             <UInput v-model="form.image.src" placeholder="https://..." icon="i-lucide-link" class="mt-2 w-full" />
            </UFormField>
 
           <UFormField label="Badge Label">
-            <UInput v-model="form.badge.label" placeholder="Contoh: Baru, Penting" />
+            <UInput v-model="form.badge.label" placeholder="Contoh: Baru, Penting" class="w-full" />
           </UFormField>
 
           <UFormField label="Tanggal">
-            <UInput v-model="form.date" type="datetime-local" />
+            <UInput v-model="form.date" type="datetime-local" class="w-full" />
           </UFormField>
 
           <USeparator class="my-6" />
@@ -187,16 +245,13 @@ async function onSave() {
             <p><strong>Info:</strong> Konten dinamis untuk menu.</p>
           </div>
         </div>
-
-        <!-- Area Utama: Editor (span 8/9) -->
-        <div class="xl:col-span-9">
-          <UFormField label="Konten Halaman" class="h-full flex flex-col">
-            <ClientOnly>
-                <TiptapEditor v-model="form.html" class="min-h-[600px]" />
-            </ClientOnly>
-          </UFormField>
-        </div>
       </div>
     </UCard>
+
+    <!-- Bottom Action Buttons -->
+    <div class="flex justify-end gap-2 pt-4">
+      <UButton to="/dashboard/admin/konten/menu" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
+      <UButton :loading="saving" :disabled="isSaveDisabled" icon="i-lucide-save" @click="onSave">Simpan</UButton>
+    </div>
   </div>
 </template>

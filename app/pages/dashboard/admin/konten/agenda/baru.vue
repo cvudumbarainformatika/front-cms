@@ -124,84 +124,112 @@ const displayImageUrl = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
     <UPageHeader title="Agenda Baru" description="Buat agenda dan publish">
       <template #links>
         <div class="flex gap-2">
           <UButton to="/dashboard/admin/konten/agenda" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
-          <UButton :loading="saving" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
-          <UButton :loading="saving" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+          <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
+          <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
         </div>
       </template>
     </UPageHeader>
 
     <UCard>
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div class="md:col-span-3 space-y-4">
-          <UFormField label="Judul" :error="errors.title" required>
-            <UInput v-model="form.title" placeholder="Judul agenda" @blur="genSlug" class="w-full" />
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <!-- Main Content Area (span 9) -->
+        <div class="xl:col-span-9 space-y-4">
+          <!-- Title Field - WordPress Style: Large and Prominent -->
+          <UFormField label="Judul" :error="errors.title" required class="mb-4">
+            <UInput 
+              v-model="form.title" 
+              placeholder="Tambahkan judul agenda" 
+              @blur="genSlug"
+              class="w-full text-2xl font-semibold placeholder:text-gray-400 placeholder:font-normal"
+            />
           </UFormField>
+
+          <!-- Description Editor -->
+          <UFormField label="Deskripsi Agenda" :error="errors.description" class="h-full flex flex-col">
+            <ClientOnly>
+              <TiptapEditor v-model="form.description" class="min-h-[600px]" />
+            </ClientOnly>
+          </UFormField>
+        </div>
+
+        <!-- Sidebar Kanan: Metadata (span 3) -->
+        <div class="xl:col-span-3 space-y-4 bg-elevated p-4 rounded-lg">
           <UFormField label="Slug" :error="errors.slug">
             <div class="flex gap-2">
-              <UInput v-model="form.slug" placeholder="otomatis dari judul" />
-              <UButton variant="outline" @click="genSlug" icon="i-lucide-refresh-ccw">Generate</UButton>
+              <UInput v-model="form.slug" placeholder="otomatis dari judul" class="flex-1" />
+              <UButton variant="outline" @click="genSlug" icon="i-lucide-refresh-ccw" size="xs">Gen</UButton>
             </div>
           </UFormField>
+
           <UFormField label="Jenis" :error="errors.type">
-            <USelect v-model="form.type" :items="typeOptions" placeholder="Pilih jenis" />
+            <USelect v-model="form.type" :items="typeOptions" placeholder="Pilih jenis" class="w-full" />
           </UFormField>
+
           <UFormField label="Tanggal Mulai" :error="errors.date">
-            <UInput v-model="form.date" type="datetime-local" />
+            <UInput v-model="form.date" type="datetime-local" class="w-full" />
           </UFormField>
+
           <UFormField label="Tanggal Selesai">
-            <UInput v-model="form.endDate" type="datetime-local" />
+            <UInput v-model="form.endDate" type="datetime-local" class="w-full" />
           </UFormField>
+
           <UFormField label="Online?">
             <USwitch v-model="form.isOnline" />
           </UFormField>
+
           <UFormField label="Lokasi">
-            <UInput v-model="form.location" placeholder="Lokasi acara" />
+            <UInput v-model="form.location" placeholder="Lokasi acara" class="w-full" />
           </UFormField>
+
           <UFormField label="Biaya">
-            <UInput v-model="form.fee" placeholder="Gratis / Rp ..." />
+            <UInput v-model="form.fee" placeholder="Gratis / Rp ..." class="w-full" />
           </UFormField>
+
           <UFormField label="SKP">
-            <UInput v-model.number="form.skp" type="number" min="0" step="0.5" />
+            <UInput v-model.number="form.skp" type="number" min="0" step="0.5" class="w-full" />
           </UFormField>
+
           <UFormField label="Kuota">
-            <UInput v-model.number="form.quota" type="number" min="0" />
+            <UInput v-model.number="form.quota" type="number" min="0" class="w-full" />
           </UFormField>
+
           <UFormField label="URL Pendaftaran">
-            <UInput v-model="form.registrationUrl" placeholder="https://..." />
+            <UInput v-model="form.registrationUrl" placeholder="https://..." class="w-full" />
           </UFormField>
-           <UFormField label="Cover Image">
-             <UFileUpload
-               v-slot="{ open, removeFile }"
-               v-model="uploadedFile"
-               accept="image/*"
-             >
-               <div class="w-full min-h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-500 transition-colors" @click="open()">
-                 <template v-if="displayImageUrl">
-                   <img 
-                     :src="displayImageUrl" 
-                     alt="cover" 
-                     class="max-h-40 object-contain rounded"
-                   />
 
-                   <div class="flex gap-2">
-                     <UButton label="Change" color="neutral" variant="outline" size="xs" @click.stop="open()" />
-                     <UButton label="Remove" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image = ''; imagePreview = ''" />
-                   </div>
-                 </template>
+          <UFormField label="Cover Image">
+            <UFileUpload
+              v-slot="{ open, removeFile }"
+              v-model="uploadedFile"
+              accept="image/*"
+            >
+              <div class="w-full min-h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-500 transition-colors" @click="open()">
+                <template v-if="displayImageUrl">
+                  <img 
+                    :src="displayImageUrl" 
+                    alt="cover" 
+                    class="max-h-40 object-contain rounded"
+                  />
+                  <div class="flex gap-2">
+                    <UButton label="Ganti" color="neutral" variant="outline" size="xs" @click.stop="open()" />
+                    <UButton label="Hapus" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image = ''; imagePreview = ''" />
+                  </div>
+                </template>
 
-                 <template v-else>
-                   <UIcon name="i-lucide-image" class="w-10 h-10 text-gray-400" />
-                   <p class="text-sm text-gray-500">Drop your image here or click to browse</p>
-                   <p class="text-xs text-gray-400">PNG, JPG or WEBP (max. 20MB)</p>
-                 </template>
-               </div>
-             </UFileUpload>
-           </UFormField>
+                <template v-else>
+                  <UIcon name="i-lucide-image" class="w-10 h-10 text-gray-400" />
+                  <p class="text-sm text-gray-500">Klik untuk upload gambar</p>
+                  <p class="text-xs text-gray-400">PNG, JPG atau WEBP (max. 20MB)</p>
+                </template>
+              </div>
+            </UFileUpload>
+          </UFormField>
+
           <UFormField label="Status">
             <URadioGroup v-model="form.status" :items="[
               { label: 'Draft', value: 'draft' },
@@ -209,14 +237,14 @@ const displayImageUrl = computed(() => {
             ]" />
           </UFormField>
         </div>
-        <div class="md:col-span-9 space-y-4">
-          <UFormField label="Deskripsi (WYSIWYG)" :error="errors.description">
-            <ClientOnly>
-              <TiptapEditor v-model="form.description" />
-            </ClientOnly>
-          </UFormField>
-        </div>
       </div>
     </UCard>
+
+    <!-- Bottom Action Buttons -->
+    <div class="flex justify-end gap-2 pt-4">
+      <UButton to="/dashboard/admin/konten/agenda" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
+      <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
+      <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+    </div>
   </div>
 </template>

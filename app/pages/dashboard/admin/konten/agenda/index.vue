@@ -11,6 +11,11 @@ const page = computed(() => parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 const status = computed(() => (route.query.status as string) || 'all')
 
+// Broadcast modal state
+const isModalOpen = ref(false)
+const selectedAgendaId = ref<number | null>(null)
+const broadcastMode = ref<'test' | 'warmup' | 'all'>('test')
+
 const { data, refresh, pending } = await useAsyncData(
   'agenda-list',
   () => $apiFetch('/agenda', {
@@ -64,25 +69,48 @@ async function onRestore(id: number) {
   }
 }
 
-async function onBroadcast(id: number) {
+function onBroadcastClick(id: number) {
+  selectedAgendaId.value = id
+  broadcastMode.value = 'test' // Reset to test mode
+  isModalOpen.value = true
+}
+
+function onModeConfirm(mode: 'test' | 'warmup' | 'all') {
+  if (selectedAgendaId.value) {
+    executeBroadcast(selectedAgendaId.value, mode)
+  }
+  isModalOpen.value = false
+}
+
+async function executeBroadcast(id: number, mode: 'test' | 'warmup' | 'all') {
   const toastId = 'broadcast-toast-' + id
+  const modeLabels = {
+    test: 'Test Mode (7 email)',
+    warmup: 'Warm-up Mode (57 email)',
+    all: 'Full Blast (1800+ email)'
+  }
+
   toast.add({
     id: toastId,
     title: 'Mengirim Broadcast...',
-    description: 'Mohon tunggu sebentar',
+    description: `Mode: ${modeLabels[mode]}`,
     loading: true,
     timeout: 0
   })
 
   try {
-    await $apiFetch(`/broadcast/agenda/${id}`, {
+    const url = mode === 'test' 
+      ? `/broadcast/agenda/${id}` 
+      : `/broadcast/agenda/${id}?target=${mode}`
+      
+    await $apiFetch(url, {
       method: 'POST'
     })
     
     toast.remove(toastId)
     toast.add({
       title: 'Berhasil',
-      description: 'Broadcast email berhasil dikirim (Cek Log Server untuk Mode Percobaan)',
+      description: `Broadcast email (${modeLabels[mode]}) sedang diproses di background`,
       color: 'success'
     })
   } catch (error: any) {
@@ -118,7 +146,7 @@ function getItems(row: any) {
     items[0].push({
       label: 'Bagikan via Email',
       icon: 'i-lucide-share-2',
-      onSelect: () => onBroadcast(row.id)
+      onSelect: () => onBroadcastClick(row.id)
     })
   }
 
@@ -152,16 +180,16 @@ function getItems(row: any) {
       <template #header>
         <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
-            <UButton :variant="status==='all'?'solid':'soft'" :color="status==='all'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('all')">Semua</UButton>
-            <UButton :variant="status==='draft'?'solid':'soft'" :color="status==='draft'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('draft')">Draft</UButton>
-            <UButton :variant="status==='published'?'solid':'soft'" :color="status==='published'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('published')">Published</UButton>
-            <UButton :variant="status==='deleted'?'solid':'soft'" :color="status==='deleted'?'primary':'gray'" size="sm" class="cursor-pointer" @click="setStatus('deleted')">Deleted</UButton>
+            <UButton :variant="status==='all'?'solid':'soft'" :color="status==='all'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('all')">Semua</UButton>
+            <UButton :variant="status==='draft'?'solid':'soft'" :color="status==='draft'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('draft')">Draft</UButton>
+            <UButton :variant="status==='published'?'solid':'soft'" :color="status==='published'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('published')">Published</UButton>
+            <UButton :variant="status==='deleted'?'solid':'soft'" :color="status==='deleted'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('deleted')">Deleted</UButton>
           </div>
           <div class="w-full sm:w-72">
              <UInput :model-value="search" placeholder="Cari judul..." icon="i-lucide-search" :ui="{ icon: { trailing: { pointer: '' } } }" @update:model-value="v=>router.push({ query: { ...route.query, search: v||undefined, page: undefined } })">
                 <template #trailing v-if="search">
                   <UButton
-                    color="gray"
+                    color="neutral"
                     variant="link"
                     size="xs"
                     icon="i-lucide-x"
@@ -199,7 +227,7 @@ function getItems(row: any) {
               <div class="min-w-0">
                 <p class="font-semibold text-highlighted line-clamp-2 leading-snug">{{ row.original.title }}</p>
                 <div class="flex items-center gap-2 mt-1">
-                   <UBadge color="gray" variant="subtle" size="xs" class="capitalize">{{ row.original.slug?.slice(0, 20) || '...' }}...</UBadge>
+                   <UBadge color="neutral" variant="subtle" size="xs" class="capitalize">{{ row.original.slug?.slice(0, 20) || '...' }}...</UBadge>
                 </div>
               </div>
             </template>
@@ -207,7 +235,7 @@ function getItems(row: any) {
             <!-- Status Slot -->
             <template #status-cell="{ row }">
                <UBadge 
-                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'draft' ? 'orange' : 'gray'" 
+                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'draft' ? 'warning' : 'neutral'" 
                  variant="subtle"
                  size="xs"
                  class="capitalize font-semibold"
@@ -225,7 +253,7 @@ function getItems(row: any) {
             <template #actions-cell="{ row }">
               <div class="flex items-center justify-end">
                 <UDropdownMenu :items="getItems(row.original)">
-                  <UButton icon="i-lucide-more-horizontal" color="gray" variant="ghost" size="sm" class="cursor-pointer" />
+                  <UButton icon="i-lucide-more-horizontal" color="neutral" variant="ghost" size="sm" class="cursor-pointer" />
                 </UDropdownMenu>
               </div>
             </template>
@@ -249,10 +277,16 @@ function getItems(row: any) {
              :total="total" 
              :page-count="10" 
              size="sm"
-             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
+             @update:model-value="(p: number) => router.push({ query: { ...route.query, page: p } })"
            />
          </div>
       </template>
     </UCard>
+
+    <!-- Broadcast Mode Selection Modal -->
+    <BroadcastModeModal 
+      v-model="isModalOpen" 
+      @confirm="onModeConfirm"
+    />
   </div>
 </template>

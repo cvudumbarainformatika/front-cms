@@ -54,25 +54,16 @@ const navigationItems = computed(() => {
       <ClientOnly>
         <!-- Guest Buttons -->
         <template v-if="!isAuthenticated">
-          <UTooltip text="Masuk">
-            <UButton
-              icon="i-lucide-log-in"
-              color="neutral"
-              variant="ghost"
-              to="/login"
-              aria-label="Masuk"
-            />
-          </UTooltip>
+          <UButton
+            to="/login"
+            label="Masuk"
+            icon="i-lucide-log-in"
+            color="gray"
+            variant="ghost"
+            class="bg-white text-slate-900 rounded-full px-5 shadow-sm ring-1 ring-slate-200 hover:ring-primary-500 hover:text-primary-600 transition-all"
+          />
 
-          <UTooltip text="Daftar Anggota">
-            <UButton
-              icon="i-lucide-user-plus"
-              color="neutral"
-              variant="ghost"
-              to="/daftar"
-              aria-label="Daftar"
-            />
-          </UTooltip>
+
         </template>
 
         <!-- Authenticated User Menu -->
@@ -136,12 +127,7 @@ const navigationItems = computed(() => {
           block
           class="mb-3"
         />
-        <UButton
-          label="Daftar"
-          color="primary"
-          to="/daftar"
-          block
-        />
+
       </template>
       <template v-else>
         <UButton

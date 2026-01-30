@@ -131,9 +131,7 @@ const homeData = computed(() => home.value?.data)
                   {{ (homeData?.hero as any)?.event_desc || 'Inovasi Penanganan PPOK & Asma' }}
                 </p>
               </div>
-              <div class="p-3 rounded-full bg-primary-100 text-primary-600">
-                <UIcon name="i-lucide-arrow-right" class="w-6 h-6" />
-              </div>
+
             </div>
           </div>
         </div>

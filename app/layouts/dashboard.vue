@@ -11,7 +11,7 @@ const sidebarCollapsed = ref(false)
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value
 }
-
+  
 // Persist sidebar state
 const savedState = useCookie('sidebar-collapsed')
 onMounted(() => {
@@ -19,29 +19,20 @@ onMounted(() => {
     sidebarCollapsed.value = savedState.value === 'true'
   }
 })
-
+  
 watch(sidebarCollapsed, (value) => {
   savedState.value = value.toString()
 })
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-muted/30">
+  <div class="min-h-screen flex bg-muted">
     <!-- Sidebar -->
     <DashboardSidebar
       :collapsed="sidebarCollapsed"
       class="fixed left-0 top-0 h-screen z-40 hidden lg:block"
     />
-
-    <!-- Mobile Sidebar Overlay -->
-    <USlideover
-      :open="false"
-      side="left"
-      class="lg:hidden"
-    >
-      <DashboardSidebar :collapsed="false" />
-    </USlideover>
-
+  
     <!-- Main Content Area -->
     <div
       :class="[
@@ -50,12 +41,10 @@ watch(sidebarCollapsed, (value) => {
       ]"
     >
       <!-- Header -->
-      <!-- <ClientOnly> -->
       <DashboardHeader
         :sidebar-collapsed="sidebarCollapsed"
         @toggle-sidebar="toggleSidebar"
       />
-      <!-- </ClientOnly> -->
 
       <!-- Page Content -->
       <main class="flex-1 p-4 lg:p-6">

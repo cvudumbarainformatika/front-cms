@@ -127,7 +127,7 @@ onMounted(checkAuth)
           />
           <UButton
             v-if="isAdmin"
-            label="Kelola Anggota"
+            label="Kelola Users"
             icon="i-lucide-users"
             color="primary"
             to="/dashboard/admin/anggota"

@@ -181,32 +181,48 @@ function removeTag (t: string) {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <UPageHeader :title="`Edit Berita`" :description="`ID: ${id}`">
+  <div class="space-y-4">
+    <UPageHeader :title="`Edit Berita`">
       <template #links>
         <div class="flex gap-2">
-           <UButton v-if="current?.slug" :to="`/berita/${current.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
+          <UButton v-if="current?.slug" :to="`/berita/${current.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
           <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
-          <UButton :loading="saving" icon="i-lucide-save" @click="save()">Simpan</UButton>
-          <UButton :loading="saving" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+          <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-save" @click="save()">Simpan</UButton>
+          <UButton :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
             {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
           </UButton>
         </div>
       </template>
     </UPageHeader>
 
-
-
     <UCard>
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <!-- Kiri: seluruh pengaturan (span 3) -->
-        <div class="xl:col-span-3 space-y-4">
-          <UFormField label="Judul" :error="errors.title" required>
-            <UInput v-model="form.title" placeholder="Judul berita" />
+        <!-- Main Content Area (span 9) -->
+        <div class="xl:col-span-9 space-y-4">
+          <!-- Title Field - WordPress Style: Large and Prominent -->
+          <UFormField label="Judul" :error="errors.title" required class="mb-4">
+            <UInput 
+              v-model="form.title" 
+              placeholder="Tambahkan judul berita" 
+              class="w-full text-2xl font-semibold placeholder:text-gray-400 placeholder:font-normal"
+            />
           </UFormField>
-          <UFormField label="Excerpt">
-            <UTextarea v-model="form.excerpt" :rows="6" placeholder="Ringkasan singkat yang menarik" />
+
+          <!-- Excerpt Field -->
+          <UFormField label="Excerpt (Ringkasan)">
+            <UTextarea v-model="form.excerpt" :rows="3" placeholder="Ringkasan singkat yang menarik" class="w-full" />
           </UFormField>
+
+          <!-- Content Editor -->
+          <UFormField label="Konten Berita" :error="errors.content" class="h-full flex flex-col">
+            <ClientOnly>
+              <TiptapEditor v-model="form.content" class="min-h-[600px]" />
+            </ClientOnly>
+          </UFormField>
+        </div>
+
+        <!-- Sidebar Kanan: Metadata (span 3) -->
+        <div class="xl:col-span-3 space-y-4 bg-elevated p-4 rounded-lg">
           <UFormField label="Cover Image">
             <UFileUpload
               v-slot="{ open, removeFile }"
@@ -221,50 +237,53 @@ function removeTag (t: string) {
                     class="max-h-40 object-contain rounded"
                   />
                   <div class="flex gap-2">
-                    <UButton label="Change" color="neutral" variant="outline" size="xs" @click.stop="open()" />
-                    <UButton label="Remove" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image_url = ''; imagePreview = ''" />
+                    <UButton label="Ganti" color="neutral" variant="outline" size="xs" @click.stop="open()" />
+                    <UButton label="Hapus" color="error" variant="outline" size="xs" @click.stop="removeFile(); form.image_url = ''; imagePreview = ''" />
                   </div>
                 </template>
 
                 <template v-else>
                   <UIcon name="i-lucide-image" class="w-10 h-10 text-gray-400" />
-                  <p class="text-sm text-gray-500">Drop your image here or click to browse</p>
-                  <p class="text-xs text-gray-400">PNG, JPG or WEBP (max. 20MB)</p>
+                  <p class="text-sm text-gray-500">Klik untuk upload gambar</p>
+                  <p class="text-xs text-gray-400">PNG, JPG atau WEBP (max. 20MB)</p>
                 </template>
               </div>
             </UFileUpload>
           </UFormField>
 
-
           <UFormField label="Kategori" :error="errors.category">
-            <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" />
+            <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" class="w-full" />
           </UFormField>
+
           <UFormField label="Penulis">
-            <UInput v-model="form.author" placeholder="Nama penulis" />
+            <UInput v-model="form.author" placeholder="Nama penulis" class="w-full" />
           </UFormField>
+
           <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
             <div class="flex flex-wrap gap-1 mb-2">
               <UBadge v-for="t in form.tags" :key="t" :label="t" variant="subtle" @click="removeTag(t)" class="cursor-pointer" />
             </div>
-            <UInput v-model="tagInput" placeholder="Ketik tag lalu Enter" @keyup.enter.prevent="addTag" />
+            <UInput v-model="tagInput" placeholder="Ketik tag lalu Enter" @keyup.enter.prevent="addTag" class="w-full" />
           </UFormField>
+
           <UFormField label="Status">
             <UBadge :label="form.status.toUpperCase()" :color="form.status==='published'?'primary':'neutral'" />
           </UFormField>
-          <UFormField label="Tanggal Publish">
-            <UInput v-model="form.published_at" type="datetime-local" />
-          </UFormField>
-        </div>
 
-        <!-- Kanan: WYSIWYG (span 9) -->
-        <div class="xl:col-span-9 space-y-4">
-          <UFormField label="Konten (WYSIWYG)" :error="errors.content">
-            <ClientOnly>
-              <TiptapEditor v-model="form.content" />
-            </ClientOnly>
+          <UFormField label="Tanggal Publish">
+            <UInput v-model="form.published_at" type="datetime-local" class="w-full" />
           </UFormField>
         </div>
       </div>
     </UCard>
+
+    <!-- Bottom Action Buttons -->
+    <div class="flex justify-end gap-2 pt-4">
+      <UButton to="/dashboard/admin/konten/berita" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
+      <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-save" @click="save()">Simpan</UButton>
+      <UButton :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+        {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
+      </UButton>
+    </div>
   </div>
 </template>

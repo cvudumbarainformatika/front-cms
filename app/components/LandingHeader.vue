@@ -64,27 +64,16 @@ const navigationItems = computed(() => {
         <ClientOnly>
           <!-- Guest -->
           <template v-if="!isAuthenticated">
-            <UTooltip text="Masuk">
-              <UButton
-                icon="i-lucide-log-in"
-                color="neutral"
-                variant="ghost"
-                to="/login"
-                aria-label="Masuk"
-                class="text-slate-600 hover:text-primary-600 hover:bg-primary-50"
-              />
-            </UTooltip>
+            <UButton
+              to="/login"
+              label="Masuk"
+              icon="i-lucide-log-in"
+              color="gray"
+              variant="ghost"
+              class="bg-white text-slate-900 rounded-full px-6 py-2 shadow-lg shadow-slate-200/50 hover:shadow-primary-500/20 hover:text-primary-600 transition-all duration-300 font-medium ring-1 ring-slate-100"
+            />
 
-            <UTooltip text="Daftar Anggota">
-              <UButton
-                to="/daftar"
-                class="rounded-full transition-all shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40"
-                color="primary"
-                icon="i-lucide-user-plus"
-              >
-                Daftar
-              </UButton>
-            </UTooltip>
+
           </template>
           
           <!-- Authenticated User Menu -->
@@ -179,15 +168,7 @@ const navigationItems = computed(() => {
                     >
                       Masuk
                     </UButton>
-                    <UButton
-                      to="/daftar"
-                      block
-                      color="primary"
-                      icon="i-lucide-user-plus"
-                      @click="isMenuOpen = false"
-                    >
-                      Daftar Anggota
-                    </UButton>
+
                   </template>
 
                   <template v-else>

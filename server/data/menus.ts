@@ -229,7 +229,7 @@ export const sidebarMenus: MenuItem[] = [
   },
   {
     id: 'admin-members',
-    label: 'Kelola Anggota',
+    label: 'Kelola Users',
     slug: 'kelola-anggota',
     to: '/dashboard/admin/anggota',
     icon: 'i-lucide-users',
@@ -238,6 +238,18 @@ export const sidebarMenus: MenuItem[] = [
     order: 11,
     isActive: true,
     roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
+  },
+  {
+    id: 'admin-members-pdpi',
+    label: 'Daftar Anggota',
+    slug: 'daftar-anggota-pdpi',
+    to: '/dashboard/admin/daftar-anggota',
+    icon: 'i-lucide-user-check',
+    parentId: null,
+    position: 'sidebar',
+    order: 11,
+    isActive: true,
+    roles: ['admin_pusat']
   },
   {
     id: 'admin-content',

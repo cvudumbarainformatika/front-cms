@@ -53,6 +53,7 @@ const shouldSyncFromServer = ref(true)
 // Delete confirmation modal state
 const isDeleteModalOpen = ref(false)
 const menuToDelete = ref<any>(null)
+const errorMessages = reactive<Record<string, string>>({})
 
 // Initialize local state from server data
 watchEffect(() => {
@@ -105,12 +106,83 @@ function getEditorPath(it: any) {
   if (!clean) return undefined // hindari navigasi ke editor/ tanpa slug
   return base + clean
 }
+
+// Helper function to convert text to URL-friendly slug
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // Replace spaces with -
+    .replace(/&/g, '')           // Remove &
+    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars except -
+    .replace(/\-\-+/g, '-')      // Replace multiple - with single -
+    .replace(/^-+/, '')          // Trim - from start of text
+    .replace(/-+$/, '')          // Trim - from end of text
+}
+
+// Auto-update URL when label changes
+function onLabelChange(item: any, newLabel: string) {
+  item.label = newLabel
+  
+  // Only auto-update URL if it's a new menu (temporary ID) or if URL is empty/default
+  const isNewMenu = String(item.id).startsWith('menu-')
+  const isDefaultUrl = !item.to || item.to === '/' || item.to.endsWith('/')
+  
+  if (isNewMenu || isDefaultUrl) {
+    const slug = slugify(newLabel)
+    
+    if (item.parentId) {
+      // For submenu, prepend parent URL
+      const parent = findMenuById(menus.value, item.parentId)
+      if (parent && parent.to) {
+        const parentUrl = parent.to.endsWith('/') ? parent.to : parent.to + '/'
+        item.to = parentUrl + slug
+      } else {
+        item.to = '/' + slug
+      }
+    } else {
+      // For main menu
+      item.to = '/' + slug
+    }
+  }
+  
+  // Force reactivity update
+  menus.value = [...menus.value]
+  
+  // Clear error for this field
+  delete errorMessages[`label-${item.id}`]
+}
+
+// Handle URL changes
+function onUrlChange(item: any, newUrl: string) {
+  item.to = newUrl
+  
+  // Force reactivity update
+  menus.value = [...menus.value]
+  
+  // Clear error for this field
+  delete errorMessages[`to-${item.id}`]
+}
+
 function addMenu(parentId: string | null = null) {
+  let defaultUrl = '/'
+  
+  // If adding a submenu, prepopulate URL with parent's URL + '/'
+  if (parentId) {
+    const parent = findMenuById(menus.value, parentId)
+    if (parent && parent.to) {
+      // Ensure parent URL ends with / and doesn't double up
+      const parentUrl = parent.to.endsWith('/') ? parent.to : parent.to + '/'
+      defaultUrl = parentUrl
+    }
+  }
+  
   const newItem = {
     id: `menu-${Date.now()}`,
     label: 'Menu Baru',
     slug: 'menu-baru',
-    to: '/',
+    to: defaultUrl,
     icon: 'i-lucide-link',
     parentId,
     position: currentPosition.value,
@@ -213,7 +285,69 @@ function removeFromList(items: any[], id: string) {
   })
 }
 
+function validateMenus(): boolean {
+  const seenUrls = new Set<string>()
+  const seenLabels = new Set<string>()
+  // Reset errors
+  Object.keys(errorMessages).forEach(key => delete errorMessages[key])
+  
+  let isValid = true
+  let firstErrorTitle = ''
+
+  // Helper to traverse and validate
+  function traverse(items: any[]) {
+    for (const item of items) {
+      // 1. Check Label
+      if (!item.label || !item.label.trim()) {
+        errorMessages[`label-${item.id}`] = 'Label menu tidak boleh kosong'
+        isValid = false
+        if (!firstErrorTitle) firstErrorTitle = 'Label menu tidak boleh kosong'
+      } else {
+        // Check duplicate label
+        const label = item.label.trim().toLowerCase()
+        if (seenLabels.has(label)) {
+          errorMessages[`label-${item.id}`] = `Nama menu "${item.label}" sudah digunakan`
+          isValid = false
+          if (!firstErrorTitle) firstErrorTitle = `Nama menu "${item.label}" sudah digunakan`
+        }
+        seenLabels.add(label)
+      }
+
+      // 2. Check URL
+      if (!item.to || !item.to.trim()) {
+        errorMessages[`to-${item.id}`] = 'URL wajib diisi'
+        isValid = false
+        if (!firstErrorTitle) firstErrorTitle = `URL untuk menu "${item.label || 'baru'}" wajib diisi`
+      } else {
+         // 3. Check Uniqueness (only check if URL exists)
+        const url = item.to.trim()
+        if (seenUrls.has(url)) {
+           errorMessages[`to-${item.id}`] = `URL "${url}" sudah digunakan`
+           isValid = false
+           if (!firstErrorTitle) firstErrorTitle = `URL "${url}" sudah digunakan`
+        }
+        seenUrls.add(url)
+      }
+
+      if (item.children && item.children.length) {
+        traverse(item.children)
+      }
+    }
+  }
+
+  traverse(menus.value)
+  
+  if (!isValid) {
+    toast.add({ title: 'Validasi Gagal', description: firstErrorTitle, color: 'warning' })
+  }
+  
+  return isValid
+}
+
+
 async function onSave() {
+  if (!validateMenus()) return
+
   saving.value = true
   try {
     const response = await $apiFetch('/menus', {
@@ -246,6 +380,12 @@ async function onSave() {
   } finally {
     saving.value = false
   }
+}
+
+async function handleUrlSave() {
+  // Trigger save only if validation passes
+  // We reuse onSave which already includes validation
+  await onSave()
 }
 </script>
 
@@ -298,8 +438,27 @@ async function onSave() {
             <div class="flex items-center gap-3 flex-1">
               <UIcon :name="item.icon || 'i-lucide-link'" class="w-5 h-5 text-muted" />
               <div class="flex-1 grid grid-cols-2 gap-4">
-                <UInput v-model="item.label" placeholder="Label Menu" size="sm" />
-                <UInput v-model="item.to" placeholder="Path / URL" size="sm" :disabled="item.is_fixed" />
+                <UFormField :error="errorMessages[`label-${item.id}`]" :ui="{ container: 'w-full' }">
+                  <UInput 
+                    v-model="item.label" 
+                    placeholder="Label Menu" 
+                    size="sm"
+                    class="w-full" 
+                    @update:model-value="(val) => onLabelChange(item, val)"
+                  />
+                </UFormField>
+                <UFormField :error="errorMessages[`to-${item.id}`]" :ui="{ container: 'w-full' }">
+                  <UInput 
+                    v-model="item.to" 
+                    placeholder="Path / URL" 
+                    size="sm"
+                    class="w-full" 
+                    :disabled="item.is_fixed"
+                    @keydown.enter="handleUrlSave"
+                    @blur="handleUrlSave"
+                    @update:model-value="(val) => onUrlChange(item, val)"
+                  />
+                </UFormField>
               </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -344,8 +503,27 @@ async function onSave() {
               <div class="flex items-center gap-3 flex-1">
                 <UIcon :name="child.icon" class="w-4 h-4 text-muted/60" />
                 <div class="flex-1 grid grid-cols-2 gap-4">
-                  <UInput v-model="child.label" placeholder="Label Submenu" size="xs" />
-                  <UInput v-model="child.to" placeholder="Path / URL" size="xs" :disabled="child.isFixed" />
+                  <UFormField :error="errorMessages[`label-${child.id}`]" :ui="{ container: 'w-full' }">
+                    <UInput 
+                      v-model="child.label" 
+                      placeholder="Label Submenu" 
+                      size="xs"
+                      class="w-full" 
+                      @update:model-value="(val) => onLabelChange(child, val)"
+                    />
+                  </UFormField>
+                  <UFormField :error="errorMessages[`to-${child.id}`]" :ui="{ container: 'w-full' }">
+                    <UInput 
+                      v-model="child.to" 
+                      placeholder="Path / URL" 
+                      size="xs"
+                      class="w-full" 
+                      :disabled="child.isFixed"
+                      @keydown.enter="handleUrlSave"
+                      @blur="handleUrlSave"
+                      @update:model-value="(val) => onUrlChange(child, val)"
+                    />
+                  </UFormField>
                 </div>
               </div>
               <div class="flex items-center gap-3">
