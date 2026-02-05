@@ -476,8 +476,8 @@ export const useAuth = () => {
       localStorage.removeItem('auth_expires_at')
     }
 
-    // Redirect ke login
-    await navigateTo('/login')
+    // Redirect ke beranda
+    await navigateTo('/')
   }
 
   /**
