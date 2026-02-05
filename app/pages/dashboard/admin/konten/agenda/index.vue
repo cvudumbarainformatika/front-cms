@@ -210,6 +210,9 @@ function getItems(row: any) {
             :data="rows" 
             :columns="columns"
             class="w-full"
+            :ui="{
+              tr: 'hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hover:shadow-sm cursor-pointer'
+            }"
           >
             <!-- Image Slot -->
             <template #image-cell="{ row }">

@@ -211,7 +211,10 @@ const getItems = (row: any) => [
             :loading="loading"
             sticky
             class="min-w-full"
-            :ui="{ th: { base: 'font-bold text-gray-900 dark:text-white' } }"
+            :ui="{ 
+              th: { base: 'font-bold text-gray-900 dark:text-white' },
+              tr: 'hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hover:shadow-sm cursor-pointer'
+            }"
           >
             <template #npa-cell="{ row }">
                 <span class="font-mono text-gray-700 dark:text-gray-300" v-if="row.original.npa">{{ row.original.npa }}</span>
