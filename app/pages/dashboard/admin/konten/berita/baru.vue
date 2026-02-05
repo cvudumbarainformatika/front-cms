@@ -6,7 +6,8 @@ const router = useRouter()
 const toast = useToast()
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
-
+const { hasMinimumRole } = useRole()
+const { user } = useAuth()
 
 const form = reactive({
   title: '',
@@ -15,7 +16,8 @@ const form = reactive({
   image_url: '',
   category: '',
   tags: [] as string[],
-  author: 'Admin', // Default author
+  author: user.value?.name || '', // Nama user yang login (untuk disimpan ke database)
+  author_id: user.value?.id ? String(user.value.id) : '', // Convert ID ke string
   status: 'draft' as 'draft'|'published',
   published_at: ''
 })
@@ -77,7 +79,7 @@ async function save(status?: 'draft'|'published') {
   saving.value = true
   try {
     const res = await $apiFetch('/berita', { method: 'POST', body: form })
-    toast.add({ title: 'Berita berhasil dibuat', color: 'success' })
+    toast.add({ title: 'Artikel berhasil dibuat', color: 'success' })
     router.push(`/dashboard/admin/konten/berita/${(res as any).data.id}`)
   } catch (e: any) {
     toast.add({ title: 'Gagal', description: e?.data?.message || 'Gagal menyimpan', color: 'error' })
@@ -95,34 +97,22 @@ const categoryOptions = [
   { label: 'Prestasi', value: 'prestasi' }
 ]
 
-const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
+const errors = reactive<{ title?: string; category?: string; content?: string }>({})
 watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
 watch(() => form.category, v => { errors.category = v ? undefined : 'Kategori wajib' })
-watch(() => form.tags, v => { errors.tags = (v && v.length) ? undefined : 'Tags wajib diisi' }, { deep: true })
 watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib' })
 
-const tagInput = ref('')
-function addTag () {
-  const val = tagInput.value.trim()
-  if (!val) return
-  if (!form.tags.includes(val)) form.tags = [...form.tags, val]
-  tagInput.value = ''
-  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
-}
-function removeTag (t: string) {
-  form.tags = form.tags.filter(x => x !== t)
-  errors.tags = form.tags.length ? '' : 'Tags wajib diisi'
-}
+
 </script>
 
 <template>
   <div class="space-y-4">
-    <UPageHeader title="Berita Baru" description="Tulis berita, simpan sebagai draft atau publish">
+    <UPageHeader title="Artikel Baru" description="Tulis artikel, simpan sebagai draft atau publish">
       <template #links>
         <div class="flex gap-2">
           <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
-          <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+          <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
         </div>
       </template>
     </UPageHeader>
@@ -146,7 +136,7 @@ function removeTag (t: string) {
           </UFormField>
 
           <!-- Content Editor -->
-          <UFormField label="Konten Berita" :error="errors.content" class="h-full flex flex-col">
+          <UFormField label="Konten Artikel" :error="errors.content" class="h-full flex flex-col">
             <ClientOnly>
               <TiptapEditor v-model="form.content" class="min-h-[600px]" />
             </ClientOnly>
@@ -187,27 +177,10 @@ function removeTag (t: string) {
             <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" class="w-full" />
           </UFormField>
 
-          <UFormField label="Penulis">
-            <UInput v-model="form.author" placeholder="Nama penulis" class="w-full" />
-          </UFormField>
+          <!-- Field author otomatis dari user login, tidak perlu input manual -->
 
-          <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
-            <div class="flex flex-wrap gap-1 mb-2">
-              <UBadge v-for="t in form.tags" :key="t" :label="t" variant="subtle" class="cursor-pointer" @click="removeTag(t)" />
-            </div>
-            <UInput v-model="tagInput" placeholder="Ketik tag lalu Enter" @keyup.enter.prevent="addTag" class="w-full" />
-          </UFormField>
+          <!-- Field author otomatis dari user login, tidak perlu input manual -->
 
-          <UFormField label="Status">
-            <URadioGroup v-model="form.status" :items="[
-              { label: 'Draft', value: 'draft' },
-              { label: 'Published', value: 'published' }
-            ]" />
-          </UFormField>
-
-          <UFormField label="Tanggal Publish" hint="Kosongkan untuk otomatis saat publish">
-            <UInput v-model="form.published_at" type="datetime-local" class="w-full" />
-          </UFormField>
         </div>
       </div>
     </UCard>
@@ -216,7 +189,7 @@ function removeTag (t: string) {
     <div class="flex justify-end gap-2 pt-4">
       <UButton to="/dashboard/admin/konten/berita" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
       <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
-      <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+      <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
     </div>
   </div>
 </template>

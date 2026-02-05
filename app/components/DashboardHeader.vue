@@ -62,7 +62,7 @@ const emit = defineEmits<{
         v-if="hasMinimumRole('admin_cabang')"
         :items="[
           [{
-            label: 'Tambah Berita',
+            label: 'Tambah Artikel',
             icon: 'i-lucide-file-plus',
             to: '/dashboard/admin/konten/berita/tambah'
           }, {

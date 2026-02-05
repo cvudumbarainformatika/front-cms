@@ -138,6 +138,7 @@ async function toggleStatus () {
 
 
 const { getImageUrl } = useImageUrl()
+const { hasMinimumRole } = useRole()
 
 // File upload using v-model
 const uploadedFile = ref<File | null>(null)
@@ -184,7 +185,7 @@ const displayImageUrl = computed(() => {
           <UButton v-if="form.slug" :to="`/agenda/${form.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
           <UButton to="/dashboard/admin/konten/agenda" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-save" @click="save()">Simpan</UButton>
-          <UButton :loading="saving" :disabled="!form.title || !form.description" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+          <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.description" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
             {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
           </UButton>
         </div>
@@ -297,7 +298,7 @@ const displayImageUrl = computed(() => {
     <div class="flex justify-end gap-2 pt-4">
       <UButton to="/dashboard/admin/konten/agenda" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
       <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-save" @click="save()">Simpan</UButton>
-      <UButton :loading="saving" :disabled="!form.title || !form.description" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+      <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.description" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
         {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
       </UButton>
     </div>

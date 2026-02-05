@@ -30,15 +30,15 @@ const modes = [
     description: 'Kirim ke 50 member + 7 test (57 total)',
     icon: 'i-lucide-zap',
     color: 'orange'
-  }
+  },
   // Full Blast hidden - uncomment when IP reputation is established
-  // {
-  //   value: 'all',
-  //   label: 'Full Blast',
-  //   description: 'Kirim ke semua member (1800+)',
-  //   icon: 'i-lucide-rocket',
-  //   color: 'green'
-  // }
+  {
+    value: 'all',
+    label: 'Full Blast',
+    description: 'Kirim ke semua member (1800+)',
+    icon: 'i-lucide-rocket',
+    color: 'green'
+  }
 ]
 
 function handleClose() {

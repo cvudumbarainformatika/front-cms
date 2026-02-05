@@ -8,6 +8,7 @@ const router = useRouter()
 const toast = useToast()
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
+const { hasMinimumRole } = useRole()
 
 
 const id = route.params.id as string
@@ -47,7 +48,9 @@ const form = reactive({
   category: '', 
   tags: [] as string[], 
   author: '',
-  status: 'draft' as 'draft'|'published', 
+  author_id: '', // ID user penulis
+  status: 'draft' as 'draft'|'published'|'rejected',
+  rejection_reason: '', // NEW
   published_at: ''
 })
 
@@ -62,7 +65,9 @@ watchEffect(() => {
     form.category = current.value.category || ''
     form.tags = current.value.tags || []
     form.author = current.value.author || ''
+    form.author_id = current.value.author_id ? String(current.value.author_id) : '' // Convert ke string
     form.status = (current.value.status || 'draft')
+    form.rejection_reason = current.value.rejection_reason || '' // NEW
     // Convert published_at from backend format
     if (current.value.published_at) {
       const date = new Date(current.value.published_at)
@@ -110,16 +115,27 @@ const displayImageUrl = computed(() => {
 
 
 const saving = ref(false)
-async function save(status?: 'draft'|'published') {
+async function save(status?: 'draft'|'published'|'rejected') {
   if (status) form.status = status
   if (!form.title || !form.content) {
     toast.add({ title: 'Validasi', description: 'Judul & Konten wajib', color: 'warning' })
     return
   }
+  
+  // Validasi rejection_reason jika status = rejected
+  if (form.status === 'rejected' && !form.rejection_reason.trim()) {
+    toast.add({ 
+      title: 'Validasi Gagal', 
+      description: 'Alasan penolakan harus diisi jika status "Ditolak"', 
+      color: 'error' 
+    })
+    return
+  }
+  
   saving.value = true
   try {
     await $apiFetch(`/berita/${id}`, { method: 'PUT', body: form })
-    toast.add({ title: 'Berita berhasil diupdate', color: 'success' })
+    toast.add({ title: 'Artikel berhasil diupdate', color: 'success' })
     refresh()
   } catch (e: any) {
     toast.add({ title: 'Gagal', description: e?.data?.message || 'Gagal menyimpan', color: 'error' })
@@ -142,7 +158,8 @@ async function toggleStatus() {
 // Autosave (debounce)
 
 const doAutosave = useDebounceFn(async () => {
-  if (!form.title || !form.content) return
+  // Jangan autosave jika title/content kosong atau status rejected (butuh validasi strict)
+  if (!form.title || !form.content || form.status === 'rejected') return
   try {
     await $apiFetch(`/berita/${id}`, { method: 'PUT', body: form })
   } catch (e) { /* ignore autosave error */ }
@@ -160,40 +177,45 @@ const categoryOptions = [
   { label: 'Prestasi', value: 'prestasi' }
 ]
 
-const errors = reactive<{ title?: string; category?: string; tags?: string; content?: string }>({})
-watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
-watch(() => form.category, v => { errors.category = v ? undefined : 'Kategori wajib' })
-watch(() => form.tags, v => { errors.tags = (v && v.length) ? undefined : 'Tags wajib diisi' }, { deep: true })
-watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib' })
+const errors = reactive<{ title?: string; category?: string; content?: string }>({})
+watch(() => form.title, v => { if (v) errors.title = undefined })
+watch(() => form.category, v => { if (v) errors.category = undefined })
+watch(() => form.content, v => { if (v) errors.content = undefined })
 
-const tagInput = ref('')
-function addTag () {
-  const val = tagInput.value.trim()
-  if (!val) return
-  if (!form.tags.includes(val)) form.tags = [...form.tags, val]
-  tagInput.value = ''
-  errors.tags = form.tags.length ? undefined : 'Tags wajib diisi'
-}
-function removeTag (t: string) {
-  form.tags = form.tags.filter(x => x !== t)
-  errors.tags = form.tags.length ? undefined : 'Tags wajib diisi'
-}
 </script>
 
 <template>
   <div class="space-y-4">
-    <UPageHeader :title="`Edit Berita`">
+    <UPageHeader :title="`Edit Artikel`">
       <template #links>
         <div class="flex gap-2">
           <UButton v-if="current?.slug" :to="`/berita/${current.slug}`" target="_blank" variant="outline" icon="i-lucide-external-link">Lihat Halaman</UButton>
           <UButton to="/dashboard/admin/konten/berita" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-save" @click="save()">Simpan</UButton>
-          <UButton :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+          <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
             {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
           </UButton>
         </div>
       </template>
     </UPageHeader>
+
+    <!-- Alert untuk Rejection Reason (tampil untuk member jika artikel ditolak) -->
+    <UAlert 
+      v-if="!hasMinimumRole('admin_pusat') && current?.status === 'rejected' && current?.rejection_reason" 
+      color="red" 
+      variant="subtle"
+      title="Artikel Ditolak"
+      icon="i-lucide-circle-x"
+      class="mb-4 shadow-sm ring-1 ring-red-200 dark:ring-red-900 bg-red-50 dark:bg-red-950/30"
+    >
+      <template #description>
+        <p class="font-semibold mb-2">Alasan Penolakan:</p>
+        <p class="whitespace-pre-wrap">{{ current.rejection_reason }}</p>
+        <p v-if="current.rejected_at" class="text-xs mt-3 text-red-600/70 dark:text-red-400/70">
+          Ditolak pada: {{ new Date(current.rejected_at).toLocaleString('id-ID') }}
+        </p>
+      </template>
+    </UAlert>
 
     <UCard>
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -214,7 +236,7 @@ function removeTag (t: string) {
           </UFormField>
 
           <!-- Content Editor -->
-          <UFormField label="Konten Berita" :error="errors.content" class="h-full flex flex-col">
+          <UFormField label="Konten Artikel" :error="errors.content" class="h-full flex flex-col">
             <ClientOnly>
               <TiptapEditor v-model="form.content" class="min-h-[600px]" />
             </ClientOnly>
@@ -255,24 +277,43 @@ function removeTag (t: string) {
             <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" class="w-full" />
           </UFormField>
 
-          <UFormField label="Penulis">
-            <UInput v-model="form.author" placeholder="Nama penulis" class="w-full" />
+          <!-- Field author tetap di-retain dari data existing, tidak perlu input manual -->
+
+          <!-- Status Field (Hanya Admin yang bisa ubah) -->
+          <UFormField v-if="hasMinimumRole('admin_pusat')" label="Status">
+            <USelect 
+              v-model="form.status" 
+              :items="[
+                { label: 'Draft', value: 'draft' },
+                { label: 'Dipublikasi', value: 'published' },
+                { label: 'Ditolak', value: 'rejected' }
+              ]"
+              placeholder="Pilih status"
+              class="w-full"
+            />
           </UFormField>
 
-          <UFormField label="Tags" :error="errors.tags" hint="Tekan Enter untuk menambahkan tag">
-            <div class="flex flex-wrap gap-1 mb-2">
-              <UBadge v-for="t in form.tags" :key="t" :label="t" variant="subtle" @click="removeTag(t)" class="cursor-pointer" />
-            </div>
-            <UInput v-model="tagInput" placeholder="Ketik tag lalu Enter" @keyup.enter.prevent="addTag" class="w-full" />
+          <!-- Rejection Reason (hanya tampil untuk admin jika status = rejected) -->
+          <UFormField 
+            v-if="hasMinimumRole('admin_pusat') && form.status === 'rejected'" 
+            label="Alasan Penolakan" 
+            required
+            hint="Wajib diisi jika status artikel 'Ditolak'"
+          >
+            <UTextarea 
+              v-model="form.rejection_reason" 
+              placeholder="Jelaskan mengapa artikel ini ditolak..." 
+              :rows="4"
+              class="w-full"
+            />
+            <template #help>
+              <p v-if="!form.rejection_reason" class="text-red-500 text-sm">
+                Alasan penolakan wajib diisi
+              </p>
+            </template>
           </UFormField>
 
-          <UFormField label="Status">
-            <UBadge :label="form.status.toUpperCase()" :color="form.status==='published'?'primary':'neutral'" />
-          </UFormField>
 
-          <UFormField label="Tanggal Publish">
-            <UInput v-model="form.published_at" type="datetime-local" class="w-full" />
-          </UFormField>
         </div>
       </div>
     </UCard>
@@ -281,7 +322,7 @@ function removeTag (t: string) {
     <div class="flex justify-end gap-2 pt-4">
       <UButton to="/dashboard/admin/konten/berita" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
       <UButton :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-save" @click="save()">Simpan</UButton>
-      <UButton :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
+      <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.content" :icon="form.status==='published'?'i-lucide-archive':'i-lucide-send'" color="primary" @click="toggleStatus">
         {{ form.status==='published' ? 'Unpublish' : 'Publish' }}
       </UButton>
     </div>

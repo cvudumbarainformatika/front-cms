@@ -165,7 +165,7 @@ const getItems = (row: any) => [
                 class="cursor-pointer capitalize shrink-0" 
                 @click="selectedStatus = status; handleSearch()"
             >
-                {{ status.toLowerCase() }}
+                {{ status?.toLowerCase() }}
             </UButton>
           </div>
           

@@ -46,7 +46,7 @@ const subNews = computed(() => newsItems.value.slice(1, 3))
       <div>
         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4 uppercase tracking-wider bg-primary-50 text-primary-600 border border-primary-100">Updates</span>
         <h2 class="text-3xl md:text-5xl font-semibold tracking-tight mb-4 text-slate-900">
-          Berita & <span class="text-primary-500">Publikasi Ilmiah</span>
+          Artikel & <span class="text-primary-500">Publikasi Ilmiah</span>
         </h2>
       </div>
       <NuxtLink to="/berita" class="group flex items-center gap-2 font-medium text-primary-600 hover:text-primary-700 transition-colors">

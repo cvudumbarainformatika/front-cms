@@ -86,7 +86,7 @@ export const headerMenus: MenuItem[] = [
   },
   {
     id: 'berita',
-    label: 'Berita',
+    label: 'Artikel',
     slug: 'berita',
     to: '/berita',
     icon: 'i-lucide-newspaper',
@@ -261,7 +261,7 @@ export const sidebarMenus: MenuItem[] = [
     position: 'sidebar',
     order: 12,
     isActive: true,
-    roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat'],
+    roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat'],
     children: [
       {
         id: 'admin-content-beranda',
@@ -278,7 +278,7 @@ export const sidebarMenus: MenuItem[] = [
       },
       {
         id: 'admin-content-berita',
-        label: 'Berita',
+        label: 'Artikel',
         slug: 'berita',
         to: '/dashboard/admin/konten/berita',
         icon: 'i-lucide-newspaper',
@@ -287,7 +287,7 @@ export const sidebarMenus: MenuItem[] = [
         order: 1,
         isActive: true,
         isFixed: true,
-        roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
+        roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
       },
       {
         id: 'admin-content-agenda',

@@ -30,7 +30,7 @@ function copyLink() {
 
 // SEO
 useSeoMeta({
-  title: () => item.value ? `${item.value.title} - PDPI` : 'Detail Berita - PDPI',
+  title: () => item.value ? `${item.value.title} - PDPI` : 'Detail Artikel - PDPI',
   description: () => item.value?.excerpt,
   ogTitle: () => item.value?.title,
   ogDescription: () => item.value?.excerpt,
@@ -215,7 +215,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
 
             <USeparator class="my-4" />
 
-            <h3 class="text-sm font-medium text-muted">Berita Terpopuler</h3>
+            <h3 class="text-sm font-medium text-muted">Artikel Terpopuler</h3>
             <div v-if="pendingPopular" class="space-y-3">
               <div v-for="i in 6" :key="i" class="flex items-start gap-3">
                 <USkeleton class="w-14 h-14 rounded" />
@@ -313,16 +313,16 @@ const formatDateShort = (dateStr: string | null | undefined) => {
               variant="outline"
               size="lg"
             >
-              Kembali ke Berita
+              Kembali ke Artikel
             </UButton>
           </div>
         </div>
         
         <div v-else class="flex flex-col items-center justify-center py-20 text-center">
           <UIcon name="i-lucide-file-question" class="w-16 h-16 text-slate-300 mb-4" />
-          <h2 class="text-2xl font-bold text-slate-800">Berita Tidak Ditemukan</h2>
-          <p class="text-slate-500 mt-2 mb-6">Maaf, berita yang Anda cari mungkin telah dihapus atau URL salah.</p>
-          <UButton to="/berita" size="lg">Kembali ke Daftar Berita</UButton>
+          <h2 class="text-2xl font-bold text-slate-800">Artikel Tidak Ditemukan</h2>
+          <p class="text-slate-600 mt-2">Artikel yang Anda cari tidak ditemukan atau sudah dihapus</p>
+          <UButton to="/berita" size="lg">Kembali ke Daftar Artikel</UButton>
         </div>
       </ClientOnly>
     </UPageBody>

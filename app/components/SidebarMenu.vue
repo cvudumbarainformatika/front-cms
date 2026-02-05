@@ -67,45 +67,77 @@ const isDivider = (item: MenuItem): boolean => {
         <USeparator v-else />
       </div>
 
-      <!-- Menu Item with Children (Collapsible) -->
-      <UCollapsible
-        v-else-if="item.children && item.children.length > 0"
-        :default-open="item.open"
-        class="group"
-      >
-        <UButton
-          :icon="item.icon"
-          :label="collapsed ? undefined : item.label"
-          color="neutral"
-          variant="ghost"
-          block
-          :class="[
-            'justify-start',
-            item.active ? 'bg-elevated' : ''
-          ]"
-          :ui="{
-            trailingIcon: 'transition-transform duration-200 group-data-[state=open]:rotate-180'
-          }"
-          :trailing-icon="collapsed ? undefined : 'i-lucide-chevron-down'"
-        />
+      <!-- Menu Item with Children -->
+      <template v-if="item.children && item.children.length > 0">
+        <!-- Mode Collapsed: Gunakan Popover -->
+        <UPopover v-if="collapsed">
+          <UButton
+            :icon="item.icon"
+            color="neutral"
+            variant="ghost"
+            block
+            class="justify-center"
+            :class="{ 'bg-elevated': item.active }"
+          />
 
-        <template #content>
-          <div class="pl-4 mt-1 flex flex-col gap-1">
-            <UButton
-              v-for="child in item.children"
-              :key="child.id"
-              :to="child.to"
-              :icon="child.icon"
-              :label="collapsed ? undefined : child.label"
-              color="neutral"
-              variant="ghost"
-              block
-              class="justify-start"
-              :class="{ 'bg-elevated text-primary': child.to && route.path === child.to }"
-            />
-          </div>
-        </template>
-      </UCollapsible>
+          <template #content>
+            <div class="p-2 flex flex-col gap-1 min-w-48">
+              <UButton
+                v-for="child in item.children"
+                :key="child.id"
+                :to="child.to"
+                :icon="child.icon"
+                :label="child.label"
+                color="neutral"
+                variant="ghost"
+                block
+                class="justify-start"
+                :class="{ 'bg-elevated text-primary': child.to && route.path === child.to }"
+              />
+            </div>
+          </template>
+        </UPopover>
+
+        <!-- Mode Expanded: Gunakan Collapsible -->
+        <UCollapsible
+          v-else
+          :default-open="item.open"
+          class="group"
+        >
+          <UButton
+            :icon="item.icon"
+            :label="item.label"
+            color="neutral"
+            variant="ghost"
+            block
+            :class="[
+              'justify-start',
+              item.active ? 'bg-elevated' : ''
+            ]"
+            :ui="{
+              trailingIcon: 'transition-transform duration-200 group-data-[state=open]:rotate-180'
+            }"
+            trailing-icon="i-lucide-chevron-down"
+          />
+
+          <template #content>
+            <div class="pl-4 mt-1 flex flex-col gap-1">
+              <UButton
+                v-for="child in item.children"
+                :key="child.id"
+                :to="child.to"
+                :icon="child.icon"
+                :label="child.label"
+                color="neutral"
+                variant="ghost"
+                block
+                class="justify-start"
+                :class="{ 'bg-elevated text-primary': child.to && route.path === child.to }"
+              />
+            </div>
+          </template>
+        </UCollapsible>
+      </template>
 
       <!-- Simple Menu Item -->
       <UButton
@@ -116,8 +148,10 @@ const isDivider = (item: MenuItem): boolean => {
         color="neutral"
         variant="ghost"
         block
-        class="justify-start"
-        :class="{ 'bg-elevated text-primary': item.active }"
+        :class="[
+          collapsed ? 'justify-center' : 'justify-start',
+          { 'bg-elevated text-primary': item.active }
+        ]"
       />
     </template>
   </nav>

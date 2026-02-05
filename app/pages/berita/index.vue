@@ -143,9 +143,9 @@ const setSearch = (query: string) => {
 
 // SEO
 useSeoMeta({
-  title: 'Berita - PDPI',
-  description: 'Berita dan update terkini dari Perhimpunan Dokter Paru Indonesia seputar dunia respirologi',
-  ogTitle: 'Berita - PDPI'
+  title: 'Artikel - PDPI',
+  description: 'Artikel dan update terkini dari Perhimpunan Dokter Paru Indonesia seputar dunia respirologi',
+  ogTitle: 'Artikel - PDPI'
 })
 
 // Avatar URL generator
@@ -169,7 +169,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
 <template>
   <UPage >
     <UPageHeader
-      title="Berita"
+      title="Artikel"
       description="Update terbaru dari dunia respirologi Indonesia"
     />
 
@@ -345,7 +345,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
     <template #right>
       <UPageAside>
         <div class="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-auto pr-1">
-          <h3 class="text-sm font-medium text-muted">Berita Terpopuler</h3>
+          <h3 class="text-sm font-medium text-muted">Artikel Terpopuler</h3>
           <ClientOnly>
             <div v-if="pendingPopular" class="space-y-3">
               <div v-for="i in 5" :key="i" class="flex items-start gap-3">

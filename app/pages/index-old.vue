@@ -248,10 +248,10 @@ useSeoMeta({
     <!-- Latest Berita (Spotlight) -->
     <UPageSection
       v-if="latestBerita?.data?.items"
-      title="Berita Terkini"
+      title="Artikel Terkini"
       description="Update terbaru dari dunia respirologi Indonesia"
       :links="[{
-        label: 'Lihat Semua Berita',
+        label: 'Lihat Semua Artikel',
         to: '/berita',
         trailingIcon: 'i-lucide-arrow-right',
         color: 'neutral',

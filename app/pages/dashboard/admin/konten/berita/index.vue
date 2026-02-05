@@ -7,12 +7,23 @@ import type { TableColumn } from '@nuxt/ui'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { userRole, user } = useAuth()
 
 // Broadcast modal state
 const isModalOpen = ref(false)
 const selectedBeritaId = ref<number | null>(null)
 const broadcastMode = ref<'test' | 'warmup' | 'all'>('test')
 const { $apiFetch } = useNuxtApp()
+
+// Rejection Modal State
+const isRejectionModalOpen = ref(false)
+const selectedRejectionReason = ref('')
+
+function openRejectionModal(reason: string) {
+  if (!reason) return
+  selectedRejectionReason.value = reason
+  isRejectionModalOpen.value = true
+}
 
 const page = computed(() => parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
@@ -26,7 +37,8 @@ const { data, refresh, pending } = await useAsyncData(
       page: page.value, 
       limit: 10, 
       search: search.value, 
-      status: status.value === 'all' ? undefined : status.value 
+      status: status.value === 'all' ? undefined : status.value,
+      author_id: userRole.value !== 'admin_pusat' && user.value?.id ? String(user.value.id) : undefined
     }
   }),
   { 
@@ -41,7 +53,7 @@ const { getImageUrl } = useImageUrl()
 
 const columns = [
   { accessorKey: 'image', id: 'image', header: 'Gambar', meta: { class: { th: 'w-16', td: 'w-16' } } },
-  { accessorKey: 'title', id: 'title', header: 'Judul Berita', meta: { class: { th: 'min-w-[300px]', td: 'min-w-[300px]' } } },
+  { accessorKey: 'title', id: 'title', header: 'Judul Artikel', meta: { class: { th: 'min-w-[300px]', td: 'min-w-[300px]' } } },
   { accessorKey: 'category', id: 'category', header: 'Kategori' },
   { accessorKey: 'status', id: 'status', header: 'Status' },
   { accessorKey: 'published_at', id: 'published_at', header: 'Tanggal Publish' },
@@ -56,7 +68,7 @@ async function onDelete(id: number) {
   if (!confirm('Hapus berita ini?')) return
   try {
     await $apiFetch(`/berita/${id}`, { method: 'DELETE' })
-    toast.add({ title: 'Berita berhasil dihapus', color: 'success' })
+    toast.add({ title: 'Artikel berhasil dihapus', color: 'success' })
     refresh()
   } catch (error: any) {
     toast.add({ title: 'Gagal menghapus berita', description: error.message, color: 'error' })
@@ -66,7 +78,7 @@ async function onDelete(id: number) {
 async function onRestore(id: number) {
   try {
     await $apiFetch(`/berita/${id}`, { method: 'PATCH', body: { deleted_at: '' } })
-    toast.add({ title: 'Berita berhasil dipulihkan', color: 'success' })
+    toast.add({ title: 'Artikel berhasil dipulihkan', color: 'success' })
     refresh()
   } catch (error: any) {
     toast.add({ title: 'Gagal memulihkan berita', description: error.message, color: 'error' })
@@ -176,10 +188,10 @@ function getItems(row: any) {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-highlighted">Kelola Berita</h1>
-        <p class="text-muted">Buat, edit, dan publikasikan artikel berita</p>
+        <h1 class="text-2xl font-bold text-highlighted">Kelola Artikel</h1>
+        <p class="text-muted">Kelola artikel, publikasi dan konten website</p>
       </div>
-      <UButton to="/dashboard/admin/konten/berita/baru" icon="i-lucide-plus" label="Berita Baru" size="lg" />
+      <UButton to="/dashboard/admin/konten/berita/baru" icon="i-lucide-plus" label="Artikel Baru" size="lg" />
     </div>
 
     <UCard :ui="{ body: { padding: 'p-0 sm:p-0' }, header: { padding: 'p-4 sm:p-6' } }">
@@ -189,6 +201,7 @@ function getItems(row: any) {
             <UButton :variant="status==='all'?'solid':'soft'" :color="status==='all'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('all')">Semua</UButton>
             <UButton :variant="status==='draft'?'solid':'soft'" :color="status==='draft'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('draft')">Draft</UButton>
             <UButton :variant="status==='published'?'solid':'soft'" :color="status==='published'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('published')">Published</UButton>
+            <UButton :variant="status==='rejected'?'solid':'soft'" :color="status==='rejected'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('rejected')">Ditolak</UButton>
             <UButton :variant="status==='deleted'?'solid':'soft'" :color="status==='deleted'?'primary':'neutral'" size="sm" class="cursor-pointer" @click="setStatus('deleted')">Deleted</UButton>
           </div>
           <div class="w-full sm:w-72 text-right">
@@ -216,7 +229,9 @@ function getItems(row: any) {
             :data="rows" 
             :columns="columns"
             class="w-full"
-            
+            :ui="{
+              tr: 'hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hover:shadow-sm cursor-pointer'
+            }"
           >
             <!-- Image Slot -->
             <template #image-cell="{ row }">
@@ -242,13 +257,14 @@ function getItems(row: any) {
             <!-- Status Slot -->
             <template #status-cell="{ row }">
                <UBadge 
-                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'draft' ? 'warning' : 'neutral'" 
+                 :color="row.original.status === 'published' ? 'primary' : row.original.status === 'rejected' ? 'error' : row.original.status === 'draft' ? 'warning' : 'neutral'" 
                  variant="subtle"
                  size="sm"
-                 class="capitalize font-semibold"
-               >
-                 {{ row.original.status }}
-               </UBadge>
+                 class="capitalize font-semibold w-fit"
+                 :class="{'cursor-pointer hover:ring-2 hover:ring-red-200 dark:hover:ring-red-900 transition-all': row.original.status === 'rejected'}"
+                 :label="row.original.status === 'published' ? 'Dipublikasi' : row.original.status === 'rejected' ? 'Ditolak' : 'Draft'"
+                 @click="row.original.status === 'rejected' && row.original.rejection_reason ? openRejectionModal(row.original.rejection_reason) : null"
+               />
             </template>
 
             <!-- Published At Slot -->
@@ -292,8 +308,16 @@ function getItems(row: any) {
 
     <!-- Broadcast Mode Selection Modal -->
     <BroadcastModeModal 
-      v-model="isModalOpen" 
+      v-model="isModalOpen"
+      :mode="broadcastMode"
       @confirm="onModeConfirm"
     />
+
+    <!-- Rejection Reason Modal -->
+    <RejectionReasonModal 
+      v-model="isRejectionModalOpen" 
+      :reason="selectedRejectionReason" 
+    />
+
   </div>
 </template>

@@ -85,6 +85,7 @@ async function save(status?: 'draft'|'published') {
 
 
 const { getImageUrl } = useImageUrl()
+const { hasMinimumRole } = useRole()
 
 // File upload using v-model
 const uploadedFile = ref<File | null>(null)
@@ -130,7 +131,7 @@ const displayImageUrl = computed(() => {
         <div class="flex gap-2">
           <UButton to="/dashboard/admin/konten/agenda" icon="i-lucide-arrow-left" variant="outline">Kembali</UButton>
           <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
-          <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+          <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
         </div>
       </template>
     </UPageHeader>
@@ -244,7 +245,7 @@ const displayImageUrl = computed(() => {
     <div class="flex justify-end gap-2 pt-4">
       <UButton to="/dashboard/admin/konten/agenda" label="Kembali" variant="outline" icon="i-lucide-arrow-left" />
       <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-archive" @click="save('draft')">Simpan Draft</UButton>
-      <UButton :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
+      <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.description" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
     </div>
   </div>
 </template>
