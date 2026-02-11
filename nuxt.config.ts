@@ -18,7 +18,7 @@ export default defineNuxtConfig({
       'plus.unsplash.com'
     ],
     alias: {
-      '/backend': (process.env.NUXT_API_SECRET_TARGET || 'http://localhost:8080') + '/api/v1'
+      '/backend': 'http://localhost:3000/backend'
     }
   },
 
@@ -43,6 +43,13 @@ export default defineNuxtConfig({
     // Private keys (Server Side Only)
     // Dapat di-override saat runtime via env var: NUXT_API_SECRET_TARGET
     apiSecretTarget: 'http://localhost:8080',
+
+    // Nuxt Image configuration at runtime
+    image: {
+      alias: {
+        '/backend': (process.env.NUXT_API_SECRET_TARGET || 'http://localhost:8080') + '/api/v1'
+      }
+    },
 
     public: {
       // Prefix backend Go yang akan di-proxy di dev dan diproxy oleh Nginx di prod
