@@ -132,16 +132,18 @@ useSeoMeta({
               :badge="{ label: `${agenda.skp} SKP` }"
               variant="outline"
               orientation="vertical"
-              :ui="{ 
+              :ui="{
                 description: 'line-clamp-2',
                 header: 'mb-6'
               }"
             >
               <template #header>
-                <img 
-                  :src="getImageUrl(agenda.image_url, 'banner')" 
+                <NuxtImg
+                  :src="getImageUrl(agenda.image_url, 'banner')"
                   :alt="agenda.title"
                   class="w-full h-48 object-cover rounded-lg block shadow-sm border border-gray-100"
+                  loading="lazy"
+                  format="webp"
                 />
               </template>
             </UBlogPost>
@@ -190,7 +192,13 @@ useSeoMeta({
                 :key="`ag-${ag.id}`"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(ag.image_url, 'thumbnail')"
+                  :alt="ag.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ ag.title }}

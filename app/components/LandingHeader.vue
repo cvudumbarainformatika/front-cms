@@ -14,7 +14,7 @@ const isMenuOpen = ref(false)
 // Filter menus by user role
 const filteredMenus = computed(() => {
   if (!headerMenus.value || pending.value) return []
-  
+
   const userRole = user.value?.role || 'public'
   return filterMenusByRole(headerMenus.value, userRole)
 })
@@ -49,8 +49,8 @@ const navigationItems = computed(() => {
 
       <!-- Menu (Desktop) - UNavigationMenu -->
       <div class="hidden md:flex items-center justify-center flex-1 mx-4">
-        <UNavigationMenu 
-          :items="navigationItems" 
+        <UNavigationMenu
+          :items="navigationItems"
           variant="link"
           :ui="{
             list: 'gap-1',
@@ -75,7 +75,7 @@ const navigationItems = computed(() => {
 
 
           </template>
-          
+
           <!-- Authenticated User Menu -->
           <template v-else>
             <UDropdownMenu
@@ -131,17 +131,32 @@ const navigationItems = computed(() => {
           <div class="flex flex-col h-full">
             <!-- Header -->
             <div class="p-4 border-b border-slate-200">
-              <NuxtLink to="/" class="flex items-center gap-2" @click="isMenuOpen = false">
-                <div class="bg-primary-500 p-1.5 rounded-lg text-white">
-                  <UIcon name="i-lucide-activity" class="w-5 h-5 stroke-[1.5]" />
-                </div>
-                <span class="text-lg font-semibold tracking-tight text-slate-900">Respira<span class="text-primary-600">Org</span></span>
-              </NuxtLink>
+              <NuxtLink to="/" class="flex items-center gap-3 group" @click="isMenuOpen = false">
+          <div class="relative w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-110 duration-300">
+            <div class="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:bg-primary/30 transition-all"></div>
+            <NuxtImg
+              src="/images/logo-pdpi.png"
+              alt="Logo PDPI"
+              class="relative w-full h-full object-contain drop-shadow-sm"
+              width="40"
+              height="40"
+              format="webp"
+            />
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-400 dark:to-primary-300 tracking-tight leading-none group-hover:to-primary-600 transition-all font-heading">
+              PDPI
+            </span>
+            <span class="text-[0.65rem] font-medium text-muted-500 dark:text-muted-400 tracking-widest uppercase group-hover:text-primary-500 transition-colors">
+              Respirologi Indonesia
+            </span>
+          </div>
+        </NuxtLink>
             </div>
 
             <!-- Mobile Navigation Menu (Vertical) -->
             <div class="flex-1 overflow-y-auto p-4">
-              <UNavigationMenu 
+              <UNavigationMenu
                 :items="navigationItems"
                 orientation="vertical"
                 variant="link"

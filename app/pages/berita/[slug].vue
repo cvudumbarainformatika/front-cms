@@ -185,7 +185,13 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="rb.id"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(rb.image_url, 'news')" :alt="rb.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(rb.image_url, 'news')"
+                  :alt="rb.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${rb.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ rb.title }}
@@ -231,7 +237,13 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="p.id"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(p.image_url, 'news')" :alt="p.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(p.image_url, 'news')"
+                  :alt="p.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${p.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ p.title }}
@@ -276,10 +288,16 @@ const formatDateShort = (dateStr: string | null | undefined) => {
              <USkeleton class="h-4 w-full" />
           </div>
         </div>
-        
+
         <div v-else-if="item">
           <div class="overflow-hidden rounded-xl border border-default mb-8">
-            <img :src="getImageUrl(item.image_url, 'banner')" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+            <NuxtImg
+              :src="getImageUrl(item.image_url, 'banner')"
+              :alt="item.title"
+              class="w-full h-[320px] lg:h-[420px] object-cover"
+              loading="lazy"
+              format="webp"
+            />
           </div>
 
           <div class="text-sm text-muted mb-6 flex items-center gap-4">
@@ -317,7 +335,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
             </UButton>
           </div>
         </div>
-        
+
         <div v-else class="flex flex-col items-center justify-center py-20 text-center">
           <UIcon name="i-lucide-file-question" class="w-16 h-16 text-slate-300 mb-4" />
           <h2 class="text-2xl font-bold text-slate-800">Artikel Tidak Ditemukan</h2>

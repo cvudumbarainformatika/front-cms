@@ -10,7 +10,7 @@ import type { HomepageData } from '~/types/content'
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
 
-const { data: home } = await useAsyncData('home-hero', 
+const { data: home } = await useAsyncData('home-hero',
   () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
   { server: false, lazy: true }
 )
@@ -22,7 +22,7 @@ const homeData = computed(() => home.value?.data)
   <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-slate-50">
     <UContainer>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-        
+
         <!-- Left Content -->
         <div class="space-y-8">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-600 text-xs font-semibold uppercase tracking-wider">
@@ -38,7 +38,7 @@ const homeData = computed(() => home.value?.data)
           <div class="text-lg md:text-lg text-slate-500 font-medium max-w-lg leading-relaxed">
             {{ homeData?.hero.description || 'Wadah profesional kesehatan paru dan respirasi untuk kemajuan sains, pelayanan medis, dan edukasi masyarakat yang berkelanjutan.' }}
           </div>
-          
+
           <div class="flex flex-col sm:flex-row gap-4">
             <UButton
               to="#agenda"
@@ -102,21 +102,23 @@ const homeData = computed(() => home.value?.data)
                 loop
                 class="w-full max-w-xl mx-auto"
               >
-                <img
+                <NuxtImg
                   :src="getImageUrl(item)"
                   :alt="`Hero Image`"
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 rounded-lg"
                   draggable="false"
-                >
+                  loading="lazy"
+                  format="webp"
+                />
               </UCarousel>
             </ClientOnly>
-            
+
             <div class="absolute inset-0 bg-gradient-to-t via-transparent to-transparent from-primary-950/80 pointer-events-none"></div>
 
             <!-- Floating Tags -->
             <div class="absolute top-8 left-8 flex flex-col gap-3 z-10">
               <span class="inline-flex items-center gap-1.5 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg bg-white/90 text-primary-800">
-                <UIcon name="i-lucide-stethoscope" class="w-3.5 h-3.5" /> 
+                <UIcon name="i-lucide-stethoscope" class="w-3.5 h-3.5" />
                 {{ (homeData?.hero as any)?.event_tag || 'Clinical Excellence' }}
               </span>
             </div>

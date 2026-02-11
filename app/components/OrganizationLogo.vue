@@ -44,10 +44,11 @@ const textSizeClasses = {
         'aspect-square flex items-center justify-center'
       ]"
     >
-      <img
+      <NuxtImg
         src="/logo_pdpi_official.png"
         alt="Logo PDPI"
         class="w-full h-full object-contain"
+        format="webp"
       />
     </div>
 

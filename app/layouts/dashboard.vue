@@ -26,7 +26,7 @@ const toggleSidebar = () => {
 const closeMobileSidebar = () => {
   mobileSidebarOpen.value = false
 }
-  
+
 // Persist desktop sidebar state
 const savedState = useCookie('sidebar-collapsed')
 onMounted(() => {
@@ -34,14 +34,14 @@ onMounted(() => {
     sidebarCollapsed.value = savedState.value === 'true'
   }
 })
-  
+
 watch(sidebarCollapsed, (value) => {
   savedState.value = value.toString()
 })
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-muted">
+  <div class="min-h-screen flex bg-slate-100 dark:bg-gray-950">
     <!-- Mobile Sidebar Overlay Backdrop -->
     <Transition
       enter-active-class="transition-opacity duration-300"
@@ -80,7 +80,7 @@ watch(sidebarCollapsed, (value) => {
       :collapsed="sidebarCollapsed"
       class="fixed left-0 top-0 h-screen z-40 hidden lg:block"
     />
-  
+
     <!-- Main Content Area -->
     <div
       :class="[
@@ -95,7 +95,7 @@ watch(sidebarCollapsed, (value) => {
       />
 
       <!-- Page Content -->
-      <main class="flex-1 p-4 lg:p-6">
+      <main class="flex-1 p-6 lg:p-10">
         <slot />
       </main>
 

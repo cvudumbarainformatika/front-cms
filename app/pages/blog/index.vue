@@ -32,7 +32,6 @@ defineOgImageComponent('Saas')
           :to="post.path"
           :title="post.title"
           :description="post.description"
-          :image="post.image"
           :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
           :authors="post.authors"
           :badge="post.badge"
@@ -42,7 +41,18 @@ defineOgImageComponent('Saas')
           :ui="{
             description: 'line-clamp-2'
           }"
-        />
+        >
+          <template #image>
+            <NuxtImg
+              v-if="post.image"
+              :src="post.image.src"
+              :alt="post.image.alt || post.title"
+              class="w-full object-cover rounded-lg"
+              loading="lazy"
+              format="webp"
+            />
+          </template>
+        </UBlogPost>
       </UBlogPosts>
     </UPageBody>
   </UContainer>

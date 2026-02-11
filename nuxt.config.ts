@@ -8,13 +8,26 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-og-image'
   ],
-  
+
+  image: {
+    domains: [
+      'localhost',
+      'be-cms.sistem-perda.id',
+      'perpamsi.or.id',
+      'images.unsplash.com',
+      'plus.unsplash.com'
+    ],
+    alias: {
+      '/backend': (process.env.NUXT_API_SECRET_TARGET || 'http://localhost:8080') + '/api/v1'
+    }
+  },
+
   colorMode: {
     preference: 'light', // default value of $colorMode.preference
     fallback: 'light', // fallback value if not system preference found
     classSuffix: ''
   },
-  
+
   devtools: {
     enabled: true
   },
@@ -29,7 +42,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (Server Side Only)
     // Dapat di-override saat runtime via env var: NUXT_API_SECRET_TARGET
-    apiSecretTarget: 'http://localhost:8080', 
+    apiSecretTarget: 'http://localhost:8080',
 
     public: {
       // Prefix backend Go yang akan di-proxy di dev dan diproxy oleh Nginx di prod

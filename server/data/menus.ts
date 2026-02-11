@@ -204,29 +204,8 @@ export const sidebarMenus: MenuItem[] = [
     isActive: true,
     roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
   },
-  {
-    id: 'skp',
-    label: 'Rekap SKP',
-    slug: 'skp',
-    to: '/dashboard/skp',
-    icon: 'i-lucide-badge-check',
-    parentId: null,
-    position: 'sidebar',
-    order: 4,
-    isActive: true,
-    roles: ['member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
-  },
-  {
-    id: 'admin-divider',
-    label: 'Administrasi',
-    slug: 'admin-divider',
-    icon: 'i-lucide-settings',
-    parentId: null,
-    position: 'sidebar',
-    order: 10,
-    isActive: true,
-    roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
-  },
+
+
   {
     id: 'admin-members',
     label: 'Kelola Users',

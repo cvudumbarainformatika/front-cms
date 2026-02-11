@@ -80,7 +80,13 @@ const subNews = computed(() => newsItems.value.slice(1, 3))
         <ScrollReveal v-if="highlight" animation="slide-up" class="lg:col-span-2">
           <NuxtLink :to="`/berita/${highlight.slug}`" class="group cursor-pointer h-full block">
             <div class="relative rounded-3xl overflow-hidden mb-4 aspect-video shadow-sm">
-              <img :src="highlight.image" :alt="highlight.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              <NuxtImg
+                :src="highlight.image"
+                :alt="highlight.title"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                format="webp"
+              />
               <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ highlight.category }}</div>
             </div>
             <div class="space-y-2">
@@ -94,15 +100,21 @@ const subNews = computed(() => newsItems.value.slice(1, 3))
         </ScrollReveal>
 
         <!-- Small Articles -->
-        <ScrollReveal 
-          v-for="(news, idx) in subNews" 
-          :key="news.id" 
-          animation="slide-up" 
+        <ScrollReveal
+          v-for="(news, idx) in subNews"
+          :key="news.id"
+          animation="slide-up"
           :delay="(Number(idx) + 1) * 200"
         >
           <NuxtLink :to="`/berita/${news.slug}`" class="group cursor-pointer h-full block">
             <div class="relative rounded-3xl overflow-hidden mb-4 aspect-4/3 shadow-sm">
-              <img :src="news.thumbnail" :alt="news.title" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              <NuxtImg
+                :src="news.thumbnail"
+                :alt="news.title"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                format="webp"
+              />
               <div class="absolute top-4 left-4 bg-primary-100/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm text-primary-700">{{ news.category }}</div>
             </div>
             <div class="space-y-2">

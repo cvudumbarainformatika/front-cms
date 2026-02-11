@@ -20,7 +20,13 @@
       <!-- Edu Card 1 -->
       <article class="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
         <div class="rounded-2xl overflow-hidden h-48 bg-slate-100 relative">
-          <img src="https://images.unsplash.com/photo-1584634731339-252c581abfc5?auto=format&fit=crop&q=80&w=600" alt="Masker" class="w-full h-full object-cover">
+          <NuxtImg
+            src="https://images.unsplash.com/photo-1584634731339-252c581abfc5?auto=format&fit=crop&q=80&w=600"
+            alt="Masker"
+            class="w-full h-full object-cover"
+            loading="lazy"
+            format="webp"
+          />
         </div>
         <div class="p-6">
           <h3 class="text-xl font-semibold mb-3 text-slate-900">Pentingnya Masker di Era Polusi Tinggi</h3>
@@ -32,7 +38,13 @@
       <!-- Edu Card 2 -->
       <article class="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
         <div class="rounded-2xl overflow-hidden h-48 bg-slate-100 relative">
-          <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=600" alt="Lari" class="w-full h-full object-cover">
+          <NuxtImg
+            src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=600"
+            alt="Lari"
+            class="w-full h-full object-cover"
+            loading="lazy"
+            format="webp"
+          />
         </div>
         <div class="p-6">
           <h3 class="text-xl font-semibold mb-3 text-slate-900">Olahraga Aman untuk Penderita Asma</h3>
@@ -44,7 +56,13 @@
       <!-- Edu Card 3 -->
       <article class="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
         <div class="rounded-2xl overflow-hidden h-48 bg-slate-100 relative">
-          <img src="https://plus.unsplash.com/premium_photo-1661766569022-1b7f918ac3f3?auto=format&fit=crop&q=80&w=600" alt="Rokok" class="w-full h-full object-cover">
+          <NuxtImg
+            src="https://plus.unsplash.com/premium_photo-1661766569022-1b7f918ac3f3?auto=format&fit=crop&q=80&w=600"
+            alt="Rokok"
+            class="w-full h-full object-cover"
+            loading="lazy"
+            format="webp"
+          />
         </div>
         <div class="p-6">
           <h3 class="text-xl font-semibold mb-3 text-slate-900">Bahaya Vape vs Rokok Konvensional</h3>

@@ -96,13 +96,13 @@ const navItems = computed(() => {
     const year = d.getUTCFullYear()
     const month = d.getUTCMonth()
     const ym = `${year}-${String(month + 1).padStart(2, '0')}`
-    
+
     if (!archivesMap.has(ym)) {
       // Nama bulan tetap menggunakan locale ID tapi dari tanggal UTC yang sama
       // Kita buat date baru dari UTC components untuk format nama bulan
       const dFormat = new Date(Date.UTC(year, month, 1))
       const title = dFormat.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', timeZone: 'UTC' })
-      
+
       const q = { ...route.query, month: ym, page: undefined, category: route.query.category || undefined }
       archivesMap.set(ym, {
         title,
@@ -209,10 +209,12 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         class="mb-8"
       >
         <template #header>
-          <img 
-            :src="getImageUrl(beritaData.data?.items[0].image_url, 'banner')" 
+          <NuxtImg
+            :src="getImageUrl(beritaData.data?.items[0].image_url, 'banner')"
             :alt="beritaData.data.items[0].title"
             class="w-full h-full object-cover rounded-lg"
+            loading="lazy"
+            format="webp"
           />
         </template>
       </UBlogPost>
@@ -264,17 +266,19 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               :badge="{ label: berita.category }"
               variant="outline"
               orientation="vertical"
-              :ui="{ 
+              :ui="{
                 description: 'line-clamp-2',
                 wrapper: 'gap-y-0',
                 header: 'mb-6'
               }"
             >
               <template #header>
-                <img 
-                  :src="getImageUrl(berita.image_url, 'news')" 
+                <NuxtImg
+                  :src="getImageUrl(berita.image_url, 'news')"
                   :alt="berita.title"
                   class="w-full h-56 object-cover rounded-lg block shadow-sm border border-gray-100"
+                  loading="lazy"
+                  format="webp"
                 />
               </template>
             </UBlogPost>
@@ -362,7 +366,13 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
                 :key="`popular-${berita.id}`"
                 class="flex items-start gap-3"
               >
-                <img :src="getImageUrl(berita.image_url, 'news')" :alt="berita.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(berita.image_url, 'news')"
+                  :alt="berita.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ berita.title }}

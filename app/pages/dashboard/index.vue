@@ -16,36 +16,42 @@ useSeoMeta({
 
 const { user, isAdmin, isAuthenticated } = useAuth()
 const router = useRouter()
+// Fetch dashboard stats
+const { data: statsResponse, status: statsStatus } = await useAsyncData('dashboard-stats', async () => {
+  const { $apiFetch } = useNuxtApp()
+  return await $apiFetch<{
+    success: boolean
+    message: string
+    data: {
+      article_count: number
+      agenda_count: number
+      member_count: number
+    }
+  }>('/dashboard/stats')
+})
 
-// Dummy stats data
-const stats = ref([
-  {
-    label: 'Total SKP',
-    value: '125',
-    icon: 'i-lucide-award',
-    change: '+12',
-    changeType: 'positive' as const
-  },
-  {
-    label: 'Sertifikat',
-    value: '8',
-    icon: 'i-lucide-file-badge',
-    change: '+2',
-    changeType: 'positive' as const
-  },
-  {
-    label: 'Status STR',
-    value: 'Aktif',
-    icon: 'i-lucide-shield-check',
-    description: 'Berlaku s/d Des 2025'
-  },
-  {
-    label: 'Status SIP',
-    value: 'Aktif',
-    icon: 'i-lucide-file-check',
-    description: 'Berlaku s/d Mar 2026'
-  }
-])
+const stats = computed(() => {
+  const data = statsResponse.value?.data || { article_count: 0, agenda_count: 0, member_count: 0 }
+
+  return [
+    {
+      label: 'Total Artikel',
+      value: data.article_count?.toLocaleString('id-ID') || '0',
+      icon: 'i-lucide-newspaper',
+    },
+    {
+      label: 'Total Agenda',
+      value: data.agenda_count?.toLocaleString('id-ID') || '0',
+      icon: 'i-lucide-calendar',
+    },
+    {
+      label: 'Anggota Direktori',
+      value: data.member_count?.toLocaleString('id-ID') || '0',
+      icon: 'i-lucide-users',
+      description: 'Terdaftar di PDPI'
+    }
+  ]
+})
 
 // Dummy upcoming events
 const upcomingEvents = ref([
@@ -72,23 +78,7 @@ const upcomingEvents = ref([
   }
 ])
 
-// Dummy notifications
-const notifications = ref([
-  {
-    id: 1,
-    title: 'Iuran Tahunan 2025',
-    message: 'Pembayaran iuran tahunan akan jatuh tempo pada 31 Januari 2025',
-    type: 'warning',
-    date: '2 hari lalu'
-  },
-  {
-    id: 2,
-    title: 'STR Akan Berakhir',
-    message: 'STR Anda akan berakhir dalam 12 bulan. Segera persiapkan perpanjangan.',
-    type: 'info',
-    date: '1 minggu lalu'
-  }
-])
+
 
 // Cek authentikasi saat komponen di mount
 const checkAuth = async () => {
@@ -104,7 +94,7 @@ onMounted(checkAuth)
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-10">
     <!-- Welcome Section -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <ClientOnly>
@@ -137,13 +127,13 @@ onMounted(checkAuth)
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
       <UPageCard
         v-for="stat in stats"
         :key="stat.label"
-        class="p-4"
+        class="p-6 transition-transform hover:-translate-y-1 duration-300"
       >
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
           <div class="p-3 rounded-lg bg-primary/10">
             <UIcon
               :name="stat.icon"
@@ -158,15 +148,6 @@ onMounted(checkAuth)
               {{ stat.value }}
             </p>
             <p
-              v-if="stat.change"
-              :class="[
-                'text-xs',
-                stat.changeType === 'positive' ? 'text-success' : 'text-error'
-              ]"
-            >
-              {{ stat.change }} bulan ini
-            </p>
-            <p
               v-if="stat.description"
               class="text-xs text-muted"
             >
@@ -178,7 +159,7 @@ onMounted(checkAuth)
     </div>
 
     <!-- Two Column Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-8">
       <!-- Upcoming Events -->
       <UPageCard>
         <template #header>
@@ -226,56 +207,7 @@ onMounted(checkAuth)
         </div>
       </UPageCard>
 
-      <!-- Notifications -->
-      <UPageCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-highlighted">
-              {{ 'Notifikasi' }}
-            </h2>
-            <UButton
-              icon="i-lucide-check-check"
-              variant="ghost"
-              size="sm"
-              color="neutral"
-            />
-          </div>
-        </template>
 
-        <div class="space-y-4">
-          <div
-            v-for="notif in notifications"
-            :key="notif.id"
-            class="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-          >
-            <div
-              :class="[
-                'p-2 rounded-lg',
-                notif.type === 'warning' ? 'bg-warning/10' : 'bg-info/10'
-              ]"
-            >
-              <UIcon
-                :name="notif.type === 'warning' ? 'i-lucide-alert-triangle' : 'i-lucide-info'"
-                :class="[
-                  'w-5 h-5',
-                  notif.type === 'warning' ? 'text-warning' : 'text-info'
-                ]"
-              />
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-highlighted">
-                {{ notif.title }}
-              </p>
-              <p class="text-sm text-muted line-clamp-2">
-                {{ notif.message }}
-              </p>
-              <p class="text-xs text-muted mt-1">
-                {{ notif.date }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </UPageCard>
     </div>
   </div>
 </template>

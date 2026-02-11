@@ -18,11 +18,29 @@ const homeData = computed(() => home.value?.data)
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12">
         <!-- Brand Column -->
         <div class="space-y-6">
-          <NuxtLink to="/" class="flex items-center gap-2">
-            <OrganizationLogo size="md" />
-          </NuxtLink>
+          <NuxtLink to="/" class="flex items-center gap-3 group">
+          <div class="relative w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-110 duration-300">
+            <div class="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:bg-primary/30 transition-all"></div>
+            <NuxtImg
+              src="/images/logo-pdpi.png"
+              alt="Logo PDPI"
+              class="relative w-full h-full object-contain drop-shadow-sm"
+              width="40"
+              height="40"
+              format="webp"
+            />
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-400 dark:to-primary-300 tracking-tight leading-none group-hover:to-primary-600 transition-all font-heading">
+              PDPI
+            </span>
+            <span class="text-[0.65rem] font-medium text-muted-500 dark:text-muted-400 tracking-widest uppercase group-hover:text-primary-500 transition-colors">
+              Respirologi Indonesia
+            </span>
+          </div>
+        </NuxtLink>
           <div class="text-slate-500 font-medium">
-            {{homeData?.hero.description}} 
+            {{homeData?.hero.description}}
           </div>
           <div class="flex gap-4">
             <NuxtLink to="#" class="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-primary-500 hover:border-primary-500 transition-all bg-white border-slate-200 text-primary-600 hover:text-white">
@@ -42,12 +60,12 @@ const homeData = computed(() => home.value?.data)
           <h4 class="font-bold mb-6 text-slate-900">Link Terkait</h4>
           <ul class="space-y-3 text-slate-500 font-medium">
             <li>
-              <NuxtLink 
-                to="https://www.direktoripdpi.com/" 
-                target="_blank" 
+              <NuxtLink
+                to="https://www.direktoripdpi.com/"
+                target="_blank"
                 class="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 transition-colors break-words"
               >
-                https://www.direktoripdpi.com/ 
+                https://www.direktoripdpi.com/
                 <UIcon name="i-lucide-external-link" class="w-4 h-4 ml-0.5 shrink-0" />
               </NuxtLink>
             </li>
@@ -71,11 +89,8 @@ const homeData = computed(() => home.value?.data)
 
       <!-- Bottom Bar -->
       <div class="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p class="text-slate-500 font-medium text-sm">© {{ new Date().getFullYear() }} Indonesian Respiratory Association. All Rights Reserved.</p>
-        <div class="flex gap-8 text-sm font-medium text-slate-500">
-          <NuxtLink to="#" class="hover:text-primary-600">Kebijakan Privasi</NuxtLink>
-          <NuxtLink to="#" class="hover:text-primary-600">Syarat & Ketentuan</NuxtLink>
-        </div>
+        <p class="text-slate-500 font-medium text-sm">© {{ new Date().getFullYear() }} Indonesian Society of Respirology. All Rights Reserved.</p>
+
       </div>
     </div>
   </footer>

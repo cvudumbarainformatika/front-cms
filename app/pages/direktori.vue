@@ -33,7 +33,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load filter options:', error)
   }
-  
+
   // Load initial data
   await loadMembers()
 })
@@ -49,7 +49,7 @@ const loadMembers = async () => {
       page: currentPage.value,
       limit: perPage
     })
-    
+
     members.value = response.members || []
     total.value = response.pagination.total
     totalPages.value = response.pagination.total_pages
@@ -98,7 +98,7 @@ const activeFilterCount = computed(() => {
 // Get avatar URL based on gender - using local images
 const getAvatarUrl = (member: any) => {
   const gender = member.jenis_kelamin?.toUpperCase()
-  
+
   if (gender === 'P') {
     // Female doctor avatar
     return '/avatars/doctor-female.png'
@@ -123,7 +123,7 @@ const getAvatarUrl = (member: any) => {
           <p class="text-lg md:text-xl text-primary-100">
             Temukan {{ total.toLocaleString() }}+ anggota Perhimpunan Dokter Paru Indonesia
           </p>
-          
+
           <div class="mt-8">
             <UButton
               to="https://www.direktoripdpi.com/"
@@ -145,9 +145,9 @@ const getAvatarUrl = (member: any) => {
       <div class="mb-8 space-y-4">
         <!-- Search Bar -->
         <div class="relative">
-          <UIcon 
-            name="i-lucide-search" 
-            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 z-10" 
+          <UIcon
+            name="i-lucide-search"
+            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 z-10"
           />
           <input
             v-model="searchQuery"
@@ -218,8 +218,8 @@ const getAvatarUrl = (member: any) => {
         <!-- Results Count -->
         <div class="flex items-center justify-between text-sm">
           <p class="text-slate-600">
-            Menampilkan 
-            <span class="font-semibold text-slate-900">{{ members.length }}</span> dari 
+            Menampilkan
+            <span class="font-semibold text-slate-900">{{ members.length }}</span> dari
             <span class="font-semibold text-slate-900">{{ total.toLocaleString() }}</span> anggota
           </p>
           <p v-if="activeFilterCount > 0" class="text-primary-600 font-medium">
@@ -258,10 +258,12 @@ const getAvatarUrl = (member: any) => {
           <!-- Avatar & Name -->
           <div class="flex items-start gap-4 mb-4">
             <div class="relative shrink-0">
-              <img
+              <NuxtImg
                 :src="getAvatarUrl(member)"
                 :alt="formatMemberName(member)"
                 class="w-16 h-16 rounded-full ring-4 ring-primary-50 group-hover:ring-primary-100 transition-all"
+                loading="lazy"
+                format="webp"
               />
               <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full ring-4 ring-white"></div>
             </div>

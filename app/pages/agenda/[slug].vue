@@ -109,7 +109,13 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <ClientOnly>
             <div class="space-y-3">
               <div v-for="ag in related" :key="ag.id" class="flex items-start gap-3">
-                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(ag.image_url, 'thumbnail')"
+                  :alt="ag.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ ag.title }}
@@ -125,7 +131,13 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
 
     <UPageBody>
       <div class="overflow-hidden rounded-xl border border-default mb-8">
-        <img :src="getImageUrl(item.image_url, 'banner')" :alt="item.title" class="w-full h-[320px] lg:h-[420px] object-cover" />
+        <NuxtImg
+          :src="getImageUrl(item.image_url, 'banner')"
+          :alt="item.title"
+          class="w-full h-[320px] lg:h-[420px] object-cover"
+          loading="lazy"
+          format="webp"
+        />
       </div>
 
       <!-- Meta -->
@@ -185,7 +197,13 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <ClientOnly>
             <div class="space-y-3">
               <div v-for="ag in latest" :key="ag.id" class="flex items-start gap-3">
-                <img :src="getImageUrl(ag.image_url, 'thumbnail')" :alt="ag.title" class="w-14 h-14 rounded object-cover" />
+                <NuxtImg
+                  :src="getImageUrl(ag.image_url, 'thumbnail')"
+                  :alt="ag.title"
+                  class="w-14 h-14 rounded object-cover"
+                  loading="lazy"
+                  format="webp"
+                />
                 <div class="min-w-0">
                   <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ ag.title }}
