@@ -97,6 +97,11 @@ const activeFilterCount = computed(() => {
 
 // Get avatar URL based on gender - using local images
 const getAvatarUrl = (member: any) => {
+  // Priority 1: Supabase Photo
+  if (member.foto && member.foto.trim() !== '') {
+    return member.foto
+  }
+
   const gender = member.jenis_kelamin?.toUpperCase()
 
   if (gender === 'P') {
@@ -258,12 +263,11 @@ const getAvatarUrl = (member: any) => {
           <!-- Avatar & Name -->
           <div class="flex items-start gap-4 mb-4">
             <div class="relative shrink-0">
-              <NuxtImg
+              <img
                 :src="getAvatarUrl(member)"
                 :alt="formatMemberName(member)"
-                class="w-16 h-16 rounded-full ring-4 ring-primary-50 group-hover:ring-primary-100 transition-all"
+                class="w-16 h-16 rounded-full ring-4 ring-primary-50 group-hover:ring-primary-100 transition-all object-cover"
                 loading="lazy"
-                format="webp"
               />
               <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full ring-4 ring-white"></div>
             </div>
@@ -338,48 +342,56 @@ const getAvatarUrl = (member: any) => {
       <!-- Pagination -->
       <div
         v-if="!loading && totalPages > 1"
-        class="mt-12 flex items-center justify-center gap-2"
+        class="mt-12 flex items-center justify-center"
       >
-        <UButton
-          @click="currentPage--"
-          :disabled="currentPage === 1"
-          color="white"
-          size="sm"
-          icon="i-lucide-chevron-left"
-        >
-          Prev
-        </UButton>
+        <div class="flex items-center gap-2 bg-white rounded-full shadow-sm border border-slate-200 p-2">
+          <!-- Prev Button -->
+          <button
+            @click="currentPage--"
+            :disabled="currentPage === 1"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500"
+            title="Halaman Sebelumnya"
+          >
+            <UIcon name="i-lucide-chevron-left" class="w-5 h-5" />
+          </button>
 
-        <div class="flex items-center gap-1">
-          <template v-for="page in totalPages" :key="page">
-            <UButton
-              v-if="Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages"
-              @click="currentPage = page"
-              :color="currentPage === page ? 'primary' : 'white'"
-              size="sm"
-              :variant="currentPage === page ? 'solid' : 'soft'"
-              class="min-w-[40px]"
-            >
-              {{ page }}
-            </UButton>
-            <span
-              v-else-if="page === currentPage - 3 || page === currentPage + 3"
-              class="px-2 text-slate-400"
-            >
-              ...
-            </span>
-          </template>
+          <!-- Page Numbers -->
+          <div class="flex items-center gap-1 px-2 border-x border-slate-100">
+            <template v-for="page in totalPages" :key="page">
+              <!-- Page Button -->
+              <button
+                v-if="Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages"
+                @click="currentPage = page"
+                :class="[
+                  'w-10 h-10 flex items-center justify-center rounded-full text-sm font-medium transition-all',
+                  currentPage === page
+                    ? 'bg-primary-600 text-white shadow-md shadow-primary-200 scale-105'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-primary-600'
+                ]"
+              >
+                {{ page }}
+              </button>
+
+              <!-- Ellipsis -->
+              <span
+                v-else-if="page === currentPage - 3 || page === currentPage + 3"
+                class="w-10 h-10 flex items-center justify-center text-slate-300"
+              >
+                <UIcon name="i-lucide-more-horizontal" class="w-4 h-4" />
+              </span>
+            </template>
+          </div>
+
+          <!-- Next Button -->
+          <button
+            @click="currentPage++"
+            :disabled="currentPage === totalPages"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500"
+            title="Halaman Selanjutnya"
+          >
+            <UIcon name="i-lucide-chevron-right" class="w-5 h-5" />
+          </button>
         </div>
-
-        <UButton
-          @click="currentPage++"
-          :disabled="currentPage === totalPages"
-          color="white"
-          size="sm"
-          trailing-icon="i-lucide-chevron-right"
-        >
-          Next
-        </UButton>
       </div>
     </UContainer>
   </div>
