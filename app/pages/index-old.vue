@@ -48,7 +48,7 @@ useSeoMeta({
               Perhimpunan Dokter Paru Indonesia
             </h1>
             <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl">
-              Organisasi profesi dokter spesialis paru terkemuka di Indonesia yang berkomitmen meningkatkan kualitas pelayanan kesehatan respiratori melalui pendidikan, penelitian, dan inovasi.
+              Perhimpunan Dokter Paru Indonesia (PDPI) adalah organisasi profesi nasional yang mewadahi para dokter spesialis paru dalam rangka meningkatkan kualitas pelayanan kesehatan paru, mendorong pengembangan ilmu pengetahuan dan teknologi kedokteran respirasi, serta berkontribusi dalam upaya penanggulangan penyakit paru di Indonesia.
             </p>
             <div class="flex flex-wrap gap-4 pt-4">
               <UButton

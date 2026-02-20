@@ -8,7 +8,7 @@ import type { HomepageData } from '../../app/types/content'
 export let homepageData: HomepageData = {
   hero: {
     title: 'Perhimpunan Dokter Paru Indonesia',
-    description: 'Organisasi profesi dokter spesialis paru terkemuka di Indonesia yang berkomitmen meningkatkan kualitas pelayanan kesehatan respiratori melalui pendidikan, penelitian, dan inovasi.',
+    description: 'Perhimpunan Dokter Paru Indonesia (PDPI) adalah organisasi profesi nasional yang mewadahi para dokter spesialis paru dalam rangka meningkatkan kualitas pelayanan kesehatan paru, mendorong pengembangan ilmu pengetahuan dan teknologi kedokteran respirasi, serta berkontribusi dalam upaya penanggulangan penyakit paru di Indonesia.',
     images: [
       'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?q=80&w=2074&auto=format&fit=crop',
