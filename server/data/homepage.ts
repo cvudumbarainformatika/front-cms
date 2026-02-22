@@ -56,7 +56,7 @@ export let homepageData: HomepageData = {
   ],
   seo: {
     title: 'PDPI - Perhimpunan Dokter Paru Indonesia',
-    description: 'Organisasi profesi dokter spesialis paru terkemuka di Indonesia. Meningkatkan kompetensi anggota dan kualitas pelayanan kesehatan respiratori.'
+    description: 'Perhimpunan Dokter Paru Indonesia (PDPI) adalah organisasi profesi nasional yang mewadahi para dokter spesialis paru dalam rangka meningkatkan kualitas pelayanan kesehatan paru, mendorong pengembangan ilmu pengetahuan dan teknologi kedokteran respirasi, serta berkontribusi dalam upaya penanggulangan penyakit paru di Indonesia.'
   }
 }
 
