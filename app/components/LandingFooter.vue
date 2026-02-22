@@ -55,7 +55,7 @@ const homeData = computed(() => home.value?.data)
 
       <!-- Bottom Bar -->
       <div class="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p class="text-slate-500 font-medium text-sm">© {{ new Date().getFullYear() }} Indonesian Society of Respirology. All Rights Reserved.</p>
+        <p class="text-slate-500 font-medium text-sm">Indonesian Society of Respirology.</p>
 
       </div>
     </div>
