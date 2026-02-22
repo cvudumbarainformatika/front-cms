@@ -9,6 +9,14 @@ export default defineNuxtConfig({
     'nuxt-og-image'
   ],
 
+  app: {
+    head: {
+      meta: [
+        { name: 'facebook-domain-verification', content: 'jwv25jwqj5z8uu1xjfwo2vs1yck28x' }
+      ]
+    }
+  },
+
   image: {
     domains: [
       'localhost',
