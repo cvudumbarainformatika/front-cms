@@ -169,12 +169,12 @@ const fetchUsers = async () => {
     const params = new URLSearchParams()
     params.append('page', page.value.toString())
     params.append('per_page', pagination.value.per_page.toString())
-    
+
     if (filters.search.trim()) params.append('q', filters.search)
     if (filters.status !== 'all') params.append('status', filters.status)
     if (filters.role !== 'all') params.append('role', filters.role)
     if (filters.cabang.trim()) params.append('cabang', filters.cabang)
-    
+
     params.append('sort', sort.column)
     params.append('order', sort.direction)
 
@@ -266,13 +266,13 @@ const handleDelete = async (user: User) => {
         await $apiFetch(`/users/delete/${user.id}`, {
           method: 'DELETE'
         })
-        
+
         toast.add({
           title: 'Berhasil',
           description: 'Anggota berhasil dihapus',
           color: 'success'
         })
-        
+
         await fetchUsers()
       } catch (error) {
         toast.add({
@@ -293,13 +293,13 @@ const handleDelete = async (user: User) => {
 //         status: 'verified'
 //       }
 //     })
-    
+
 //     toast.add({
 //       title: 'Berhasil',
 //       description: 'Anggota berhasil diverifikasi',
 //       color: 'success'
 //     })
-    
+
 //     await fetchUsers()
 //   } catch (error) {
 //     toast.add({
@@ -312,8 +312,8 @@ const handleDelete = async (user: User) => {
 
 const handleVerify = async (user: User) => {
 
-  
-  
+
+
 
   openConfirmModal(
     'Verifikasi Anggota',
@@ -327,13 +327,13 @@ const handleVerify = async (user: User) => {
             status: 'active'
           }
         })
-        
+
         toast.add({
           title: 'Berhasil',
           description: `${user.name} berhasil diverifikasi`,
           color: 'success'
         })
-        
+
         await fetchUsers()
       } catch (error) {
         toast.add({
@@ -354,13 +354,13 @@ const handleVerify = async (user: User) => {
 //         status: 'active'
 //       }
 //     })
-    
+
 //     toast.add({
 //       title: 'Berhasil',
 //       description: 'Anggota berhasil diaktifkan',
 //       color: 'success'
 //     })
-    
+
 //     await fetchUsers()
 //   } catch (error) {
 //     toast.add({
@@ -384,13 +384,13 @@ const handleApprove = async (user: User) => {
             status: 'active'
           }
         })
-        
+
         toast.add({
           title: 'Berhasil',
           description: `${user.name} berhasil diaktifkan`,
           color: 'success'
         })
-        
+
         await fetchUsers()
       } catch (error) {
         toast.add({
@@ -487,18 +487,7 @@ const getRoleLabel = (role: string) => {
         </p>
       </div>
       <div class="flex gap-2">
-        <UButton
-          icon="i-lucide-plus"
-          label="Tambah Anggota"
-          to="/dashboard/admin/anggota/create"
-          color="primary"
-        />
-        <UButton
-          icon="i-lucide-download"
-          label="Export"
-          variant="soft"
-          color="neutral"
-        />
+        <!-- Buttons removed as per request -->
       </div>
     </div>
 
@@ -706,27 +695,10 @@ const getRoleLabel = (role: string) => {
                   />
 
                   <!-- Approve Button (untuk verified) -->
-                 
 
-                  <!-- Edit Button -->
-                  <UButton
-                    icon="i-lucide-edit"
-                    size="xs"
-                    color="neutral"
-                    variant="soft"
-                    @click="handleEdit(user)"
-                    title="Edit"
-                  />
 
-                  <!-- Delete Button -->
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    size="xs"
-                    color="error"
-                    variant="soft"
-                    @click="handleDelete(user)"
-                    title="Hapus"
-                  />
+                  <!-- Edit Button (Removed) -->
+                  <!-- Delete Button (Removed) -->
                 </div>
               </td>
             </tr>
@@ -791,7 +763,7 @@ const getRoleLabel = (role: string) => {
         </div>
       </template>
     </UCard>
-  
+
     <UModal v-model:open="isConfirmModalOpen" description="" title="">
     <!-- <UButton label="Open" color="neutral" variant="subtle" /> -->
       <template #header>
@@ -800,7 +772,7 @@ const getRoleLabel = (role: string) => {
       </template>
     <template #body>
       <p>{{ confirmModal.description }}</p>
-      
+
     </template>
 
     <template #footer="{ close }">
@@ -809,8 +781,8 @@ const getRoleLabel = (role: string) => {
             @click="handleConfirmModal" />
     </template>
   </UModal>
-  
+
   </div>
 
-  
+
 </template>
