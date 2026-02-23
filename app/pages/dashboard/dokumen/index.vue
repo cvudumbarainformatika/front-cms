@@ -241,72 +241,79 @@ onMounted(() => {
         <p class="text-xs text-muted mt-1">Coba gunakan kata kunci pencarian yang lain atau unggah dokumen baru.</p>
       </div>
 
-      <UCard
+      <div
         v-for="doc in documents"
         :key="doc.id"
-        class="flex flex-col h-full overflow-hidden hover:ring-1 hover:ring-primary-500/50 transition-all duration-200"
+        class="bg-white dark:bg-gray-900 rounded-lg ring-1 ring-gray-200 dark:ring-gray-800 flex flex-col h-full overflow-hidden group hover:shadow-md transition-shadow duration-300"
       >
-        <div class="aspect-video bg-gray-100 dark:bg-gray-800 relative group overflow-hidden border-b border-gray-100 dark:border-gray-800">
+        <!-- Thumbnail Section (Edge to Edge) -->
+        <div class="relative w-full aspect-4/3 bg-gray-100 dark:bg-gray-800 overflow-hidden border-b border-gray-100 dark:border-gray-800">
            <img
              v-if="isImage(doc.file_url)"
              :src="getFileUrl(doc.file_url)"
-             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+             class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
              :alt="doc.name"
            />
-           <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-              <UIcon name="i-lucide-file-text" class="w-12 h-12 mb-2 stroke-[1.5]" />
-              <span class="text-xs font-medium uppercase tracking-wider">{{ doc.file_url?.split('.').pop() || 'File' }}</span>
+           <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-800/80">
+              <div class="p-4 rounded-full bg-white dark:bg-gray-900 shadow-sm mb-3">
+                 <UIcon name="i-lucide-file-text" class="w-8 h-8 text-primary-500" />
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ doc.file_url?.split('.').pop() || 'File' }}</span>
            </div>
 
-           <!-- Overlay actions -->
-           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+           <!-- Overlay Actions -->
+           <div class="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
               <UButton
                 icon="i-lucide-external-link"
-                color="neutral"
+                color="primary"
+                label="Buka Dokumen"
                 variant="solid"
-                title="Lihat Dokumen"
+                class="shadow-lg hover:scale-105 transition-transform"
                 :to="getFileUrl(doc.file_url)"
                 target="_blank"
                 external
               />
            </div>
+
+           <!-- Status Badge Positioned over image -->
+           <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+             <UBadge :label="doc.type" size="sm" variant="solid" color="neutral" class="shadow-sm font-medium" />
+           </div>
         </div>
 
+        <!-- Content Section -->
         <div class="p-4 flex-1 flex flex-col">
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <h3 class="font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight">{{ doc.name }}</h3>
-            <UBadge :label="doc.type" size="xs" variant="soft" color="neutral" class="shrink-0" />
-          </div>
+          <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-2 text-base leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ doc.name }}</h3>
 
-          <div class="mt-auto pt-3 flex flex-col gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-             <div class="flex items-center gap-1.5">
-               <UIcon name="i-lucide-calendar" class="w-3.5 h-3.5 shrink-0" />
-               <span class="truncate">Diunggah: {{ formatDate(doc.created_at) }}</span>
+          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400">
+             <div class="flex items-center gap-2">
+               <UIcon name="i-lucide-calendar" class="w-4 h-4 text-gray-400" />
+               <span class="truncate">Dibuat: {{ formatDate(doc.created_at) }}</span>
              </div>
-             <div class="flex items-center gap-1.5" :class="{ 'text-red-500': doc.valid_until && new Date(doc.valid_until) < new Date() }">
-               <UIcon name="i-lucide-hourglass" class="w-3.5 h-3.5 shrink-0" />
-               <span class="truncate">Berlaku: {{ doc.valid_until ? formatDate(doc.valid_until) : 'Seumur Hidup' }}</span>
+             <div class="flex items-center gap-2" :class="{ 'text-red-600 dark:text-red-400 font-medium': doc.valid_until && new Date(doc.valid_until) < new Date() }">
+               <UIcon name="i-lucide-hourglass" class="w-4 h-4 text-gray-400" :class="{ 'text-red-500 dark:text-red-400': doc.valid_until && new Date(doc.valid_until) < new Date() }" />
+               <span class="truncate">Batas: {{ doc.valid_until ? formatDate(doc.valid_until) : 'Seumur Hidup' }}</span>
              </div>
-             <div v-if="isAdmin" class="flex items-center gap-1.5 mt-1 pt-1.5 border-t border-gray-100 dark:border-gray-800">
-                <UIcon name="i-lucide-user" class="w-3.5 h-3.5 shrink-0" />
-                <span class="truncate">User ID: {{ doc.user_id }}</span>
+             <div v-if="isAdmin" class="flex items-center gap-2">
+                <UIcon name="i-lucide-user" class="w-4 h-4 text-gray-400" />
+                <span class="truncate">User ID: <span class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{{ doc.user_id }}</span></span>
              </div>
           </div>
         </div>
 
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton
-              icon="i-lucide-trash-2"
-              size="xs"
-              color="error"
-              variant="ghost"
-              label="Hapus"
-              @click="deleteDocument(doc.id)"
-            />
-          </div>
-        </template>
-      </UCard>
+        <!-- Footer Actions -->
+        <div class="px-3 py-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
+          <span class="text-xs text-gray-500 font-medium ml-1">ID: #{{ doc.id }}</span>
+          <UButton
+            icon="i-lucide-trash-2"
+            size="sm"
+            color="error"
+            variant="ghost"
+            class="hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+            @click="deleteDocument(doc.id)"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Table Card -->
