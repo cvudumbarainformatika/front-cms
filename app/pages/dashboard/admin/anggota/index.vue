@@ -492,67 +492,64 @@ const getRoleLabel = (role: string) => {
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+    <div class="flex flex-wrap gap-2 items-center">
       <!-- Search -->
-      <div class="w-full sm:w-72">
-        <UInput
-          v-model="searchQuery"
-          icon="i-lucide-search"
-          placeholder="Cari nama, email..."
-          size="md"
-          @change="fetchUsers"
-        >
+      <UInput
+        v-model="searchQuery"
+        icon="i-lucide-search"
+        placeholder="Cari nama, email..."
+        size="sm"
+        @change="fetchUsers"
+        class="w-full sm:w-64"
+      >
         <template v-if="searchQuery?.length" #trailing>
           <UButton
             color="neutral"
             variant="link"
-            size="sm"
+            size="xs"
             icon="i-lucide-circle-x"
             aria-label="Clear input"
             @click="handleClearSearch"
+            :padded="false"
           />
         </template>
       </UInput>
-      </div>
 
       <!-- Status Filter -->
-      <div class="w-full sm:w-48">
-        <USelect
-          v-model="filters.status"
-          :items="statusOptions"
-          value-key="value"
-          placeholder="Filter Status"
-          size="md"
-        />
-      </div>
+      <USelect
+        v-model="filters.status"
+        :items="statusOptions"
+        value-key="value"
+        placeholder="Filter Status"
+        size="sm"
+        class="w-full sm:w-40"
+      />
 
       <!-- Role Filter -->
-      <div class="w-full sm:w-48">
-        <USelect
-          v-model="filters.role"
-          :items="roleOptions"
-          value-key="value"
-          placeholder="Filter Role"
-          size="md"
-        />
-      </div>
+      <USelect
+        v-model="filters.role"
+        :items="roleOptions"
+        value-key="value"
+        placeholder="Filter Role"
+        size="sm"
+        class="w-full sm:w-40"
+      />
 
       <!-- Clear Filters -->
-      <div class="w-full sm:w-auto flex items-center">
-        <UButton
-          variant="outline"
-          color="primary"
-          icon="i-lucide-x"
-          @click="() => {
-            filters.search = ''
-            filters.status = ''
-            filters.role = ''
-            filters.cabang = ''
-            page = 1
-          }"
-          label="Clear"
-        />
-      </div>
+      <UButton
+        variant="outline"
+        color="primary"
+        icon="i-lucide-x"
+        @click="() => {
+          filters.search = ''
+          filters.status = ''
+          filters.role = ''
+          filters.cabang = ''
+          page = 1
+        }"
+        label="Clear"
+        size="sm"
+      />
     </div>
 
     <!-- Table -->
