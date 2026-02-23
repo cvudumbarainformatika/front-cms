@@ -249,17 +249,13 @@ const getItems = (row: any) => [
             :key="member.id"
             class="bg-white dark:bg-gray-900 rounded-xl ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden group hover:shadow-lg hover:ring-primary-500/30 transition-all duration-300 flex flex-col"
           >
-            <!-- Member Header: Avatar & Cover -->
-            <div class="h-24 bg-linear-to-r from-primary-500/10 to-primary-600/5 dark:from-primary-900/30 dark:to-primary-800/10 relative">
-               <div class="absolute -bottom-10 left-4">
-                 <UAvatar
-                   :src="getAvatarUrl(member)"
-                   :alt="member.nama"
-                   :text="(member.nama || 'NA').substring(0, 2).toUpperCase()"
-                   size="3xl"
-                   class="ring-4 ring-white dark:ring-gray-900 shadow-sm bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400"
-                 />
-               </div>
+            <!-- Member Header: Full Thumbnail -->
+            <div class="relative w-full aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden border-b border-gray-100 dark:border-gray-800">
+               <img
+                 :src="getAvatarUrl(member)"
+                 :alt="member.nama"
+                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+               />
                <div class="absolute top-3 right-3">
                  <UBadge
                    :label="member.status || 'Aktif'"
@@ -272,7 +268,7 @@ const getItems = (row: any) => [
             </div>
 
             <!-- Member Info -->
-            <div class="px-4 pt-12 pb-4 flex-1 flex flex-col">
+            <div class="px-4 pt-4 pb-4 flex-1 flex flex-col">
                <div class="mb-1">
                  <h3 class="font-bold text-gray-900 dark:text-white text-lg leading-tight line-clamp-1" :title="member.nama">{{ member.nama }}</h3>
                  <p class="text-sm font-medium text-primary-600 dark:text-primary-400 mt-0.5">NPA: {{ member.npa || '-' }}</p>
