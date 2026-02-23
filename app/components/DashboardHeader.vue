@@ -96,7 +96,7 @@ const emit = defineEmits<{
           }, {
             label: 'Pengaturan',
             icon: 'i-lucide-settings',
-            to: '/dashboard/pengaturan'
+            to: '/dashboard/profil/security'
           }],
           [{
             label: 'Kembali ke Beranda',
