@@ -118,6 +118,18 @@ const getStatusColor = (status: string) => {
     }
 }
 
+const getAvatarUrl = (member: any) => {
+  if (member.foto && member.foto.trim() !== '') {
+    return member.foto
+  }
+  const gender = member.jenis_kelamin?.toUpperCase()
+  if (gender === 'P') {
+    return '/avatars/doctor-female.png'
+  } else {
+    return '/avatars/doctor-male.png'
+  }
+}
+
 const getItems = (row: any) => [
   [{
     label: 'Detail',
@@ -241,7 +253,7 @@ const getItems = (row: any) => [
             <div class="h-24 bg-linear-to-r from-primary-500/10 to-primary-600/5 dark:from-primary-900/30 dark:to-primary-800/10 relative">
                <div class="absolute -bottom-10 left-4">
                  <UAvatar
-                   :src="member.foto_profil"
+                   :src="getAvatarUrl(member)"
                    :alt="member.nama"
                    :text="(member.nama || 'NA').substring(0, 2).toUpperCase()"
                    size="3xl"
@@ -312,11 +324,22 @@ const getItems = (row: any) => [
                 <span class="text-gray-400 italic" v-else>-</span>
             </template>
             <template #nama-cell="{ row }">
-                <div class="font-medium text-gray-900 dark:text-white truncate max-w-[200px] sm:max-w-[300px]" v-if="row.original.nama" :title="row.original.nama">{{ row.original.nama }}</div>
+              <div class="flex items-center gap-3">
+                <UAvatar
+                  :src="getAvatarUrl(row.original)"
+                  :alt="row.original.nama"
+                  :text="(row.original.nama || 'NA').substring(0, 2).toUpperCase()"
+                  size="sm"
+                  class="bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400"
+                />
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-[250px]" v-if="row.original.nama" :title="row.original.nama">{{ row.original.nama }}</div>
                   <span class="text-gray-400 italic" v-else>Nama Kosong</span>
-                <div class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[300px]" v-if="row.original.nama">
-                    {{ row.original.gelar ? `${row.original.gelar},` : '' }} {{ row.original.gelar2 || '' }}
+                  <div class="text-xs text-gray-500 truncate max-w-[150px] sm:max-w-[250px]" v-if="row.original.nama">
+                      {{ row.original.gelar ? `${row.original.gelar},` : '' }} {{ row.original.gelar2 || '' }}
+                  </div>
                 </div>
+              </div>
             </template>
             <template #email-cell="{ row }">
               <span class="text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[150px] sm:max-w-[200px]" :title="row.original.email">{{ row.original.email || '-' }}</span>
