@@ -17,6 +17,17 @@ const uploading = ref(false)
 const isUploadModalOpen = ref(false)
 const documents = ref<any[]>([])
 const pagination = ref({ page: 1, limit: 10, total: 0, total_pages: 0 })
+const searchQuery = ref('')
+const viewMode = ref<'grid' | 'table'>('grid')
+const searchTimeout = ref<NodeJS.Timeout | null>(null)
+
+function onSearch() {
+  if (searchTimeout.value) clearTimeout(searchTimeout.value)
+  searchTimeout.value = setTimeout(() => {
+    pagination.value.page = 1
+    fetchDocuments()
+  }, 500)
+}
 
 // Form
 const form = ref({
@@ -60,7 +71,11 @@ async function fetchDocuments() {
   loading.value = true
   try {
     const res: any = await $apiFetch('/documents', {
-      query: { page: pagination.value.page, limit: pagination.value.limit }
+      query: {
+        page: pagination.value.page,
+        limit: pagination.value.limit,
+        search: searchQuery.value || undefined
+      }
     })
 
     if (res?.data) {
@@ -185,8 +200,117 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Toolbar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="w-full sm:w-72">
+        <UInput
+          v-model="searchQuery"
+          icon="i-lucide-search"
+          placeholder="Cari nama dokumen..."
+          @input="onSearch"
+        />
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Tampilan:</span>
+        <div class="bg-gray-100 dark:bg-gray-800 p-1 flex items-center rounded-lg border border-gray-200 dark:border-gray-700">
+          <button
+            @click="viewMode = 'grid'"
+            :class="['p-1.5 rounded-md transition-colors', viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+            title="Tampilan Grid"
+          >
+            <UIcon name="i-lucide-layout-grid" class="w-4 h-4" />
+          </button>
+          <button
+            @click="viewMode = 'table'"
+            :class="['p-1.5 rounded-md transition-colors', viewMode === 'table' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+            title="Tampilan Tabel"
+          >
+            <UIcon name="i-lucide-list" class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid View -->
+    <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div v-if="!loading && documents.length === 0" class="col-span-full p-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="rounded-full bg-gray-50 dark:bg-gray-800/50 p-4 inline-flex mb-4">
+          <UIcon name="i-lucide-search-x" class="w-8 h-8 text-gray-400" />
+        </div>
+        <p class="text-muted font-medium">Dokumen tidak ditemukan</p>
+        <p class="text-xs text-muted mt-1">Coba gunakan kata kunci pencarian yang lain atau unggah dokumen baru.</p>
+      </div>
+
+      <UCard
+        v-for="doc in documents"
+        :key="doc.id"
+        class="flex flex-col h-full overflow-hidden hover:ring-1 hover:ring-primary-500/50 transition-all duration-200"
+      >
+        <div class="aspect-video bg-gray-100 dark:bg-gray-800 relative group overflow-hidden border-b border-gray-100 dark:border-gray-800">
+           <img
+             v-if="isImage(doc.file_url)"
+             :src="getFileUrl(doc.file_url)"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+             :alt="doc.name"
+           />
+           <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+              <UIcon name="i-lucide-file-text" class="w-12 h-12 mb-2 stroke-[1.5]" />
+              <span class="text-xs font-medium uppercase tracking-wider">{{ doc.file_url?.split('.').pop() || 'File' }}</span>
+           </div>
+
+           <!-- Overlay actions -->
+           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+              <UButton
+                icon="i-lucide-external-link"
+                color="neutral"
+                variant="solid"
+                title="Lihat Dokumen"
+                :to="getFileUrl(doc.file_url)"
+                target="_blank"
+                external
+              />
+           </div>
+        </div>
+
+        <div class="p-4 flex-1 flex flex-col">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight">{{ doc.name }}</h3>
+            <UBadge :label="doc.type" size="xs" variant="soft" color="neutral" class="shrink-0" />
+          </div>
+
+          <div class="mt-auto pt-3 flex flex-col gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+             <div class="flex items-center gap-1.5">
+               <UIcon name="i-lucide-calendar" class="w-3.5 h-3.5 shrink-0" />
+               <span class="truncate">Diunggah: {{ formatDate(doc.created_at) }}</span>
+             </div>
+             <div class="flex items-center gap-1.5" :class="{ 'text-red-500': doc.valid_until && new Date(doc.valid_until) < new Date() }">
+               <UIcon name="i-lucide-hourglass" class="w-3.5 h-3.5 shrink-0" />
+               <span class="truncate">Berlaku: {{ doc.valid_until ? formatDate(doc.valid_until) : 'Seumur Hidup' }}</span>
+             </div>
+             <div v-if="isAdmin" class="flex items-center gap-1.5 mt-1 pt-1.5 border-t border-gray-100 dark:border-gray-800">
+                <UIcon name="i-lucide-user" class="w-3.5 h-3.5 shrink-0" />
+                <span class="truncate">User ID: {{ doc.user_id }}</span>
+             </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton
+              icon="i-lucide-trash-2"
+              size="xs"
+              color="error"
+              variant="ghost"
+              label="Hapus"
+              @click="deleteDocument(doc.id)"
+            />
+          </div>
+        </template>
+      </UCard>
+    </div>
+
     <!-- Table Card -->
-    <UCard :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+    <UCard v-else-if="viewMode === 'table'" class="overflow-hidden">
       <div class="overflow-x-auto">
         <UTable
           :columns="columns"
@@ -254,34 +378,33 @@ onMounted(() => {
           <p class="text-xs text-muted mt-1">Silakan unggah dokumen persyaratan Anda</p>
         </div>
       </div>
-
-      <template #footer v-if="pagination.total > pagination.limit">
-         <div class="flex items-center justify-between py-2">
-           <span class="text-xs text-muted">Total: {{ pagination.total }} dokumen</span>
-           <div class="flex items-center gap-2">
-              <UButton
-                :disabled="pagination.page <= 1"
-                icon="i-lucide-chevron-left"
-                @click="pagination.page--; fetchDocuments()"
-                variant="ghost"
-                size="sm"
-                color="neutral"
-              />
-              <span class="text-sm font-medium">
-                {{ pagination.page }} / {{ pagination.total_pages }}
-              </span>
-              <UButton
-                :disabled="pagination.page >= pagination.total_pages"
-                icon="i-lucide-chevron-right"
-                @click="pagination.page++; fetchDocuments()"
-                variant="ghost"
-                size="sm"
-                color="neutral"
-              />
-           </div>
-         </div>
-      </template>
     </UCard>
+
+    <!-- Pagination -->
+    <div v-if="pagination.total > pagination.limit" class="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-800 mt-4">
+      <span class="text-xs text-muted">Total: {{ pagination.total }} dokumen</span>
+      <div class="flex items-center gap-2">
+        <UButton
+          :disabled="pagination.page <= 1"
+          icon="i-lucide-chevron-left"
+          @click="pagination.page--; fetchDocuments()"
+          variant="ghost"
+          size="sm"
+          color="neutral"
+        />
+        <span class="text-sm font-medium">
+          {{ pagination.page }} / {{ pagination.total_pages }}
+        </span>
+        <UButton
+          :disabled="pagination.page >= pagination.total_pages"
+          icon="i-lucide-chevron-right"
+          @click="pagination.page++; fetchDocuments()"
+          variant="ghost"
+          size="sm"
+          color="neutral"
+        />
+      </div>
+    </div>
 
     <!-- Upload Modal Component -->
     <UploadDocumentModal
