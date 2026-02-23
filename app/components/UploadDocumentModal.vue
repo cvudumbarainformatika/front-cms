@@ -84,14 +84,18 @@ defineExpose({
 <template>
   <UModal
     v-model:open="isOpen"
-    title=""
-    description=""
   >
+  <!-- <UModal
+    v-model:open="isOpen"
+    title="Unggah Dokumen Baru"
+    description="Unggah dokumen persyaratan baru Anda ke dalam sistem"
+    :ui="{ header: 'flex items-center gap-2' }"
+  > -->
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
            <UIcon name="i-lucide-file-up" class="w-5 h-5 text-primary-600" />
-           <span class="font-semibold text-lg">Unggah Dokumen Baru</span>
+           <h2 class="font-semibold text-lg">Unggah Dokumen Baru</h2>
         </div>
       </div>
     </template>
@@ -146,7 +150,7 @@ defineExpose({
 
         <!-- Baris 3: File Upload -->
         <UFormField
-          label="File Dokumen (PDF/JPG/PNG)"
+          label="File Dokumen (PDF/JPG/PNG/ZIP)"
           required
         >
           <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50 mt-1">
@@ -154,7 +158,7 @@ defineExpose({
               type="file"
               ref="fileInput"
               @change="handleFileChange"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.zip"
               class="block w-full text-sm text-gray-600 dark:text-gray-300
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-md file:border-0
@@ -167,7 +171,7 @@ defineExpose({
           </div>
           <p class="text-xs text-info-600 dark:text-info-400 mt-2 flex items-center gap-1">
             <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
-            Format yang didukung: PDF, JPG, PNG. Maksimal ukuran 5MB.
+            Format yang didukung: PDF, JPG, PNG, WEBP, ZIP. Maksimal ukuran 5MB.
           </p>
         </UFormField>
       </form>
