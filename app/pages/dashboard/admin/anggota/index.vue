@@ -494,7 +494,7 @@ const getRoleLabel = (role: string) => {
     <!-- Filters -->
     <div class="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
       <!-- Search -->
-      <div class="flex-1 min-w-[200px]">
+      <div class="w-full sm:w-72">
         <UInput
           v-model="searchQuery"
           icon="i-lucide-search"
@@ -538,7 +538,7 @@ const getRoleLabel = (role: string) => {
       </div>
 
       <!-- Clear Filters -->
-      <div class="flex items-center">
+      <div class="w-full sm:w-auto flex items-center">
         <UButton
           variant="outline"
           color="primary"
