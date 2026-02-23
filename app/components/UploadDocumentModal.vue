@@ -40,12 +40,12 @@ function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     const file = target.files[0]
-    if (file.size > 5 * 1024 * 1024) {
+    if (file && file.size > 5 * 1024 * 1024) {
       toast.add({ title: 'Ukuran file', description: 'Maksimal ukuran file adalah 5MB', color: 'error' })
       if (fileInput.value) fileInput.value.value = ''
       return
     }
-    form.value.file = file
+    form.value.file = file || null
   }
 }
 
@@ -94,40 +94,59 @@ defineExpose({
 
     <template #body>
       <form @submit.prevent="submitForm" class="space-y-4" id="upload-doc-form">
-        <UFormGroup label="Nama Dokumen" required>
-          <UInput v-model="form.name" placeholder="Misal: STR Tahun 2025" required />
-        </UFormGroup>
+        <!-- Baris 1: Nama & Jenis Dokumen -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <UFormGroup label="Nama atau Catatan" required>
+            <UInput
+              v-model="form.name"
+              placeholder="Misal: STR Dokter Umum Tahun 2025"
+              required
+            />
+          </UFormGroup>
 
-        <UFormGroup label="Jenis Dokumen" required>
-          <USelect
-            v-model="form.type"
-            :items="documentTypes"
-            placeholder="Pilih jenis dokumen"
-            required
-            value-key="value"
+          <UFormGroup label="Pilih Jenis Dokumen" required>
+            <USelect
+              v-model="form.type"
+              :items="documentTypes"
+              placeholder="Jenis dokumen..."
+              required
+              value-key="value"
+            />
+          </UFormGroup>
+        </div>
+
+        <!-- Baris 2: Masa Berlaku -->
+        <UFormGroup label="Masa Berlaku">
+          <UInput
+            type="date"
+            v-model="form.valid_until"
+            class="sm:w-1/2"
           />
+          <p class="text-xs text-gray-500 mt-1">Kosongkan jika dokumen berlaku seumur hidup</p>
         </UFormGroup>
 
-        <UFormGroup label="Berlaku Hingga">
-          <UInput type="date" v-model="form.valid_until" />
-          <p class="text-xs text-gray-500 mt-1">Kosongkan jika berlaku seumur hidup</p>
-        </UFormGroup>
-
-        <UFormGroup label="File Dokumen" required>
-          <input
-            type="file"
-            ref="fileInput"
-            @change="handleFileChange"
-            accept=".pdf,.jpg,.jpeg,.png"
-            class="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-primary-50 file:text-primary-700
-              hover:file:bg-primary-100"
-            required
-          />
-          <p class="text-xs text-gray-500 mt-1">Format: PDF, JPG, PNG. Maksimal 5MB.</p>
+        <!-- Baris 3: File Upload -->
+        <UFormGroup label="File Dokumen (PDF/JPG/PNG)" required>
+          <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50">
+            <input
+              type="file"
+              ref="fileInput"
+              @change="handleFileChange"
+              accept=".pdf,.jpg,.jpeg,.png"
+              class="block w-full text-sm text-gray-600 dark:text-gray-300
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-medium
+                file:bg-white dark:file:bg-gray-900 file:text-gray-700 dark:file:text-gray-200
+                file:shadow-sm file:ring-1 file:ring-gray-200 dark:file:ring-gray-700
+                hover:file:bg-gray-50 dark:hover:file:bg-gray-800 cursor-pointer"
+              required
+            />
+          </div>
+          <p class="text-xs text-info-600 dark:text-info-400 mt-1.5 flex items-center gap-1">
+            <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
+            Maksimal ukuran file 5MB.
+          </p>
         </UFormGroup>
       </form>
     </template>

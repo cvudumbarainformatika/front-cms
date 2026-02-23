@@ -88,7 +88,7 @@ function handleFileChange(e: Event) {
       if (fileInput.value) fileInput.value.value = ''
       return
     }
-    form.value.file = file
+    form.value.file = file || null
   }
 }
 
