@@ -295,18 +295,18 @@ export const sidebarMenus: MenuItem[] = [
       }
     ]
   },
-  {
-    id: 'admin-reports',
-    label: 'Laporan',
-    slug: 'laporan',
-    to: '/dashboard/admin/laporan',
-    icon: 'i-lucide-bar-chart-3',
-    parentId: null,
-    position: 'sidebar',
-    order: 13,
-    isActive: true,
-    roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
-  },
+  // {
+  //   id: 'admin-reports',
+  //   label: 'Laporan',
+  //   slug: 'laporan',
+  //   to: '/dashboard/admin/laporan',
+  //   icon: 'i-lucide-bar-chart-3',
+  //   parentId: null,
+  //   position: 'sidebar',
+  //   order: 13,
+  //   isActive: true,
+  //   roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
+  // },
   {
     id: 'admin-pdpi-sync',
     label: 'Sync PDPI',
