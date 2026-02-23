@@ -134,7 +134,7 @@ const getItems = (row: any) => [
   [{
     label: 'Detail',
     icon: 'i-lucide-eye',
-    click: () => router.push(`/dashboard/admin/daftar-anggota/${row.id}`)
+    onSelect: () => router.push(`/dashboard/admin/daftar-anggota/${row.id}`)
   }]
 ]
 </script>
