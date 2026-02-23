@@ -44,8 +44,7 @@ const columns = computed(() => {
   const baseCols = [
     { accessorKey: 'name', id: 'name', header: 'Nama Dokumen' },
     { accessorKey: 'type', id: 'type', header: 'Jenis' },
-    { accessorKey: 'valid_until', id: 'valid_until', header: 'Berlaku Hingga' },
-    { accessorKey: 'status', id: 'status', header: 'Status' }
+    { accessorKey: 'valid_until', id: 'valid_until', header: 'Berlaku Hingga' }
   ]
 
   if (isAdmin.value) {
@@ -221,16 +220,6 @@ onMounted(() => {
             <span class="text-sm" :class="{ 'text-red-500': row.original.valid_until && new Date(row.original.valid_until) < new Date() }">
               {{ row.original.valid_until ? formatDate(row.original.valid_until) : 'Seumur Hidup' }}
             </span>
-          </template>
-
-          <template #status-cell="{ row }">
-            <UBadge
-              :label="row.original.status"
-              :color="getStatusColor(row.original.status)"
-              size="xs"
-              variant="subtle"
-              class="capitalize"
-            />
           </template>
 
           <template #actions-cell="{ row }">
