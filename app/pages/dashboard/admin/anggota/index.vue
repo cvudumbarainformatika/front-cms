@@ -492,9 +492,9 @@ const getRoleLabel = (role: string) => {
     </div>
 
     <!-- Filters -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
       <!-- Search -->
-      <div>
+      <div class="flex-1 min-w-[200px]">
         <UInput
           v-model="searchQuery"
           icon="i-lucide-search"
@@ -516,7 +516,7 @@ const getRoleLabel = (role: string) => {
       </div>
 
       <!-- Status Filter -->
-      <div>
+      <div class="w-full sm:w-48">
         <USelect
           v-model="filters.status"
           :items="statusOptions"
@@ -527,7 +527,7 @@ const getRoleLabel = (role: string) => {
       </div>
 
       <!-- Role Filter -->
-      <div>
+      <div class="w-full sm:w-48">
         <USelect
           v-model="filters.role"
           :items="roleOptions"
@@ -538,7 +538,7 @@ const getRoleLabel = (role: string) => {
       </div>
 
       <!-- Clear Filters -->
-      <div class="flex gap-2">
+      <div class="flex items-center">
         <UButton
           variant="outline"
           color="primary"
