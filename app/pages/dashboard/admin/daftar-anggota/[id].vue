@@ -102,10 +102,11 @@ function formatDate(dateObj: any) {
 }
 
 const getAvatarUrl = (memberData: any) => {
-  if (memberData?.foto?.String && memberData.foto.String.trim() !== '') {
-    return memberData.foto.String
+  if (memberData?.foto && typeof memberData.foto === 'string' && memberData.foto.trim() !== '') {
+    return memberData.foto
   }
-  const gender = memberData?.jenis_kelamin?.String?.toUpperCase()
+
+  const gender = memberData?.jenis_kelamin?.toUpperCase()
   if (gender === 'P') {
     return '/avatars/doctor-female.png'
   } else {
