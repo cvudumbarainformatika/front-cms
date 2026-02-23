@@ -96,37 +96,51 @@ defineExpose({
       <form @submit.prevent="submitForm" class="space-y-4" id="upload-doc-form">
         <!-- Baris 1: Nama & Jenis Dokumen -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormGroup label="Nama atau Catatan" required>
-            <UInput
-              v-model="form.name"
-              placeholder="Misal: STR Dokter Umum Tahun 2025"
-              required
-            />
-          </UFormGroup>
-
-          <UFormGroup label="Pilih Jenis Dokumen" required>
+          <UFormGroup
+            label="Pilih Jenis Dokumen"
+            required
+            help="Tentukan kategori dokumen"
+          >
             <USelect
               v-model="form.type"
               :items="documentTypes"
-              placeholder="Jenis dokumen..."
+              placeholder="Pilih jenis dokumen..."
               required
               value-key="value"
+            />
+          </UFormGroup>
+
+          <UFormGroup
+            label="Nama atau Catatan"
+            required
+            help="Sebutkan spesifik (Misal: STR Dokter Umum 2025)"
+          >
+            <UInput
+              v-model="form.name"
+              placeholder="Tuliskan nama dokumen"
+              required
             />
           </UFormGroup>
         </div>
 
         <!-- Baris 2: Masa Berlaku -->
-        <UFormGroup label="Masa Berlaku">
+        <UFormGroup
+          label="Masa Berlaku"
+          help="Kosongkan jika dokumen berlaku seumur hidup"
+        >
           <UInput
             type="date"
             v-model="form.valid_until"
             class="sm:w-1/2"
           />
-          <p class="text-xs text-gray-500 mt-1">Kosongkan jika dokumen berlaku seumur hidup</p>
         </UFormGroup>
 
         <!-- Baris 3: File Upload -->
-        <UFormGroup label="File Dokumen (PDF/JPG/PNG)" required>
+        <UFormGroup
+          label="File Dokumen (PDF/JPG/PNG)"
+          required
+          help="Format: PDF, JPG, PNG. Maksimal ukuran 5MB."
+        >
           <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50">
             <input
               type="file"
@@ -143,10 +157,6 @@ defineExpose({
               required
             />
           </div>
-          <p class="text-xs text-info-600 dark:text-info-400 mt-1.5 flex items-center gap-1">
-            <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
-            Maksimal ukuran file 5MB.
-          </p>
         </UFormGroup>
       </form>
     </template>
