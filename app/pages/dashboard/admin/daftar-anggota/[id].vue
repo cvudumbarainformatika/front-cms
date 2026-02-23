@@ -21,7 +21,7 @@ async function fetchMember() {
   try {
     const res: any = await $apiFetch(`/members/${id}`)
     member.value = res.data
-    selectedUserId.value = member.value.user_id?.Int64 ? Number(member.value.user_id.Int64) : null
+    selectedUserId.value = member.value.user_id ? Number(member.value.user_id) : null
   }
   catch (error: any) {
     toast.add({
@@ -102,7 +102,7 @@ function formatDate(dateObj: any) {
 }
 
 const getAvatarUrl = (memberData: any) => {
-  if (memberData?.foto && typeof memberData.foto === 'string' && memberData.foto.trim() !== '') {
+  if (memberData?.foto && memberData.foto.trim() !== '') {
     return memberData.foto
   }
 
@@ -173,11 +173,11 @@ onMounted(() => {
           <div class="flex-1">
             <div class="flex flex-wrap items-center gap-3 mb-2">
               <h1 class="text-3xl md:text-4xl font-bold text-white">
-                {{ member.gelar?.String }} {{ member.nama }} {{ member.gelar2?.String }}
+                {{ member.gelar ? `${member.gelar} ` : '' }}{{ member.nama }}{{ member.gelar2 ? `, ${member.gelar2}` : '' }}
               </h1>
               <UBadge
-                :label="member.status?.String || 'N/A'"
-                :color="member.status?.String === 'Aktif' ? 'success' : 'neutral'"
+                :label="member.status || 'N/A'"
+                :color="member.status === 'Aktif' ? 'success' : 'neutral'"
                 size="lg"
                 variant="solid"
                 class="shadow-lg"
@@ -189,13 +189,13 @@ onMounted(() => {
                 <UIcon name="i-lucide-credit-card" class="w-4 h-4" />
                 <span class="font-mono font-semibold">{{ member.npa }}</span>
               </div>
-              <div v-if="member.cabang?.String" class="flex items-center gap-2">
+              <div v-if="member.cabang" class="flex items-center gap-2">
                 <UIcon name="i-lucide-building-2" class="w-4 h-4" />
-                <span>{{ member.cabang.String }}</span>
+                <span>{{ member.cabang }}</span>
               </div>
-              <div v-if="member.email?.String" class="flex items-center gap-2">
+              <div v-if="member.email" class="flex items-center gap-2">
                 <UIcon name="i-lucide-mail" class="w-4 h-4" />
-                <span>{{ member.email.String }}</span>
+                <span>{{ member.email }}</span>
               </div>
             </div>
 
@@ -249,14 +249,14 @@ onMounted(() => {
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Lengkap</label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="font-medium">{{ member.nama }}</p>
+                <p class="font-medium">{{ member.gelar ? `${member.gelar} ` : '' }}{{ member.nama }}{{ member.gelar2 ? `, ${member.gelar2}` : '' }}</p>
               </div>
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NIK</label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="font-mono">{{ member.nik?.String || '-' }}</p>
+                <p class="font-mono">{{ member.nik || '-' }}</p>
               </div>
             </div>
 
@@ -266,7 +266,7 @@ onMounted(() => {
                 Email
               </label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="truncate">{{ member.email?.String || '-' }}</p>
+                <p class="truncate">{{ member.email || '-' }}</p>
               </div>
             </div>
 
@@ -276,7 +276,7 @@ onMounted(() => {
                 No. HP
               </label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="font-mono">{{ member.no_hp?.String || '-' }}</p>
+                <p class="font-mono">{{ member.no_hp || '-' }}</p>
               </div>
             </div>
 
@@ -286,7 +286,7 @@ onMounted(() => {
                 Tempat Lahir
               </label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p>{{ member.tempat_lahir?.String || '-' }}</p>
+                <p>{{ member.tempat_lahir || '-' }}</p>
               </div>
             </div>
 
@@ -306,7 +306,7 @@ onMounted(() => {
                 Alamat Rumah
               </label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="text-sm">{{ member.alamat_rumah?.String || '-' }}</p>
+                <p class="text-sm">{{ member.alamat_rumah || '-' }}</p>
               </div>
             </div>
           </div>
@@ -329,28 +329,28 @@ onMounted(() => {
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</label>
               <div class="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg border border-emerald-200 dark:border-emerald-700/30">
-                <p class="font-medium text-emerald-700 dark:text-emerald-300">{{ member.cabang?.String || '-' }}</p>
+                <p class="font-medium text-emerald-700 dark:text-emerald-300">{{ member.cabang || '-' }}</p>
               </div>
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Provinsi</label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p>{{ member.provinsi?.String || '-' }}</p>
+                <p>{{ member.provinsi || '-' }}</p>
               </div>
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alumni</label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p>{{ member.alumni?.String || '-' }}</p>
+                <p>{{ member.alumni || '-' }}</p>
               </div>
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tahun Lulus</label>
               <div class="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p class="font-mono">{{ member.thn_lulus?.Int64 || '-' }}</p>
+                <p class="font-mono">{{ member.thn_lulus || '-' }}</p>
               </div>
             </div>
           </div>
@@ -381,7 +381,7 @@ onMounted(() => {
               <div class="space-y-2">
                 <div>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">No. STR</p>
-                  <p class="font-mono font-semibold">{{ member.no_str?.String || '-' }}</p>
+                  <p class="font-mono font-semibold">{{ member.no_str || '-' }}</p>
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Berlaku Sampai</p>
@@ -401,7 +401,7 @@ onMounted(() => {
               <div class="space-y-2">
                 <div>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">No. SIP</p>
-                  <p class="font-mono font-semibold">{{ member.no_sip?.String || '-' }}</p>
+                  <p class="font-mono font-semibold">{{ member.no_sip || '-' }}</p>
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Berlaku Sampai</p>
@@ -431,17 +431,17 @@ onMounted(() => {
                 <UIcon name="i-lucide-star" class="w-4 h-4 text-orange-500" />
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tempat Tugas Utama</p>
               </div>
-              <p class="font-medium text-lg">{{ member.tempat_tugas?.String || '-' }}</p>
+              <p class="font-medium text-lg">{{ member.tempat_tugas || '-' }}</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Tempat Praktek 1</p>
-                <p class="font-medium">{{ member.tempat_praktek_1?.String || '-' }}</p>
+                <p class="font-medium">{{ member.tempat_praktek_1 || '-' }}</p>
               </div>
               <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Tempat Praktek 2</p>
-                <p class="font-medium">{{ member.tempat_praktek_2?.String || '-' }}</p>
+                <p class="font-medium">{{ member.tempat_praktek_2 || '-' }}</p>
               </div>
             </div>
           </div>
@@ -491,13 +491,13 @@ onMounted(() => {
               </p>
             </div>
 
-            <div v-if="member.user_id?.Int64" class="p-4 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-200 dark:border-success-700/30">
+            <div v-if="member.user_id" class="p-4 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-200 dark:border-success-700/30">
               <div class="flex items-center gap-2 text-success-700 dark:text-success-300 font-semibold mb-1">
                 <UIcon name="i-lucide-check-circle-2" class="w-5 h-5" />
                 Terhubung
               </div>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                ID: <span class="font-mono">{{ member.user_id.Int64 }}</span>
+                ID: <span class="font-mono">{{ member.user_id }}</span>
               </p>
             </div>
             <div v-else class="p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -527,7 +527,7 @@ onMounted(() => {
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <span class="text-sm text-gray-500 dark:text-gray-400">Terakhir Sync</span>
               <span class="font-mono text-sm font-medium">
-                {{ member.synced_at?.Valid ? new Date(member.synced_at.Time).toLocaleDateString('id-ID') : 'Belum pernah' }}
+                {{ member.synced_at ? new Date(member.synced_at).toLocaleDateString('id-ID') : 'Belum pernah' }}
               </span>
             </div>
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
