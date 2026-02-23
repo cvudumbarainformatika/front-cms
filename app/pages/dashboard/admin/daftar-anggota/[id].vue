@@ -452,7 +452,7 @@ onMounted(() => {
       <!-- Right Column - Sidebar (1 col) -->
       <div class="space-y-6">
         <!-- System Link -->
-        <UCard v-if="isAdmin" class="backdrop-blur-sm bg-gradient-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border-primary-200 dark:border-primary-700/30 shadow-xl sticky top-6">
+        <!-- <UCard v-if="isAdmin" class="backdrop-blur-sm bg-gradient-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border-primary-200 dark:border-primary-700/30 shadow-xl sticky top-6">
           <template #header>
             <div class="flex items-center gap-3">
               <div class="p-2 bg-primary-500 rounded-lg">
@@ -511,7 +511,7 @@ onMounted(() => {
               </p>
             </div>
           </div>
-        </UCard>
+        </UCard> -->
 
         <!-- Sync Info -->
         <UCard class="backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border-white/20 shadow-xl">
