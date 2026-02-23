@@ -8,6 +8,8 @@ const toast = useToast()
 const authCookie = useCookie('auth')
 const user = computed(() => authCookie.value?.user)
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase || '/backend'
 
 // State
 const loading = ref(false)
@@ -141,6 +143,18 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function getFileUrl(url: string) {
+  if (!url) return '#'
+  if (url.startsWith('http')) return url
+  return `${apiBase}${url.replace('/api/v1', '')}`
+}
+
+function isImage(url: string) {
+  if (!url) return false
+  const lowerUrl = url.toLowerCase()
+  return lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp')
+}
+
 const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'valid': return 'success'
@@ -182,8 +196,21 @@ onMounted(() => {
           class="min-w-full"
         >
           <template #name-cell="{ row }">
-            <span class="font-medium text-gray-900 dark:text-white">{{ row.original.name }}</span>
-            <div class="text-xs text-gray-500">{{ formatDate(row.original.created_at) }}</div>
+            <div class="flex items-center gap-3">
+              <div class="shrink-0 w-10 h-10 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-700">
+                <img
+                  v-if="isImage(row.original.file_url)"
+                  :src="getFileUrl(row.original.file_url)"
+                  class="w-full h-full object-cover"
+                  alt="Thumbnail"
+                />
+                <UIcon v-else name="i-lucide-file-text" class="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <span class="font-medium text-gray-900 dark:text-white">{{ row.original.name }}</span>
+                <div class="text-xs text-gray-500">{{ formatDate(row.original.created_at) }}</div>
+              </div>
+            </div>
           </template>
 
           <template #user_id-cell="{ row }" v-if="isAdmin">
@@ -214,8 +241,9 @@ onMounted(() => {
                 color="primary"
                 variant="soft"
                 title="Lihat Dokumen"
-                :to="row.original.file_url"
+                :to="getFileUrl(row.original.file_url)"
                 target="_blank"
+                external
               />
               <UButton
                 icon="i-lucide-trash-2"
