@@ -302,8 +302,7 @@ onMounted(() => {
         </div>
 
         <!-- Footer Actions -->
-        <div class="px-3 py-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
-          <span class="text-xs text-gray-500 font-medium ml-1">ID: #{{ doc.id }}</span>
+        <div class="px-3 py-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-end">
           <UButton
             icon="i-lucide-trash-2"
             size="sm"
@@ -388,7 +387,7 @@ onMounted(() => {
     </UCard>
 
     <!-- Pagination -->
-    <div v-if="pagination.total > pagination.limit" class="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-800 mt-4">
+    <div v-if="pagination.total > 0" class="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-800 mt-4">
       <span class="text-xs text-muted">Total: {{ pagination.total }} dokumen</span>
       <div class="flex items-center gap-2">
         <UButton
