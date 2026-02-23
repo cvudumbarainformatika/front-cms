@@ -25,6 +25,8 @@ const form = ref({
 })
 const fileInput = ref<HTMLInputElement | null>(null)
 
+import UploadDocumentModal from '~/components/UploadDocumentModal.vue'
+
 // Options
 const documentTypes = [
   { label: 'STR', value: 'STR' },
@@ -90,19 +92,11 @@ function handleFileChange(e: Event) {
   }
 }
 
-async function uploadDocument() {
-  if (!form.value.name || !form.value.type || !form.value.file) {
-    toast.add({ title: 'Validasi', description: 'Mohon lengkapi semua field yang wajib', color: 'error' })
-    return
-  }
+const uploadModal = ref<InstanceType<typeof UploadDocumentModal> | null>(null)
 
-  uploading.value = true
+async function handleUpload(formData: FormData) {
   try {
-    const formData = new FormData()
-    formData.append('name', form.value.name)
-    formData.append('type', form.value.type)
-    if (form.value.valid_until) formData.append('valid_until', form.value.valid_until)
-    formData.append('file', form.value.file)
+    uploadModal.value?.setUploading(true)
 
     await $apiFetch('/documents', {
       method: 'POST',
@@ -111,10 +105,7 @@ async function uploadDocument() {
 
     toast.add({ title: 'Berhasil', description: 'Dokumen berhasil diunggah', color: 'success' })
     isUploadModalOpen.value = false
-
-    // Reset
-    form.value = { name: '', type: '', valid_until: '', file: null }
-    if (fileInput.value) fileInput.value.value = ''
+    uploadModal.value?.reset()
 
     fetchDocuments()
   } catch (error: any) {
@@ -124,7 +115,7 @@ async function uploadDocument() {
       color: 'error'
     })
   } finally {
-    uploading.value = false
+    uploadModal.value?.setUploading(false)
   }
 }
 
@@ -275,58 +266,11 @@ onMounted(() => {
       </template>
     </UCard>
 
-    <!-- Upload Modal -->
-    <UModal v-model="isUploadModalOpen">
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold leading-6">Unggah Dokumen Baru</h3>
-            <UButton color="gray" variant="ghost" icon="i-lucide-x" @click="isUploadModalOpen = false" />
-          </div>
-        </template>
-
-        <form @submit.prevent="uploadDocument" class="space-y-4">
-          <UFormGroup label="Nama Dokumen" required>
-            <UInput v-model="form.name" placeholder="Misal: STR Tahun 2025" required />
-          </UFormGroup>
-
-          <UFormGroup label="Jenis Dokumen" required>
-            <USelect
-              v-model="form.type"
-              :items="documentTypes"
-              placeholder="Pilih jenis dokumen"
-              required
-            />
-          </UFormGroup>
-
-          <UFormGroup label="Berlaku Hingga">
-            <UInput type="date" v-model="form.valid_until" />
-            <p class="text-xs text-gray-500 mt-1">Kosongkan jika berlaku seumur hidup</p>
-          </UFormGroup>
-
-          <UFormGroup label="File Dokumen" required>
-            <input
-              type="file"
-              ref="fileInput"
-              @change="handleFileChange"
-              accept=".pdf,.jpg,.jpeg,.png"
-              class="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-primary-50 file:text-primary-700
-                hover:file:bg-primary-100"
-              required
-            />
-            <p class="text-xs text-gray-500 mt-1">Format: PDF, JPG, PNG. Maksimal 5MB.</p>
-          </UFormGroup>
-
-          <div class="pt-4 flex justify-end gap-2">
-            <UButton color="gray" variant="soft" label="Batal" @click="isUploadModalOpen = false" />
-            <UButton type="submit" color="primary" label="Unggah" :loading="uploading" />
-          </div>
-        </form>
-      </UCard>
-    </UModal>
+    <!-- Upload Modal Component -->
+    <UploadDocumentModal
+      v-model="isUploadModalOpen"
+      ref="uploadModal"
+      @upload="handleUpload"
+    />
   </div>
 </template>
