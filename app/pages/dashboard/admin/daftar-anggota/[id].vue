@@ -101,6 +101,18 @@ function formatDate(dateObj: any) {
   return new Date(dateObj.Time).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+const getAvatarUrl = (memberData: any) => {
+  if (memberData?.foto?.String && memberData.foto.String.trim() !== '') {
+    return memberData.foto.String
+  }
+  const gender = memberData?.jenis_kelamin?.String?.toUpperCase()
+  if (gender === 'P') {
+    return '/avatars/doctor-female.png'
+  } else {
+    return '/avatars/doctor-male.png'
+  }
+}
+
 onMounted(() => {
   fetchMember()
   fetchUsers()
@@ -114,7 +126,7 @@ onMounted(() => {
       <!-- Gradient Background -->
       <div class="absolute inset-0 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 dark:from-primary-600 dark:via-primary-700 dark:to-primary-800" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-      
+
       <!-- Decorative Elements -->
       <div class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
       <div class="absolute bottom-0 left-0 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl" />
@@ -147,8 +159,12 @@ onMounted(() => {
           <!-- Avatar dengan Gradient Border -->
           <div class="relative group">
             <div class="absolute -inset-1 bg-gradient-to-br from-white/30 to-white/10 rounded-full blur-sm group-hover:blur-md transition-all" />
-            <div class="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 dark:from-primary-400 dark:to-primary-500 flex items-center justify-center shadow-xl">
-              <UIcon name="i-lucide-user" class="w-12 h-12 md:w-16 md:h-16 text-primary-700 dark:text-primary-900" />
+            <div class="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 dark:from-primary-400 dark:to-primary-500 overflow-hidden flex items-center justify-center shadow-xl ring-4 ring-white/20">
+              <img
+                :src="getAvatarUrl(member)"
+                :alt="member.nama"
+                class="w-full h-full object-cover"
+              />
             </div>
           </div>
 
@@ -166,7 +182,7 @@ onMounted(() => {
                 class="shadow-lg"
               />
             </div>
-            
+
             <div class="flex flex-wrap items-center gap-4 text-white/90 mb-4">
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-credit-card" class="w-4 h-4" />
