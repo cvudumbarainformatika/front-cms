@@ -82,7 +82,11 @@ defineExpose({
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" title="Unggah Dokumen Baru" description="Unggah dokumen persyaratan baru Anda ke dalam sistem">
+  <UModal
+    v-model:open="isOpen"
+    title=""
+    description=""
+  >
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
