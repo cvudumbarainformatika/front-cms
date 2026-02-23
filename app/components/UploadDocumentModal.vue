@@ -95,7 +95,7 @@ defineExpose({
     <template #body>
       <form @submit.prevent="submitForm" class="space-y-6" id="upload-doc-form">
         <!-- Baris 1: Nama & Jenis Dokumen -->
-        <UFormGroup
+        <UFormField
           label="Pilih Jenis Dokumen"
           required
           class="mb-6"
@@ -109,9 +109,9 @@ defineExpose({
             size="md"
             class="w-full"
           />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup
+        <UFormField
           label="Nama atau Catatan Dokumen"
           required
           class="mb-6"
@@ -124,10 +124,10 @@ defineExpose({
             class="w-full"
           />
           <p class="text-xs text-gray-500 mt-1.5">Berikan nama spesifik agar mudah dikenali di kemudian hari</p>
-        </UFormGroup>
+        </UFormField>
 
         <!-- Baris 2: Masa Berlaku -->
-        <UFormGroup
+        <UFormField
           label="Masa Berlaku"
           class="mb-6"
         >
@@ -138,10 +138,10 @@ defineExpose({
             size="md"
           />
           <p class="text-xs text-gray-500 mt-1.5">Kosongkan jika dokumen berlaku seumur hidup</p>
-        </UFormGroup>
+        </UFormField>
 
         <!-- Baris 3: File Upload -->
-        <UFormGroup
+        <UFormField
           label="File Dokumen (PDF/JPG/PNG)"
           required
         >
@@ -165,7 +165,7 @@ defineExpose({
             <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
             Format yang didukung: PDF, JPG, PNG. Maksimal ukuran 5MB.
           </p>
-        </UFormGroup>
+        </UFormField>
       </form>
     </template>
 
