@@ -47,6 +47,7 @@ const emit = defineEmits<{
     <div class="flex items-center gap-2">
       <!-- Notifications -->
       <UButton
+        v-if="false"
         icon="i-lucide-bell"
         color="neutral"
         variant="ghost"
