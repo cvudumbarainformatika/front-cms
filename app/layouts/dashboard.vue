@@ -38,6 +38,13 @@ onMounted(() => {
 watch(sidebarCollapsed, (value) => {
   savedState.value = value.toString()
 })
+
+useHead({
+  title: 'PDPI - ADMIN',
+  titleTemplate: (titleChunk) => {
+    return titleChunk ? `${titleChunk} - PDPI Admin` : 'PDPI - ADMIN'
+  }
+})
 </script>
 
 <template>
