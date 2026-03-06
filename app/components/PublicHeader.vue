@@ -33,7 +33,12 @@ const navigationItems = computed(() => {
 </script>
 
 <template>
-  <UHeader>
+  <UHeader
+    :ui="{
+      root: 'bg-white border-b-8 border-primary-600 sticky top-0 z-50 shadow-md',
+      container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24'
+    }"
+  >
     <template #left>
       <NuxtLink to="/" class="flex items-center">
         <OrganizationLogo size="md" />
@@ -58,7 +63,7 @@ const navigationItems = computed(() => {
             to="/login"
             label="Masuk"
             icon="i-lucide-log-in"
-            color="gray"
+            color="neutral"
             variant="ghost"
             class="bg-white text-slate-900 rounded-full px-5 shadow-sm ring-1 ring-slate-200 hover:ring-primary-500 hover:text-primary-600 transition-all"
           />

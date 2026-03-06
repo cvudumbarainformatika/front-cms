@@ -172,13 +172,43 @@ export interface FeatureItem {
  * Data Beranda (Homepage)
  */
 export interface HomepageData {
+  theme?: 'theme-1' | 'theme-2'
   hero: {
     title: string
     description: string
     images: string[]
+    label?: string
+    event_tag?: string
+    event_title?: string
+    event_desc?: string
+  }
+  about?: {
+    title?: string
+    subtitle?: string
+    description: string
+    photo?: string
+    members: {
+      name: string
+      position: string
+      photo: string
+      joinedDate: string
+    }[]
   }
   stats: StatItem[]
-  features: FeatureItem[]
+  footer?: {
+    contact: {
+      phone: string
+      email: string
+    }
+    socials: {
+      instagram: string
+      youtube: string
+    }
+    columns?: {
+      title: string
+      items: string[]
+    }[]
+  }
   seo: {
     title: string
     description: string

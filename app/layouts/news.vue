@@ -12,7 +12,7 @@
       </UContainer>
     </UMain>
 
-    <LandingFooter />
+    <PublicFooter />
     <ScrollToTop />
   </div>
 </template>

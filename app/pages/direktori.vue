@@ -117,9 +117,9 @@ const getAvatarUrl = (member: any) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+  <div class="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50">
     <!-- Hero Header -->
-    <div class="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
+    <div class="bg-linear-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
       <UContainer class="py-16">
         <div class="text-center max-w-3xl mx-auto">
           <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
@@ -133,7 +133,7 @@ const getAvatarUrl = (member: any) => {
             <UButton
               to="https://www.direktoripdpi.com/"
               target="_blank"
-              color="white"
+              color="neutral"
               variant="soft"
               size="sm"
               icon="i-lucide-external-link"
@@ -176,11 +176,7 @@ const getAvatarUrl = (member: any) => {
             size="lg"
             variant="outline"
             :ui="{
-              color: {
-                white: {
-                  outline: 'bg-white shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-primary-500 text-slate-700'
-                }
-              }
+              base: 'bg-white shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-primary-500 text-slate-700'
             }"
           >
             <template #leading>
@@ -198,11 +194,7 @@ const getAvatarUrl = (member: any) => {
             size="lg"
             variant="outline"
             :ui="{
-             color: {
-                white: {
-                  outline: 'bg-white shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-primary-500 text-slate-700'
-                }
-              }
+              base: 'bg-white shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-primary-500 text-slate-700'
             }"
           >
             <template #leading>
@@ -253,69 +245,43 @@ const getAvatarUrl = (member: any) => {
       <!-- Members Grid -->
       <div
         v-else-if="members.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12"
       >
-        <div
-          v-for="member in members"
+        <ScrollReveal
+          v-for="(member, idx) in members"
           :key="member.id"
-          class="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-primary-200 transition-all duration-300 hover:-translate-y-1"
+          animation="slide-up"
+          :delay="idx % 4 * 100"
         >
-          <!-- Avatar & Name -->
-          <div class="flex items-start gap-4 mb-4">
-            <div class="relative shrink-0">
-              <img
-                :src="getAvatarUrl(member)"
-                :alt="formatMemberName(member)"
-                class="w-16 h-16 rounded-full ring-4 ring-primary-50 group-hover:ring-primary-100 transition-all object-cover"
-                loading="lazy"
-              />
-              <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full ring-4 ring-white"></div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-bold text-slate-900 text-sm leading-tight mb-1 group-hover:text-primary-700 transition-colors line-clamp-2">
-                {{ formatMemberName(member) }}
-              </h3>
-              <p class="text-xs text-slate-500 font-medium">
-                NPA: {{ member.npa }}
-              </p>
-            </div>
-          </div>
+          <LandingMemberCard
+            :name="formatMemberName(member)"
+            :position="`NPA: ${member.npa}`"
+            :photo="getAvatarUrl(member)"
+            :show-join-date="true"
+            :joined-date="member.cabang || member.provinsi"
+            icon="i-lucide-award"
+          >
+            <!-- Original content preserved in slot -->
+            <div class="space-y-2 text-left w-full px-2">
+               <!-- Tempat Praktik -->
+               <div class="flex flex-col gap-0.5 text-slate-700">
+                 <span class="font-extrabold text-primary-600 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                   <UIcon name="i-lucide-hospital" class="w-3 h-3" />
+                   Tempat Praktik
+                 </span>
+                 <p class="text-[11px] font-bold text-slate-600 line-clamp-1 pl-4.5">{{ member.tempat_praktek_1 || 'RS / Praktik Mandiri' }}</p>
+               </div>
 
-          <!-- Info -->
-          <!-- Info -->
-          <div class="space-y-3 text-xs mt-4">
-            <!-- Tempat Praktik -->
-            <div class="flex flex-col gap-1 text-slate-700">
-              <span class="font-bold text-slate-900 flex items-center gap-1.5">
-                <UIcon name="i-lucide-hospital" class="w-3.5 h-3.5 text-primary-500" />
-                Tempat Praktik
-              </span>
-              <span class="pl-5 truncate">{{ member.tempat_praktek_1 || 'Praktik Pribadi / RS Swasta' }}</span>
+               <!-- Location details -->
+               <div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">
+                  <div v-if="member.kota_kabupaten" class="flex items-center gap-2 text-slate-500">
+                     <UIcon name="i-lucide-map-pin" class="w-3 h-3 text-slate-400" />
+                     <span class="text-[10px] font-bold uppercase truncate">{{ member.kota_kabupaten }}</span>
+                  </div>
+               </div>
             </div>
-
-            <div class="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <!-- Kota/Kabupaten -->
-              <div v-if="member.kota_kabupaten" class="flex flex-col gap-0.5 text-slate-600">
-                <span class="font-semibold text-slate-700 text-[10px]">Kota/Kabupaten:</span>
-                <div class="flex items-center gap-1.5">
-                  <UIcon name="i-lucide-map" class="w-3 h-3 text-primary-400" />
-                  <span class="truncate">{{ member.kota_kabupaten }}</span>
-                </div>
-              </div>
-
-              <!-- Provinsi -->
-              <div v-if="member.provinsi" class="flex flex-col gap-0.5 text-slate-600">
-                <span class="font-semibold text-slate-700 text-[10px]">Provinsi:</span>
-                <div class="flex items-center gap-1.5">
-                  <UIcon name="i-lucide-map-pin" class="w-3 h-3 text-primary-400" />
-                  <span class="truncate">{{ member.provinsi }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Status Badge Removed as requested -->
-        </div>
+          </LandingMemberCard>
+        </ScrollReveal>
       </div>
 
       <!-- Empty State -->
