@@ -77,7 +77,7 @@ const navLinks = computed(() => {
     </div>
 
     <!-- Main Footer (Green Background) -->
-    <div class="bg-primary-900 text-white py-20 relative overflow-hidden">
+    <div class="bg-linear-to-r from-blue-900 via-sky-800 to-emerald-600 text-white py-20 relative overflow-hidden">
       <!-- Subtle Pattern Overlay -->
       <div class="absolute inset-0 bg-[url('/images/footer-pattern.svg')] opacity-[0.03] pointer-events-none"></div>
 

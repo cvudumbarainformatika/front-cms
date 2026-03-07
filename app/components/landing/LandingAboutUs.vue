@@ -89,7 +89,7 @@ const members = computed(() => {
 
       <!-- Footer Buttons -->
       <ScrollReveal animation="fade" :delay="400">
-        <div class="mt-24 bg-primary-900 rounded-[3rem] p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-[0_40px_80px_-20px_rgba(16,185,129,0.3)]">
+        <div class="mt-24 bg-linear-to-r from-blue-900 via-sky-800 to-emerald-600 rounded-[3rem] p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-[0_40px_80px_-20px_rgba(16,185,129,0.3)]">
           <div class="absolute inset-0 bg-primary-600/10 pointer-events-none"></div>
           <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
 
