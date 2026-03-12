@@ -70,6 +70,7 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/': { ssr: false },
     '/docs': { redirect: '/docs/getting-started', prerender: false },
     '/dashboard/**': { ssr: false }
   },
