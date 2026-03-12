@@ -1,7 +1,10 @@
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
-}>()
+  type?: 'email' | 'whatsapp'
+}>(), {
+  type: 'email'
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -14,32 +17,52 @@ const isOpen = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const selectedMode = ref<'test' | 'warmup'>('test')
+const selectedMode = ref<'test' | 'warmup' | 'all'>('test')
 
-const modes = [
-  {
-    value: 'test',
-    label: 'Test Mode',
-    description: 'Kirim ke 7 email testing',
-    icon: 'i-lucide-test-tube',
-    color: 'blue'
-  },
-  {
-    value: 'warmup',
-    label: 'Warm-up Mode',
-    description: 'Kirim ke 50 member + 7 test (57 total)',
-    icon: 'i-lucide-zap',
-    color: 'orange'
-  },
-  // Full Blast hidden - uncomment when IP reputation is established
-  {
-    value: 'all',
-    label: 'Full Blast',
-    description: 'Kirim ke semua member (1800+)',
-    icon: 'i-lucide-rocket',
-    color: 'green'
+const modes = computed(() => {
+  if (props.type === 'whatsapp') {
+    return [
+      {
+        value: 'test',
+        label: 'Test Mode',
+        description: 'Kirim ke tim testing (Admin)',
+        icon: 'i-lucide-test-tube',
+        color: 'blue'
+      },
+      {
+        value: 'all',
+        label: 'Broadcast Semua',
+        description: 'Kirim ke semua anggota yang ada No. HPnya',
+        icon: 'i-lucide-rocket',
+        color: 'green'
+      }
+    ]
   }
-]
+
+  return [
+    {
+      value: 'test',
+      label: 'Test Mode',
+      description: 'Kirim ke 7 email testing',
+      icon: 'i-lucide-test-tube',
+      color: 'blue'
+    },
+    {
+      value: 'warmup',
+      label: 'Warm-up Mode',
+      description: 'Kirim ke 50 member + 7 test (57 total)',
+      icon: 'i-lucide-zap',
+      color: 'orange'
+    },
+    {
+      value: 'all',
+      label: 'Full Blast',
+      description: 'Kirim ke semua member (1800+)',
+      icon: 'i-lucide-rocket',
+      color: 'green'
+    }
+  ]
+})
 
 function handleClose() {
   emit('update:modelValue', false)
@@ -107,7 +130,11 @@ function handleConfirm() {
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
         <UButton color="neutral" variant="outline" label="Batal" @click="close" />
-        <UButton label="Kirim Email" icon="i-lucide-send" @click="handleConfirm" />
+        <UButton 
+          :label="type === 'email' ? 'Kirim Email' : 'Kirim WhatsApp'" 
+          :icon="type === 'email' ? 'i-lucide-send' : 'i-lucide-message-circle'" 
+          @click="handleConfirm" 
+        />
       </div>
     </template>
   </UModal>

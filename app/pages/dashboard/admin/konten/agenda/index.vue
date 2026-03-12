@@ -15,6 +15,7 @@ const status = computed(() => (route.query.status as string) || 'all')
 const isModalOpen = ref(false)
 const selectedAgendaId = ref<number | null>(null)
 const broadcastMode = ref<'test' | 'warmup' | 'all'>('test')
+const broadcastType = ref<'email' | 'whatsapp'>('email')
 
 const { data, refresh, pending } = await useAsyncData(
   'agenda-list',
@@ -71,13 +72,19 @@ async function onRestore(id: number) {
 
 function onBroadcastClick(id: number) {
   selectedAgendaId.value = id
-  broadcastMode.value = 'test' // Reset to test mode
+  broadcastMode.value = 'test'
+  broadcastType.value = 'email'
   isModalOpen.value = true
 }
 
 function onModeConfirm(mode: 'test' | 'warmup' | 'all') {
   if (selectedAgendaId.value) {
-    executeBroadcast(selectedAgendaId.value, mode)
+    if (broadcastType.value === 'email') {
+      executeBroadcast(selectedAgendaId.value, mode)
+    } else {
+      // Cast safely since 'warmup' isn't available in WA type UI
+      executeWABroadcast(selectedAgendaId.value, mode as 'test' | 'all')
+    }
   }
   isModalOpen.value = false
 }
@@ -123,6 +130,50 @@ async function executeBroadcast(id: number, mode: 'test' | 'warmup' | 'all') {
   }
 }
 
+function onBroadcastWAAgendaClick(id: number) {
+  selectedAgendaId.value = id
+  broadcastMode.value = 'test'
+  broadcastType.value = 'whatsapp'
+  isModalOpen.value = true
+}
+
+async function executeWABroadcast(id: number, mode: 'test' | 'all') {
+  const toastId = `wa-broadcast-agenda-${id}`
+  const modeLabel = mode === 'test' ? 'Test (Tim Testing)' : 'Semua Anggota'
+  
+  toast.add({
+    id: toastId,
+    title: 'Menyiapkan WA...',
+    description: `Mode: ${modeLabel}`,
+    loading: true,
+    timeout: 0
+  })
+
+  try {
+    const url = mode === 'test' 
+      ? `/broadcast/agenda-wa/${id}` 
+      : `/broadcast/agenda-wa/${id}?target=${mode}`
+
+    await $apiFetch(url, {
+      method: 'POST'
+    })
+    
+    toast.remove(toastId)
+    toast.add({
+      title: 'WA Terkirim',
+      description: `Agenda (${modeLabel}) sedang diproses di background`,
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.remove(toastId)
+    toast.add({
+      title: 'Gagal Kirim WA',
+      description: error.data?.message || 'Gagal menghubungi service WhatsApp',
+      color: 'error'
+    })
+  }
+}
+
 function getItems(row: any) {
   const items = [
     [
@@ -147,6 +198,11 @@ function getItems(row: any) {
       label: 'Bagikan via Email',
       icon: 'i-lucide-share-2',
       onSelect: () => onBroadcastClick(row.id)
+    })
+    items[0].push({
+      label: 'Bagikan via WhatsApp',
+      icon: 'i-lucide-message-circle',
+      onSelect: () => onBroadcastWAAgendaClick(row.id)
     })
   }
 
@@ -289,6 +345,7 @@ function getItems(row: any) {
     <!-- Broadcast Mode Selection Modal -->
     <BroadcastModeModal 
       v-model="isModalOpen" 
+      :type="broadcastType"
       @confirm="onModeConfirm"
     />
   </div>

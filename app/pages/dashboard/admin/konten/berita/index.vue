@@ -13,6 +13,7 @@ const { userRole, user } = useAuth()
 const isModalOpen = ref(false)
 const selectedBeritaId = ref<number | null>(null)
 const broadcastMode = ref<'test' | 'warmup' | 'all'>('test')
+const broadcastType = ref<'email' | 'whatsapp'>('email')
 const { $apiFetch } = useNuxtApp()
 
 // Rejection Modal State
@@ -86,16 +87,19 @@ async function onRestore(id: number) {
 }
 
 function onBroadcastClick(id: number) {
-  console.log('onBroadcastClick called with id:', id)
   selectedBeritaId.value = id
-  broadcastMode.value = 'test' // Reset to test mode
+  broadcastMode.value = 'test'
+  broadcastType.value = 'email'
   isModalOpen.value = true
-  console.log('isModalOpen set to:', isModalOpen.value)
 }
 
 function onModeConfirm(mode: 'test' | 'warmup' | 'all') {
   if (selectedBeritaId.value) {
-    executeBroadcast(selectedBeritaId.value, mode)
+    if (broadcastType.value === 'email') {
+      executeBroadcast(selectedBeritaId.value, mode)
+    } else {
+      executeWABroadcast(selectedBeritaId.value, mode as 'test' | 'all')
+    }
   }
   isModalOpen.value = false
 }
@@ -141,6 +145,50 @@ async function executeBroadcast(id: number, mode: 'test' | 'warmup' | 'all') {
   }
 }
 
+function onBroadcastWAClick(id: number) {
+  selectedBeritaId.value = id
+  broadcastMode.value = 'test'
+  broadcastType.value = 'whatsapp'
+  isModalOpen.value = true
+}
+
+async function executeWABroadcast(id: number, mode: 'test' | 'all') {
+  const toastId = `wa-broadcast-${id}`
+  const modeLabel = mode === 'test' ? 'Test (Tim Testing)' : 'Semua Anggota'
+  
+  toast.add({
+    id: toastId,
+    title: 'Menyiapkan WA...',
+    description: `Mode: ${modeLabel}`,
+    loading: true,
+    timeout: 0
+  })
+
+  try {
+    const url = mode === 'test' 
+      ? `/broadcast/berita-wa/${id}` 
+      : `/broadcast/berita-wa/${id}?target=${mode}`
+
+    await $apiFetch(url, {
+      method: 'POST'
+    })
+    
+    toast.remove(toastId)
+    toast.add({
+      title: 'WA Terkirim',
+      description: `Pesan (${modeLabel}) sedang diproses di background`,
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.remove(toastId)
+    toast.add({
+      title: 'Gagal Kirim WA',
+      description: error.data?.message || 'Gagal menghubungi service WhatsApp',
+      color: 'error'
+    })
+  }
+}
+
 function getItems(row: any) {
   const items = [
     [
@@ -165,6 +213,11 @@ function getItems(row: any) {
       label: 'Bagikan via Email',
       icon: 'i-lucide-share-2',
       onSelect: () => onBroadcastClick(row.id)
+    })
+    items[0].push({
+      label: 'Bagikan via WhatsApp',
+      icon: 'i-lucide-message-circle',
+      onSelect: () => onBroadcastWAClick(row.id)
     })
   }
 
@@ -310,6 +363,7 @@ function getItems(row: any) {
     <BroadcastModeModal 
       v-model="isModalOpen"
       :mode="broadcastMode"
+      :type="broadcastType"
       @confirm="onModeConfirm"
     />
 
