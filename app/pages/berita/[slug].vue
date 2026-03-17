@@ -11,7 +11,7 @@ const slug = route.params.slug as string
 // Fetch berita detail from backend
 const { data: berita, pending, error } = await useAsyncData(
   `berita-${slug}`,
-  () => $apiFetch(`/berita/${slug}`),
+  () => $apiFetch(`/berita/s/${slug}`),
   { server: false }
 )
 

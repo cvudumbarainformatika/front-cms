@@ -11,7 +11,7 @@ const { getImageUrl } = useImageUrl()
 // Fetch agenda detail
 const { data: res, pending, error } = await useAsyncData(
   `agenda-detail-${slug}`,
-  () => $apiFetch(`/agenda/${slug}`)
+  () => $apiFetch(`/agenda/s/${slug}`)
 )
 
 if (error.value || !res.value?.data) {

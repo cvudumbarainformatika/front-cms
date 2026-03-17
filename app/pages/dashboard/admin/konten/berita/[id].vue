@@ -13,29 +13,10 @@ const { hasMinimumRole } = useRole()
 
 const id = route.params.id as string
 
-// Fetch berita by ID - first get slug from list, then fetch detail
+// Fetch berita by ID
 const { data: beritaData, refresh } = await useAsyncData(
   `berita-edit-${id}`,
-  async () => {
-    try {
-      // First, fetch list to find the slug
-      const listResponse = await $apiFetch('/berita', {
-        query: { limit: 1000 }
-      })
-      const items = listResponse?.data?.items || []
-      const beritaFromList = items.find((b: any) => String(b.id) === String(id))
-      
-      if (!beritaFromList) {
-        return null
-      }
-      
-      // Then fetch detail by slug to get full content
-      const detailResponse = await $apiFetch(`/berita/${beritaFromList.slug}`)
-      return detailResponse
-    } catch (error) {
-      return null
-    }
-  }
+  () => $apiFetch(`/berita/${id}`)
 )
 
 const current = computed(() => beritaData.value?.data)
@@ -202,7 +183,7 @@ watch(() => form.content, v => { if (v) errors.content = undefined })
     <!-- Alert untuk Rejection Reason (tampil untuk member jika artikel ditolak) -->
     <UAlert 
       v-if="!hasMinimumRole('admin_pusat') && current?.status === 'rejected' && current?.rejection_reason" 
-      color="red" 
+      color="error" 
       variant="subtle"
       title="Artikel Ditolak"
       icon="i-lucide-circle-x"

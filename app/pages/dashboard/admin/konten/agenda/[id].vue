@@ -9,28 +9,13 @@ const { $apiFetch } = useNuxtApp()
 
 const id = route.params.id as string
 
-// Fetch agenda by ID - workaround finding in list
+// Fetch agenda by ID
 const { data: agendaData, refresh } = await useAsyncData(
   `agenda-edit-${id}`,
   async () => {
     try {
-      // Fetch list with high limit to find by ID
-      // Do not filter by status to get all (draft + published)
-      const listResponse = await $apiFetch('/agenda', {
-        query: { limit: 1000 } 
-      })
-      const items = listResponse?.data?.items || []
-      const found = items.find((b: any) => String(b.id) === String(id))
-      
-      if (!found) {
-        // If not found in list (e.g. pagination > 1000), ideally we need GetByID endpoint.
-        // For now, assume < 1000 items. 
-        // Or if we implemented GetBySlug, we could try that if we knew the slug? No.
-        // Fallback: If GetBySlug was available via some other means.
-        console.error('Agenda not found in list with ID:', id)
-        return null
-      }
-      return found
+      const res: any = await $apiFetch(`/agenda/${id}`)
+      return res?.data
     } catch (error) {
       console.error('Error fetching agenda:', error)
       return null
@@ -74,12 +59,20 @@ const typeOptions = [
   { label: 'Pelatihan', value: 'pelatihan' }
 ]
 
-const errors = reactive<{ title?: string; slug?: string; type?: string; date?: string; description?: string }>({})
-watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
-watch(() => form.slug, v => { errors.slug = v ? undefined : 'Slug wajib' })
-watch(() => form.type, v => { errors.type = v ? undefined : 'Jenis wajib' })
-watch(() => form.date, v => { errors.date = v ? undefined : 'Tanggal wajib' })
-watch(() => form.description, v => { errors.description = v ? undefined : 'Deskripsi wajib' })
+const errors = reactive<{ title?: string; slug?: string; type?: string; date?: string; location?: string; description?: string }>({})
+watch(() => form.title, v => { errors.title = v ? undefined : 'Judul harus diisi' })
+watch(() => form.slug, v => { errors.slug = v ? undefined : 'Slug harus diisi' })
+watch(() => form.type, v => { errors.type = v ? undefined : 'Jenis agenda harus dipilih' })
+watch(() => form.date, v => { errors.date = v ? undefined : 'Tanggal agenda harus diisi' })
+watch(() => form.location, v => { errors.location = v ? undefined : 'Lokasi agenda harus diisi' })
+watch(() => form.description, v => { errors.description = v ? undefined : 'Deskripsi agenda harus diisi' })
+
+// Template refs for focusing
+const titleRef = ref<any>(null)
+const slugRef = ref<any>(null)
+const typeRef = ref<any>(null)
+const dateRef = ref<any>(null)
+const locationRef = ref<any>(null)
 
 const saving = ref(false)
 function genSlug() { 
@@ -88,9 +81,46 @@ function genSlug() {
 
 async function save(status?: 'draft'|'published') {
   if (status) form.status = status
-  if (!form.title || !form.slug || !form.type || !form.date || !form.description) {
-    toast.add({ title: 'Validasi', description: 'Isi bidang wajib', color: 'warning' }); 
+
+  // Reset errors
+  Object.keys(errors).forEach(key => (errors as any)[key] = undefined)
+
+  // Explicit Validation with Specific Messages and Focus
+  if (!form.title) {
+    errors.title = 'Judul harus diisi'
+    toast.add({ title: 'Validasi Gagal', description: 'Judul agenda wajib diisi', color: 'warning' })
+    titleRef.value?.inputRef?.focus()
     return
+  }
+  if (!form.slug) {
+    errors.slug = 'Slug harus diisi'
+    toast.add({ title: 'Validasi Gagal', description: 'Slug agenda wajib diisi', color: 'warning' })
+    slugRef.value?.inputRef?.focus()
+    return
+  }
+  if (!form.type) {
+    errors.type = 'Jenis harus dipilih'
+    toast.add({ title: 'Validasi Gagal', description: 'Silakan pilih jenis agenda', color: 'warning' })
+    typeRef.value?.inputRef?.focus()
+    return
+  }
+  if (!form.date) {
+    errors.date = 'Tanggal harus diisi'
+    toast.add({ title: 'Validasi Gagal', description: 'Tanggal pelaksanaan agenda wajib diisi', color: 'warning' })
+    dateRef.value?.inputRef?.focus()
+    return
+  }
+  if (!form.location) {
+    errors.location = 'Lokasi harus diisi'
+    toast.add({ title: 'Validasi Gagal', description: 'Lokasi agenda wajib diisi', color: 'warning' })
+    locationRef.value?.inputRef?.focus()
+    return
+  }
+  if (!form.description || form.description === '<p></p>' || form.description === '<p>Deskripsi agenda...</p>') {
+    errors.description = 'Deskripsi harus diisi'
+    toast.add({ title: 'Validasi Gagal', description: 'Deskripsi agenda wajib diisi', color: 'warning' })
+    document.getElementById('description-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return 
   }
   
   saving.value = true
@@ -199,6 +229,7 @@ const displayImageUrl = computed(() => {
           <!-- Title Field - WordPress Style: Large and Prominent -->
           <UFormField label="Judul" :error="errors.title" required class="mb-4">
             <UInput 
+              ref="titleRef"
               v-model="form.title" 
               placeholder="Tambahkan judul agenda" 
               @blur="genSlug"
@@ -207,7 +238,7 @@ const displayImageUrl = computed(() => {
           </UFormField>
 
           <!-- Description Editor -->
-          <UFormField label="Deskripsi Agenda" :error="errors.description" class="h-full flex flex-col">
+          <UFormField id="description-field" label="Deskripsi Agenda" :error="errors.description" class="h-full flex flex-col">
             <ClientOnly>
               <TiptapEditor v-model="form.description" class="min-h-[600px]" />
             </ClientOnly>
@@ -218,17 +249,17 @@ const displayImageUrl = computed(() => {
         <div class="xl:col-span-3 space-y-4 bg-elevated p-4 rounded-lg">
           <UFormField label="Slug" :error="errors.slug">
             <div class="flex gap-2">
-              <UInput v-model="form.slug" placeholder="otomatis dari judul" class="flex-1" />
+              <UInput ref="slugRef" v-model="form.slug" placeholder="otomatis dari judul" class="flex-1" />
               <UButton variant="outline" @click="genSlug" icon="i-lucide-refresh-ccw" size="xs">Gen</UButton>
             </div>
           </UFormField>
 
           <UFormField label="Jenis" :error="errors.type">
-            <USelect v-model="form.type" :items="typeOptions" placeholder="Pilih jenis" class="w-full" />
+            <USelect ref="typeRef" v-model="form.type" :items="typeOptions" placeholder="Pilih jenis" class="w-full" />
           </UFormField>
 
           <UFormField label="Tanggal Mulai" :error="errors.date">
-            <UInput v-model="form.date" type="datetime-local" class="w-full" />
+            <UInput ref="dateRef" v-model="form.date" type="datetime-local" class="w-full" />
           </UFormField>
 
           <UFormField label="Tanggal Selesai">
@@ -239,8 +270,8 @@ const displayImageUrl = computed(() => {
             <USwitch v-model="form.isOnline" />
           </UFormField>
 
-          <UFormField label="Lokasi">
-            <UInput v-model="form.location" placeholder="Lokasi acara" class="w-full" />
+          <UFormField label="Lokasi" :error="errors.location" required>
+            <UInput ref="locationRef" v-model="form.location" placeholder="Lokasi acara" class="w-full" />
           </UFormField>
 
           <UFormField label="Biaya">
