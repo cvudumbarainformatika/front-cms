@@ -1,0 +1,231 @@
+<script setup lang="ts">
+definePageMeta({ layout: 'dashboard', ssr: false })
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+const { $apiFetch } = useNuxtApp()
+const { getImageUrl } = useImageUrl()
+
+// Modal State using shared BroadcastModeModal
+const isModalOpen = ref(false)
+const selectedGreetingId = ref<number | null>(null)
+const broadcastType = ref<'email' | 'whatsapp'>('email')
+
+const page = computed(() => parseInt(route.query.page as string) || 1)
+const search = computed(() => route.query.search as string || '')
+
+// Fetch greetings
+const { data, refresh, pending } = await useAsyncData(
+  'greetings-list',
+  () => $apiFetch<{ success: boolean, data: { items: any[], total: number } }>('/greetings', {
+    query: { 
+      page: page.value, 
+      limit: 10, 
+      search: search.value 
+    }
+  }),
+  { 
+    watch: [page, search]
+  }
+)
+
+const rows = computed(() => data.value?.data?.items || [])
+const total = computed(() => data.value?.data?.total || 0)
+
+const columns = [
+  { accessorKey: 'image', id: 'image', header: 'Thumbnail', meta: { class: { th: 'w-24', td: 'w-24' } } },
+  { accessorKey: 'title', id: 'title', header: 'Judul Ucapan', meta: { class: { th: 'min-w-[250px]', td: 'min-w-[250px]' } } },
+  { accessorKey: 'status', id: 'status', header: 'Status' },
+  { accessorKey: 'created_at', id: 'created_at', header: 'Dibuat Pada' },
+  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'text-right', td: 'text-right' } } }
+]
+
+async function onDelete(id: number) {
+  if (!confirm('Hapus ucapan ini?')) return
+  try {
+    await $apiFetch(`/greetings/${id}`, { method: 'DELETE' })
+    toast.add({ title: 'Ucapan berhasil dihapus', color: 'success' })
+    refresh()
+  } catch (error: any) {
+    toast.add({ title: 'Gagal menghapus ucapan', description: error.message, color: 'error' })
+  }
+}
+
+function onSendClick(id: number, type: 'whatsapp' | 'email') {
+  selectedGreetingId.value = id
+  broadcastType.value = type
+  isModalOpen.value = true
+}
+
+function onModeConfirm(mode: 'test' | 'warmup' | 'all') {
+  if (selectedGreetingId.value) {
+    executeSend(selectedGreetingId.value, broadcastType.value, mode as 'test' | 'all')
+  }
+  isModalOpen.value = false
+}
+
+async function executeSend(id: number, type: 'email' | 'whatsapp', target: 'test' | 'all') {
+  const toastId = 'send-toast-' + id
+  const targetLabel = target === 'test' ? 'Internal/Test' : 'Semua Anggota'
+  
+  toast.add({
+    id: toastId,
+    title: `Mengirim ${type === 'whatsapp' ? 'WA' : 'Email'}...`,
+    description: `Target: ${targetLabel}`,
+    loading: true,
+    timeout: 0
+  })
+
+  try {
+    const endpoint = type === 'whatsapp' ? `/greetings/send-wa/${id}` : `/greetings/send-email/${id}`
+    await $apiFetch(endpoint, {
+      method: 'POST',
+      query: { target }
+    })
+    
+    toast.remove(toastId)
+    toast.add({
+      title: 'Berhasil',
+      description: `Pengiriman ${type.toUpperCase()} (${targetLabel}) sedang diproses di background`,
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.remove(toastId)
+    toast.add({
+      title: 'Gagal',
+      description: error.data?.message || 'Gagal melakukan pengiriman',
+      color: 'error'
+    })
+  }
+}
+
+function getItems(row: any) {
+  return [
+    [
+      {
+        label: 'Edit',
+        icon: 'i-lucide-pencil',
+        onSelect: () => router.push(`/dashboard/admin/konten/ucapan/${row.id}`)
+      },
+      {
+        label: 'Kirim WhatsApp',
+        icon: 'i-lucide-message-circle',
+        onSelect: () => onSendClick(row.id, 'whatsapp')
+      },
+      {
+        label: 'Kirim Email',
+        icon: 'i-lucide-mail',
+        onSelect: () => onSendClick(row.id, 'email')
+      }
+    ],
+    [
+      {
+        label: 'Hapus',
+        icon: 'i-lucide-trash',
+        onSelect: () => onDelete(row.id)
+      }
+    ]
+  ]
+}
+</script>
+
+<template>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-highlighted">Ucapan Hari Besar</h1>
+        <p class="text-muted">Kelola ucapan selamat hari besar untuk dikirim ke anggota</p>
+      </div>
+      <UButton to="/dashboard/admin/konten/ucapan/baru" icon="i-lucide-plus" label="Buat Ucapan Baru" size="lg" />
+    </div>
+
+    <UCard :ui="{ body: { padding: 'p-0 sm:p-0' }, header: { padding: 'p-4 sm:p-6' } }">
+      <template #header>
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div class="w-full sm:w-72">
+             <UInput 
+               :model-value="search" 
+               placeholder="Cari ucapan..." 
+               icon="i-lucide-search" 
+               @update:model-value="v => router.push({ query: { ...route.query, search: v || undefined, page: undefined } })"
+             />
+          </div>
+        </div>
+      </template>
+
+      <ClientOnly>
+        <UTable 
+          :loading="pending"
+          :data="rows" 
+          :columns="columns"
+          class="w-full"
+        >
+          <template #image-cell="{ row }">
+             <img 
+               v-if="row.original.image_url"
+               :src="getImageUrl(row.original.image_url)" 
+               class="w-16 h-10 object-cover rounded shadow-sm border border-gray-100"
+             />
+             <div v-else class="w-16 h-10 bg-gray-100 rounded flex items-center justify-center border border-gray-100">
+               <UIcon name="i-lucide-image" class="text-gray-400" />
+             </div>
+          </template>
+
+          <template #title-cell="{ row }">
+            <div class="max-w-md">
+              <p class="font-semibold text-highlighted line-clamp-1">{{ row.original.title }}</p>
+              <p class="text-xs text-muted line-clamp-2 mt-0.5">{{ row.original.content }}</p>
+            </div>
+          </template>
+
+          <template #status-cell="{ row }">
+             <UBadge 
+               :color="row.original.is_active ? 'primary' : 'neutral'" 
+               variant="subtle"
+               size="sm"
+               :label="row.original.is_active ? 'Aktif' : 'Non-aktif'"
+             />
+          </template>
+
+          <template #created_at-cell="{ row }">
+            <span class="text-sm text-muted">{{ new Date(row.original.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
+          </template>
+
+          <template #actions-cell="{ row }">
+            <div class="flex items-center justify-end">
+              <UDropdownMenu :items="getItems(row.original)">
+                <UButton icon="i-lucide-more-horizontal" color="gray" variant="ghost" size="sm" class="cursor-pointer" />
+              </UDropdownMenu>
+            </div>
+          </template>
+        </UTable>
+
+        <div v-if="!pending && !rows.length" class="p-12 text-center">
+           <p class="text-muted font-medium">Belum ada ucapan yang dibuat</p>
+           <UButton to="/dashboard/admin/konten/ucapan/baru" variant="link" label="Buat ucapan pertama Anda" class="mt-2" />
+        </div>
+      </ClientOnly>
+      
+      <template #footer>
+         <div class="flex items-center justify-between py-2">
+           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data</span>
+           <UPagination 
+             :model-value="page" 
+             :total="total" 
+             :page-count="10" 
+             size="sm"
+             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
+           />
+         </div>
+      </template>
+    </UCard>
+
+    <!-- Broadcast Mode Selection Modal (Consistent with Berita) -->
+    <BroadcastModeModal 
+      v-model="isModalOpen"
+      :type="broadcastType"
+      @confirm="onModeConfirm"
+    />
+  </div>
+</template>

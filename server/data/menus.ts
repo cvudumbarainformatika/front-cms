@@ -282,6 +282,18 @@ export const sidebarMenus: MenuItem[] = [
         roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
       },
       {
+        id: 'admin-content-ucapan',
+        label: 'Ucapan',
+        slug: 'ucapan',
+        to: '/dashboard/admin/konten/ucapan',
+        icon: 'i-lucide-megaphone',
+        parentId: 'admin-content',
+        position: 'sidebar',
+        order: 2.5,
+        isActive: true,
+        roles: ['admin_cabang', 'admin_wilayah', 'admin_pusat']
+      },
+      {
         id: 'admin-content-menu',
         label: 'Menu Navigasi',
         slug: 'menu',
