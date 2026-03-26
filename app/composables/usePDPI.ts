@@ -231,6 +231,40 @@ export const usePDPI = () => {
     }
   }
 
+  /**
+   * Import members from Excel file (Admin only)
+   * @param file - File object (Excel)
+   */
+  const importExcel = async (file: File) => {
+    try {
+      isLoadingMember.value = true
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await $apiFetch<ApiResponse<{
+        updated: number
+        created: number
+        failed: number
+        rows_processed: number
+      }>>('/pdpi/import-excel', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res?.success && res?.data) {
+        return res.data
+      } else {
+        throw new Error(res?.message || 'Failed to import excel')
+      }
+    } catch (error) {
+      console.error('Import excel error:', error)
+      throw error
+    } finally {
+      isLoadingMember.value = false
+    }
+  }
+
   return {
     // State
     myMemberData: readonly(myMemberData),
@@ -239,6 +273,7 @@ export const usePDPI = () => {
     // Methods
     syncMember,
     syncAllMembers,
+    importExcel,
     getMembers,
     getMemberByNPA,
     getMyMemberData,

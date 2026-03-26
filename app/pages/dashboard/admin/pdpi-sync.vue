@@ -7,7 +7,80 @@
       </p>
     </div>
 
-    <!-- Action Card -->
+    <!-- Import Excel Card -->
+    <div class="action-card import-card">
+      <div class="card-content">
+        <div class="info-section">
+          <div class="icon">📁</div>
+          <div class="text">
+            <h3>Import dari Excel</h3>
+            <p>Perbarui data anggota berdasarkan NPA menggunakan file Excel. Pastikan kolom sesuai (NPA, Nama, Email, Cabang, No WA).</p>
+          </div>
+        </div>
+
+        <div class="upload-controls">
+          <input 
+            type="file" 
+            ref="fileInput" 
+            accept=".xlsx, .xls" 
+            class="hidden-input" 
+            @change="handleFileChange"
+          />
+          <button 
+            @click="$refs.fileInput.click()" 
+            :disabled="isImporting || isSyncing"
+            class="btn-outline"
+          >
+            <span>📂 Pilih File</span>
+          </button>
+          
+          <button 
+            v-if="selectedFile"
+            @click="handleImportExcel" 
+            :disabled="isImporting || isSyncing"
+            class="btn-sync import-btn"
+            :class="{ 'loading': isImporting }"
+          >
+            <span v-if="!isImporting">📥 Import Data</span>
+            <span v-else>⏳ Processing...</span>
+          </button>
+        </div>
+      </div>
+      
+      <div v-if="selectedFile" class="file-info">
+        <span class="file-name">📄 {{ selectedFile.name }}</span>
+        <button @click="selectedFile = null" class="btn-remove">✕</button>
+      </div>
+    </div>
+
+    <!-- Import Result Card -->
+    <div v-if="importResult" class="result-card success animate-fade-in">
+      <div class="result-header">
+        <span class="icon">✅</span>
+        <h3>Import Berhasil!</h3>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Proses</div>
+          <div class="stat-value">{{ importResult.rows_processed }}</div>
+        </div>
+        <div class="stat-item success">
+          <div class="stat-label">Update</div>
+          <div class="stat-value">{{ importResult.updated }}</div>
+        </div>
+        <div class="stat-item success">
+          <div class="stat-label">Baru</div>
+          <div class="stat-value">{{ importResult.created }}</div>
+        </div>
+        <div class="stat-item" :class="{ 'error': importResult.failed > 0 }">
+          <div class="stat-label">Gagal</div>
+          <div class="stat-value">{{ importResult.failed }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Card (Existing Sync) -->
     <div class="action-card">
       <div class="card-content">
         <div class="info-section">
@@ -94,11 +167,20 @@ definePageMeta({
   ssr: false
 })
 
-const { syncAllMembers, isLoadingMember } = usePDPI()
+const { syncAllMembers, importExcel, isLoadingMember } = usePDPI()
 const { isAuthenticated } = useAuth()
 const router = useRouter()
 
 const isSyncing = ref(false)
+const isImporting = ref(false)
+const selectedFile = ref<File | null>(null)
+const importResult = ref<{
+  updated: number
+  created: number
+  failed: number
+  rows_processed: number
+} | null>(null)
+
 const syncResult = ref<{
   total_fetched: number
   total_synced: number
@@ -113,6 +195,39 @@ const resultClass = computed(() => {
   if (!syncResult.value) return ''
   return syncResult.value.total_failed === 0 ? 'success' : 'warning'
 })
+
+const handleFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (input.files && input.files.length > 0) {
+    selectedFile.value = input.files[0]
+    importResult.value = null
+    errorMessage.value = null
+  }
+}
+
+const handleImportExcel = async () => {
+  if (!selectedFile.value) return
+
+  try {
+    isImporting.value = true
+    importResult.value = null
+    errorMessage.value = null
+
+    const result = await importExcel(selectedFile.value)
+    importResult.value = result
+    selectedFile.value = null // Clear after success
+    
+    // Clear input ref
+    const fileInput = document.querySelector('.hidden-input') as HTMLInputElement
+    if (fileInput) fileInput.value = ''
+
+  } catch (error: any) {
+    console.error('Import error:', error)
+    errorMessage.value = error?.message || 'Gagal mengimport data Excel'
+  } finally {
+    isImporting.value = false
+  }
+}
 
 const handleSyncAll = async () => {
   try {
@@ -212,6 +327,79 @@ onMounted(checkAuth)
   font-weight: 600;
   color: #2d3748;
   margin-bottom: 0.5rem;
+}
+
+/* Import Card Styles */
+.import-card {
+  border-top: 4px solid #4a90e2;
+  margin-bottom: 1.5rem;
+}
+
+.upload-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.btn-outline {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #4a90e2;
+  border: 2px solid #4a90e2;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #f0f7ff;
+}
+
+.import-btn {
+  background: #4a90e2 !important;
+}
+
+.file-info {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+}
+
+.btn-remove:hover {
+  color: #ef4444;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .info-section .text p {
