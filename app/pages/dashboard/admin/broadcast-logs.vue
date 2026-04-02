@@ -7,15 +7,31 @@ const { $apiFetch } = useNuxtApp()
 const toast = useToast()
 
 const loading = ref(true)
+const timeFilter = ref<'1h' | 'today' | 'all'>('all')
 const logs = ref({
   success: [] as string[],
   deferred: [] as string[]
 })
 
+const since = computed(() => {
+  if (timeFilter.value === '1h') return Math.floor(Date.now() / 1000) - 3600
+  if (timeFilter.value === 'today') {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return Math.floor(today.getTime() / 1000)
+  }
+  return 0
+})
+
 const fetchLogs = async () => {
   loading.value = true
   try {
-    const response = await $apiFetch<any>('/broadcast/email-logs')
+    const query: any = {}
+    if (since.value > 0) query.since = since.value
+
+    const response = await $apiFetch<any>('/broadcast/email-logs', {
+      query: query
+    })
     logs.value = {
       success: response?.success || [],
       deferred: response?.deferred || []
@@ -33,6 +49,13 @@ const fetchLogs = async () => {
 }
 
 onMounted(() => {
+  fetchLogs()
+  // Auto refresh every 10 seconds
+  const interval = setInterval(fetchLogs, 10000)
+  onUnmounted(() => clearInterval(interval))
+})
+
+watch(timeFilter, () => {
   fetchLogs()
 })
 
@@ -70,16 +93,22 @@ const stats = computed(() => {
           Monitor status pengiriman pesan ke anggota secara real-time dari riwayat mailserver.
         </p>
       </div>
-      <div>
+      <div class="flex items-center gap-2">
+        <UButtonGroup size="sm">
+          <UButton :color="timeFilter === '1h' ? 'primary' : 'neutral'" variant="soft" @click="timeFilter = '1h'">1 Jam</UButton>
+          <UButton :color="timeFilter === 'today' ? 'primary' : 'neutral'" variant="soft" @click="timeFilter = 'today'">Hari Ini</UButton>
+          <UButton :color="timeFilter === 'all' ? 'primary' : 'neutral'" variant="soft" @click="timeFilter = 'all'">Semua</UButton>
+        </UButtonGroup>
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
           variant="outline"
+          size="sm"
           :loading="loading"
           @click="fetchLogs"
           class="shadow-sm hover:shadow-md transition-shadow"
         >
-          Refresh Data
+          Refresh
         </UButton>
       </div>
     </div>
