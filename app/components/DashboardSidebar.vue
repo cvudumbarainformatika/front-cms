@@ -28,7 +28,7 @@ const filteredMenus = computed<MenuItem[]>(() => {
 
   const filterByRole = (items: MenuItem[]): MenuItem[] => {
     return items
-      .filter(item => item.isActive && item.roles.includes(role))
+      .filter(item => (item.is_active || (item as any).isActive) && item.roles.includes(role))
       .map(item => ({
         ...item,
         children: item.children ? filterByRole(item.children) : undefined
@@ -36,6 +36,13 @@ const filteredMenus = computed<MenuItem[]>(() => {
   }
 
   return filterByRole(sidebarMenus.value)
+})
+
+const { isAdmin } = useAuth()
+
+const isMounted = ref(false)
+onMounted(() => {
+  isMounted.value = true
 })
 
 // console.log(filteredMenus);
@@ -63,12 +70,26 @@ const filteredMenus = computed<MenuItem[]>(() => {
     <!-- Navigation -->
     <div class="p-3 overflow-y-auto h-[calc(100vh-4rem)]">
       <template v-if="status === 'success'">
-        <!-- <ClientOnly> -->
         <SidebarMenu
+          v-if="isMounted"
           :items="filteredMenus"
           :collapsed="collapsed"
         />
-        <!-- </ClientOnly> -->
+
+        <!-- Manual Admin Add-on: Broadcast Monitoring -->
+        <div v-if="isMounted && isAdmin" class="mt-4 pt-4 border-t border-slate-200 dark:border-gray-800">
+          <p v-if="!collapsed" class="px-3 mb-2 text-xs font-semibold uppercase text-muted tracking-wider">Monitoring</p>
+          <UButton
+            to="/dashboard/admin/broadcast-logs"
+            icon="i-heroicons-chart-bar"
+            label="Laporan Email"
+            color="neutral"
+            variant="ghost"
+            block
+            :class="[collapsed ? 'justify-center' : 'justify-start']"
+            :ui="{ leadingIcon: 'text-primary' }"
+          />
+        </div>
       </template>
 
       <template v-else>
