@@ -89,6 +89,16 @@ onMounted(() => {
             :class="[collapsed ? 'justify-center' : 'justify-start']"
             :ui="{ leadingIcon: 'text-primary' }"
           />
+          <UButton
+            to="/dashboard/admin/whatsapp-logs"
+            icon="i-heroicons-chat-bubble-left-right"
+            label="Laporan WA"
+            color="neutral"
+            variant="ghost"
+            block
+            :class="[collapsed ? 'justify-center' : 'justify-start']"
+            :ui="{ leadingIcon: 'text-emerald-500' }"
+          />
         </div>
       </template>
 
