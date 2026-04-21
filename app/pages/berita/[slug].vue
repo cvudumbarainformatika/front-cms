@@ -9,7 +9,7 @@ const { getImageUrl } = useImageUrl()
 const slug = route.params.slug as string
 
 // Fetch berita detail from backend
-const { data: berita, pending, error } = await useAsyncData(
+const { data: berita, pending, error } = useAsyncData(
   `berita-${slug}`,
   () => $apiFetch(`/berita/s/${slug}`),
   { server: false }
@@ -77,14 +77,14 @@ const sanitizedContent = computed(() => item.value ? sanitizeHtml((item.value.co
 
 // Related posts fetch
 // Gunakan watchEffect atau similar karena item mungkin null di awal
-const { data: relatedByCategory, pending: pendingCat } = await useAsyncData(
+const { data: relatedByCategory, pending: pendingCat } = useAsyncData(
   `related-cat-${slug}`, // key unik static karena item.category belum ada
   () => item.value ? $apiFetch('/berita', {
     query: { category: item.value.category, limit: 6, status: 'published' }
   }) : Promise.resolve(null),
   { watch: [item], server: false }
 )
-const { data: relatedByAuthor, pending: pendingAuthor } = await useAsyncData(
+const { data: relatedByAuthor, pending: pendingAuthor } = useAsyncData(
   `related-author-${slug}`,
   () => item.value ? $apiFetch('/berita', {
     query: { author: item.value.author, limit: 6, status: 'published' }
@@ -102,7 +102,7 @@ const related = computed(() => {
 const relatedPending = computed(() => pendingCat.value || pendingAuthor.value)
 
 // Popular posts
-const { data: popularData, pending: pendingPopular } = await useAsyncData(
+const { data: popularData, pending: pendingPopular } = useAsyncData(
   'popular-berita',
   () => $apiFetch('/berita', {
     query: { sort: 'views', order: 'desc', limit: 6, status: 'published' }

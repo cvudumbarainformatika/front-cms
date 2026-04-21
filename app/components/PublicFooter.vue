@@ -6,7 +6,7 @@
 import type { HomepageData } from '~/types/content'
 
 const { $apiFetch } = useNuxtApp()
-const { data: home } = await useAsyncData('home-footer-final',
+const { data: home } = useAsyncData('home-footer-final',
   () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
   { server: false, lazy: true }
 )
@@ -16,7 +16,7 @@ const footerData = computed(() => homeData.value?.footer)
 
 const currentYear = new Date().getFullYear()
 
-const { data: headerMenus } = await useMenu('header')
+const { data: headerMenus } = useMenu('header')
 const { user } = useAuth()
 
 // Filter menus by user role (same as header)

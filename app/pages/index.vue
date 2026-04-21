@@ -10,7 +10,7 @@ definePageMeta({
 })
 
 const { $apiFetch } = useNuxtApp()
-const { data: home } = await useAsyncData('home-index',
+const { data: home } = useAsyncData('home-index',
   () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
   { server: false, lazy: true }
 )

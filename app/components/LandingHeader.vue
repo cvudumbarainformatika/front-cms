@@ -4,7 +4,8 @@
  * Floating pill navbar dengan dynamic menu dan auth logic
  */
 
-const { data: headerMenus, pending } = await useMenu('header')
+const { data: headerMenus, status } = useMenu('header')
+const pending = computed(() => status.value === 'pending')
 const { isAuthenticated, user, logout } = useAuth()
 const { getImageUrl } = useImageUrl()
 const route = useRoute()

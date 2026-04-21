@@ -66,7 +66,7 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ['@tiptap/vue-3']
+    transpile: ['@tiptap/vue-3', 'reka-ui', '@nuxt/ui']
   },
 
   routeRules: {
@@ -85,6 +85,9 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       dedupe: [
+        'vue',
+        '@vue/runtime-core',
+        '@vue/server-renderer',
         'prosemirror-state',
         'prosemirror-view',
         'prosemirror-model',
@@ -104,7 +107,7 @@ export default defineNuxtConfig({
       include: []
     },
     ssr: {
-      noExternal: ['@tiptap/*', 'prosemirror-*']
+      noExternal: ['@tiptap/*', 'prosemirror-*', 'reka-ui', '@nuxt/ui']
     }
   },
   eslint: {

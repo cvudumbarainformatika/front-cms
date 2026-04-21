@@ -27,7 +27,7 @@ useSeoMeta({
   twitterCard: 'summary'
 })
 
-const { data: navigation } = await useAsyncData('navigation', async () => {
+const { data: navigation } = useLazyAsyncData('navigation', async () => {
   try {
     const data = await queryCollectionNavigation('docs')
     return data.find(item => item.path === '/docs')?.children || []

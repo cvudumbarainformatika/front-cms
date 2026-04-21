@@ -16,7 +16,7 @@ const author = computed(() => route.query.author as string || '')
 const search = computed(() => route.query.search as string || '')
 
 // Fetch berita from backend
-const { data: beritaData, pending, error } = await useAsyncData(
+const { data: beritaData, pending, error } = useAsyncData(
   'berita-public-list',
   () => $apiFetch('/berita', {
     query: {
@@ -31,15 +31,14 @@ const { data: beritaData, pending, error } = await useAsyncData(
   {
     watch: [page, category, author, search],
     transform: (data: any) => {
-      // console.log('Berita Data:', data)
       return data
     },
-    server: false // Force fetch on client side only to avoid SSR issues
+    server: false
   }
 )
 
 // Fetch popular berita
-const { data: popularData, pending: pendingPopular } = await useAsyncData(
+const { data: popularData, pending: pendingPopular } = useAsyncData(
   'berita-public-popular',
   () => $apiFetch('/berita', {
     query: {
@@ -200,7 +199,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         :to="`/berita/${beritaData.data.items[0].slug}`"
         :title="beritaData.data.items[0].title"
         :description="beritaData.data.items[0].excerpt"
-        :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+        :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"
         orientation="horizontal"
@@ -261,7 +260,7 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               :to="`/berita/${berita.slug}`"
               :title="berita.title"
               :description="berita.excerpt"
-              :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })"
+              :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })"
               :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
               :badge="{ label: berita.category }"
               variant="outline"

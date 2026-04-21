@@ -9,7 +9,7 @@ const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
 
 // Fetch agenda detail
-const { data: res, pending, error } = await useAsyncData(
+const { data: res, pending, error } = useAsyncData(
   `agenda-detail-${slug}`,
   () => $apiFetch(`/agenda/s/${slug}`)
 )
@@ -74,7 +74,7 @@ const shareToFacebook = computed(() => `https://www.facebook.com/sharer/sharer.p
 function copyLink () { if (process.client) navigator.clipboard.writeText(currentUrl.value || '') }
 
 // Related & Latest
-const { data: relatedData } = await useAsyncData(
+const { data: relatedData } = useAsyncData(
   `agenda-related-${slug}`,
   () => $apiFetch('/agenda', {
     query: { type: item.value?.type, limit: 6 }
@@ -86,7 +86,7 @@ const { data: relatedData } = await useAsyncData(
 )
 const related = computed(() => (relatedData.value?.data?.items || []).filter((a: any) => a.slug !== slug).slice(0, 6))
 
-const { data: latestData } = await useAsyncData(
+const { data: latestData } = useAsyncData(
   'agenda-latest-sidebar',
   () => $apiFetch('/agenda', {
     query: { limit: 6 }

@@ -225,85 +225,102 @@ const getAvatarUrl = (member: any) => {
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div
-          v-for="i in 8"
-          :key="i"
-          class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-pulse"
-        >
-          <div class="flex items-start gap-4">
-            <div class="w-16 h-16 bg-slate-200 rounded-full shrink-0"></div>
-            <div class="flex-1 space-y-3">
-              <div class="h-4 bg-slate-200 rounded w-3/4"></div>
-              <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+      <!-- Members Area - Wrapped in ClientOnly to prevent SSR/Hydration mismatch -->
+      <ClientOnly>
+        <template #fallback>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div
+              v-for="i in 8"
+              :key="`skeleton-ssr-${i}`"
+              class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-pulse"
+            >
+              <div class="flex items-start gap-4">
+                <div class="w-16 h-16 bg-slate-200 rounded-full shrink-0"></div>
+                <div class="flex-1 space-y-3">
+                  <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div
+            v-for="i in 8"
+            :key="`skeleton-client-${i}`"
+            class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-pulse"
+          >
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 bg-slate-200 rounded-full shrink-0"></div>
+              <div class="flex-1 space-y-3">
+                <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+                <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Members Grid -->
-      <div
-        v-else-if="members.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12"
-      >
-        <ScrollReveal
-          v-for="(member, idx) in members"
-          :key="member.id"
-          animation="slide-up"
-          :delay="idx % 4 * 100"
+        <!-- Members Grid -->
+        <div
+          v-else-if="members.length > 0"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12"
         >
-          <LandingMemberCard
-            :name="formatMemberName(member)"
-            :position="`NPA: ${member.npa}`"
-            :photo="getAvatarUrl(member)"
-            :show-join-date="true"
-            :joined-date="member.cabang || member.provinsi"
-            icon="i-lucide-award"
+          <ScrollReveal
+            v-for="(member, idx) in members"
+            :key="member.id"
+            animation="slide-up"
+            :delay="idx % 4 * 100"
           >
-            <!-- Original content preserved in slot -->
-            <div class="space-y-2 text-left w-full px-2">
-               <!-- Tempat Praktik -->
-               <div class="flex flex-col gap-0.5 text-slate-700">
-                 <span class="font-extrabold text-primary-600 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
-                   <UIcon name="i-lucide-hospital" class="w-3 h-3" />
-                   Tempat Praktik
-                 </span>
-                 <p class="text-[11px] font-bold text-slate-600 line-clamp-1 pl-4.5">{{ member.tempat_praktek_1 || 'RS / Praktik Mandiri' }}</p>
-               </div>
+            <LandingMemberCard
+              :name="formatMemberName(member)"
+              :position="`NPA: ${member.npa}`"
+              :photo="getAvatarUrl(member)"
+              :show-join-date="true"
+              :joined-date="member.cabang || member.provinsi"
+              icon="i-lucide-award"
+            >
+              <div class="space-y-2 text-left w-full px-2">
+                 <div class="flex flex-col gap-0.5 text-slate-700">
+                   <span class="font-extrabold text-primary-600 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                     <UIcon name="i-lucide-hospital" class="w-3 h-3" />
+                     Tempat Praktik
+                   </span>
+                   <p class="text-[11px] font-bold text-slate-600 line-clamp-1 pl-4.5">{{ member.tempat_praktek_1 || 'RS / Praktik Mandiri' }}</p>
+                 </div>
+                 <div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">
+                    <div v-if="member.kota_kabupaten" class="flex items-center gap-2 text-slate-500">
+                       <UIcon name="i-lucide-map-pin" class="w-3 h-3 text-slate-400" />
+                       <span class="text-[10px] font-bold uppercase truncate">{{ member.kota_kabupaten }}</span>
+                    </div>
+                 </div>
+              </div>
+            </LandingMemberCard>
+          </ScrollReveal>
+        </div>
 
-               <!-- Location details -->
-               <div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">
-                  <div v-if="member.kota_kabupaten" class="flex items-center gap-2 text-slate-500">
-                     <UIcon name="i-lucide-map-pin" class="w-3 h-3 text-slate-400" />
-                     <span class="text-[10px] font-bold uppercase truncate">{{ member.kota_kabupaten }}</span>
-                  </div>
-               </div>
-            </div>
-          </LandingMemberCard>
-        </ScrollReveal>
-      </div>
-
-      <!-- Empty State -->
-      <div
-        v-else
-        class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200"
-      >
-        <UIcon name="i-lucide-users-x" class="w-16 h-16 mx-auto text-slate-300 mb-4" />
-        <h3 class="text-lg font-semibold text-slate-900 mb-2">
-          Tidak ada anggota ditemukan
-        </h3>
-        <p class="text-slate-500 mb-6">
-          Coba ubah filter atau kata kunci pencarian Anda
-        </p>
-        <UButton
-          @click="clearFilters"
-          color="primary"
-          variant="soft"
+        <!-- Empty State -->
+        <div
+          v-else
+          class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200"
         >
-          Reset Semua Filter
-        </UButton>
-      </div>
+          <UIcon name="i-lucide-users-x" class="w-16 h-16 mx-auto text-slate-300 mb-4" />
+          <h3 class="text-lg font-semibold text-slate-900 mb-2">
+            Tidak ada anggota ditemukan
+          </h3>
+          <p class="text-slate-500 mb-6">
+            Coba ubah filter atau kata kunci pencarian Anda
+          </p>
+          <UButton
+            @click="clearFilters"
+            color="primary"
+            variant="soft"
+          >
+            Reset Semua Filter
+          </UButton>
+        </div>
+      </ClientOnly>
 
       <!-- Pagination -->
       <div

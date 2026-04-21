@@ -19,7 +19,7 @@ useSeoMeta({
   description: 'We are sorry but this page could not be found.'
 })
 
-const { data: navigation } = await useAsyncData('error-navigation', () => queryCollectionNavigation('docs'), {
+const { data: navigation } = useAsyncData('error-navigation', () => queryCollectionNavigation('docs'), {
   transform: data => data.find(item => item.path === '/docs')?.children || []
 })
 const { data: files } = useLazyAsyncData('error-search', () => queryCollectionSearchSections('docs'), {

@@ -10,7 +10,7 @@ import type { HomepageData } from '~/types/content'
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
 
-const { data: home } = await useAsyncData('home-hero',
+const { data: home } = useAsyncData('home-hero',
   () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
   { server: false, lazy: true }
 )

@@ -5,7 +5,7 @@
  * Menggunakan Nuxt UI UHeader
  */
 
-const { data: headerMenus, status } = await useMenu('header')
+const { data: headerMenus, status } = useMenu('header')
 const { isAuthenticated, user } = useAuth()
 const { getImageUrl } = useImageUrl()
 

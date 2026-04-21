@@ -9,7 +9,7 @@ import MemberCard from './MemberCard.vue'
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
 
-const { data: home } = await useAsyncData('home-about',
+const { data: home } = useAsyncData('home-about',
   () => $apiFetch<{ success: boolean, data: HomepageData, message: string }>('/homepage'),
   { server: false, lazy: true }
 )
