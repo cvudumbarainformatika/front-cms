@@ -23,7 +23,9 @@
     "nuxt": "^4.2.2",
     "nuxt-og-image": "^5.1.13",
     "zod": "^4.2.1",
-    "@tiptap/extension-text-align": "3.13.0"
+    "@tiptap/extension-text-align": "3.13.0",
+    "tailwindcss": "4.0.0",
+    "@tailwindcss/vite": "4.0.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.12.1",
@@ -44,6 +46,9 @@
       "@vue/compiler-dom": "3.5.26",
       "@vue/reactivity": "3.5.26",
       "@vue/shared": "3.5.26"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   }
 }

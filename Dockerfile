@@ -1,22 +1,34 @@
 # Stage 1: Build
 FROM node:20 AS builder
 
+# Re-ensure build tools are present for native compilation
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy package files (use package-lock.json for npm)
-COPY package.json package-lock.json ./
+# Use the specific pnpm version from project
+RUN npm install -g pnpm@10.26.1
 
-# Install dependencies using npm (more forgiving of lockfile mismatch)
-RUN npm install
+# Copy project files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies. 
+# Because of "onlyBuiltDependencies" in package.json, better-sqlite3 will now build automatically.
+RUN pnpm install --frozen-lockfile
 
 # Copy the rest of the application
 COPY . .
 
-# Increase memory limit for build (4GB) - Note: Production server requires Swap if RAM < 4GB
+# Increase memory limit for build (4GB)
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Build the application
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Production
 FROM node:20-slim
@@ -35,4 +47,3 @@ ENV PORT=3000
 
 # Start the application
 CMD ["node", ".output/server/index.mjs"]
-
