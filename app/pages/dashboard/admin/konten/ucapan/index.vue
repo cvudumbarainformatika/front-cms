@@ -12,26 +12,66 @@ const isModalOpen = ref(false)
 const selectedGreetingId = ref<number | null>(null)
 const broadcastType = ref<'email' | 'whatsapp'>('email')
 
-const page = computed(() => parseInt(route.query.page as string) || 1)
+const page = ref(parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 
-// Fetch greetings
-const { data, refresh, pending } = await useAsyncData(
+// Sync page with route query
+watch(() => route.query.page, (newVal) => {
+  const p = parseInt(newVal as string) || 1
+  if (page.value !== p) {
+    page.value = p
+  }
+})
+
+// Sync route query with page change
+watch(page, (newVal) => {
+  if (parseInt(route.query.page as string) !== newVal) {
+    router.push({ query: { ...route.query, page: newVal > 1 ? newVal : undefined } })
+  }
+})
+
+const { data, refresh, pending } = useAsyncData(
   'greetings-list',
-  () => $apiFetch<{ success: boolean, data: { items: any[], total: number } }>('/greetings', {
-    query: { 
-      page: page.value, 
-      limit: 10, 
-      search: search.value 
-    }
-  }),
-  { 
-    watch: [page, search]
+  async () => {
+    console.log('[Debug Ucapan] Fetching data for page:', page.value)
+    const res = await $apiFetch<{ success: boolean, data: { items: any[], pagination: { total: number } } }>('/greetings', {
+      query: { 
+        page: page.value, 
+        limit: 10, 
+        search: search.value 
+      }
+    })
+    console.log('[Debug Ucapan] API Response:', res)
+    return res
   }
 )
 
-const rows = computed(() => data.value?.data?.items || [])
-const total = computed(() => data.value?.data?.total || 0)
+// Explicit watch to force refresh on search change
+watch([page, search], (newVals) => {
+  console.log('[Debug Ucapan] Watch triggered:', { page: newVals[0], search: newVals[1] })
+  refresh()
+})
+
+const rows = computed(() => {
+  const res = data.value as any
+  const items = res?.data?.items || res?.items || []
+  console.log('[Debug Ucapan] Rows computed:', items.length)
+  return items
+})
+
+const total = computed(() => {
+  const res = data.value as any
+  return res?.data?.pagination?.total || res?.pagination?.total || 0
+})
+
+const totalPages = computed(() => Math.ceil(total.value / 10))
+
+function onPageChange(p: number) {
+  if (p < 1 || p > totalPages.value) return
+  console.log('[Debug Ucapan] onPageChange triggered with:', p)
+  page.value = p
+  router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
+}
 
 const columns = [
   { accessorKey: 'image', id: 'image', header: 'Thumbnail', meta: { class: { th: 'w-24', td: 'w-24' } } },
@@ -209,14 +249,58 @@ function getItems(row: any) {
       
       <template #footer>
          <div class="flex items-center justify-between py-2">
-           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data</span>
-           <UPagination 
-             :model-value="page" 
-             :total="total" 
-             :page-count="10" 
-             size="sm"
-             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
-           />
+           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data (Hal: {{ page }}/{{ totalPages }})</span>
+           
+           <!-- CUSTOM PREMIUM PAGINATION -->
+           <div v-if="totalPages > 1" class="flex items-center gap-1">
+             <UButton 
+               icon="i-lucide-chevrons-left" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page <= 1"
+               @click="onPageChange(1)"
+             />
+             <UButton 
+               icon="i-lucide-chevron-left" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page <= 1"
+               @click="onPageChange(page - 1)"
+             />
+             
+             <div class="flex items-center gap-1 mx-2">
+               <UButton 
+                 v-for="p in totalPages" 
+                 :key="p"
+                 :color="page === p ? 'primary' : 'neutral'"
+                 :variant="page === p ? 'solid' : 'ghost'"
+                 size="xs"
+                 class="min-w-[28px] justify-center"
+                 @click="onPageChange(p)"
+               >
+                 {{ p }}
+               </UButton>
+             </div>
+
+             <UButton 
+               icon="i-lucide-chevron-right" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page >= totalPages"
+               @click="onPageChange(page + 1)"
+             />
+             <UButton 
+               icon="i-lucide-chevrons-right" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page >= totalPages"
+               @click="onPageChange(totalPages)"
+             />
+           </div>
          </div>
       </template>
     </UCard>

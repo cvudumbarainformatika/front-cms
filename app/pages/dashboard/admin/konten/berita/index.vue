@@ -26,29 +26,70 @@ function openRejectionModal(reason: string) {
   isRejectionModalOpen.value = true
 }
 
-const page = computed(() => parseInt(route.query.page as string) || 1)
+const page = ref(parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 const status = computed(() => (route.query.status as string) || 'all')
 
+// Sync page with route query
+watch(() => route.query.page, (newVal) => {
+  const p = parseInt(newVal as string) || 1
+  if (page.value !== p) {
+    page.value = p
+  }
+})
+
+// Sync route query with page change
+watch(page, (newVal) => {
+  if (parseInt(route.query.page as string) !== newVal) {
+    router.push({ query: { ...route.query, page: newVal > 1 ? newVal : undefined } })
+  }
+})
+
 // Fetch data from backend Go API
-const { data, refresh, pending } = await useAsyncData(
+const { data, refresh, pending } = useAsyncData(
   'berita-list',
-  () => $apiFetch<{ success: boolean, data: { items: any[], total: number }, message: string }>('/berita', {
-    query: { 
-      page: page.value, 
-      limit: 10, 
-      search: search.value, 
-      status: status.value === 'all' ? undefined : status.value,
-      author_id: userRole.value !== 'admin_pusat' && user.value?.id ? String(user.value.id) : undefined
-    }
-  }),
-  { 
-    watch: [page, search, status]
+  async () => {
+    console.log('[Debug Berita] Fetching data for page:', page.value)
+    const res = await $apiFetch<{ success: boolean, data: { items: any[], pagination: { total: number } }, message: string }>('/berita', {
+      query: { 
+        page: page.value, 
+        limit: 10, 
+        search: search.value, 
+        status: status.value === 'all' ? undefined : status.value,
+        author_id: userRole.value !== 'admin_pusat' && user.value?.id ? String(user.value.id) : undefined
+      }
+    })
+    console.log('[Debug Berita] API Response:', res)
+    return res
   }
 )
 
-const rows = computed(() => [...(data.value?.data?.items || [])])
-const total = computed(() => data.value?.data?.total || 0)
+// Explicit watch to force refresh on search/status change
+watch([page, search, status], (newVals) => {
+  console.log('[Debug Berita] Watch triggered:', { page: newVals[0], search: newVals[1], status: newVals[2] })
+  refresh()
+})
+
+const rows = computed(() => {
+  const res = data.value as any
+  const items = [...(res?.data?.items || res?.items || [])]
+  console.log('[Debug Berita] Rows computed:', items.length)
+  return items
+})
+
+const total = computed(() => {
+  const res = data.value as any
+  return res?.data?.pagination?.total || res?.pagination?.total || 0
+})
+
+const totalPages = computed(() => Math.ceil(total.value / 10))
+
+function onPageChange(p: number) {
+  if (p < 1 || p > totalPages.value) return
+  console.log('[Debug Berita] onPageChange triggered with:', p)
+  page.value = p
+  router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
+}
 
 const { getImageUrl } = useImageUrl()
 
@@ -347,14 +388,58 @@ function getItems(row: any) {
       
       <template #footer>
          <div class="flex items-center justify-between py-2">
-           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data</span>
-           <UPagination 
-             :model-value="page" 
-             :total="total" 
-             :page-count="10" 
-             size="sm"
-             @update:model-value="p => router.push({ query: { ...route.query, page: p } })"
-           />
+           <span class="text-xs text-muted">Menampilkan {{ rows.length }} dari {{ total }} data (Hal: {{ page }}/{{ totalPages }})</span>
+           
+           <!-- CUSTOM PREMIUM PAGINATION -->
+           <div v-if="totalPages > 1" class="flex items-center gap-1">
+             <UButton 
+               icon="i-lucide-chevrons-left" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page <= 1"
+               @click="onPageChange(1)"
+             />
+             <UButton 
+               icon="i-lucide-chevron-left" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page <= 1"
+               @click="onPageChange(page - 1)"
+             />
+             
+             <div class="flex items-center gap-1 mx-2">
+               <UButton 
+                 v-for="p in totalPages" 
+                 :key="p"
+                 :color="page === p ? 'primary' : 'neutral'"
+                 :variant="page === p ? 'solid' : 'ghost'"
+                 size="xs"
+                 class="min-w-[28px] justify-center"
+                 @click="onPageChange(p)"
+               >
+                 {{ p }}
+               </UButton>
+             </div>
+
+             <UButton 
+               icon="i-lucide-chevron-right" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page >= totalPages"
+               @click="onPageChange(page + 1)"
+             />
+             <UButton 
+               icon="i-lucide-chevrons-right" 
+               size="xs" 
+               color="neutral" 
+               variant="ghost" 
+               :disabled="page >= totalPages"
+               @click="onPageChange(totalPages)"
+             />
+           </div>
          </div>
       </template>
     </UCard>
