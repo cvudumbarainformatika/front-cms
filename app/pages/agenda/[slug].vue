@@ -32,6 +32,23 @@ const fmt = (d: string, opt: Intl.DateTimeFormatOptions) => new Intl.DateTimeFor
 const fmtLong = (d: string) => fmt(d, { day: 'numeric', month: 'long', year: 'numeric' })
 const fmtShort = (d: string) => fmt(d, { day: 'numeric', month: 'short' })
 
+// Date parts for card view
+const getDay = (date: string | Date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', { day: 'numeric', timeZone: 'UTC' })
+}
+const getMonth = (date: string | Date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' })
+}
+const getYear = (date: string | Date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return isNaN(d.getTime()) ? '' : d.getUTCFullYear()
+}
+
 // Sanitizer (SSR-safe + client enhancement)
 function sanitizeHtmlSSR(html: string) {
   html = html.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
@@ -107,13 +124,20 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <ClientOnly>
             <div class="space-y-3">
               <div v-for="ag in related" :key="ag.id" class="flex items-start gap-3">
-                <NuxtImg
-                  :src="getImageUrl(ag.image_url, 'thumbnail')"
-                  :alt="ag.title"
-                  class="w-14 h-14 rounded object-cover"
-                  loading="lazy"
-                  format="webp"
-                />
+                <div class="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
+                  <div v-if="!ag.image_url" class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span class="text-xl font-black text-primary-600 dark:text-primary-400 leading-none tabular-nums">{{ getDay(ag.date) }}</span>
+                    <span class="text-[9px] uppercase font-bold text-neutral-500 tracking-wide mt-0.5">{{ getMonth(ag.date) }}</span>
+                  </div>
+                  <NuxtImg
+                    v-else
+                    :src="getImageUrl(ag.image_url, 'thumbnail')"
+                    :alt="ag.title"
+                    class="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    format="webp"
+                  />
+                </div>
                 <div class="min-w-0">
                   <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ ag.title }}
@@ -138,8 +162,24 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
         </div>
 
         <div v-else-if="item">
-          <div class="overflow-hidden rounded-xl border border-default mb-8">
+          <div class="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 mb-8 bg-neutral-50 dark:bg-neutral-900">
+            <!-- Date Card for Banner if no image -->
+            <div v-if="!item.image_url" class="w-full h-[320px] lg:h-[420px] flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-950 dark:to-neutral-900">
+              <div class="text-center">
+                <span class="block text-[120px] lg:text-[160px] font-black text-primary-600 dark:text-primary-400 leading-none tabular-nums tracking-tighter">
+                  {{ getDay(item.date) }}
+                </span>
+                <span class="block mt-4 text-2xl lg:text-3xl font-black uppercase tracking-[0.3em] text-primary-700/70 dark:text-primary-400/70">
+                  {{ getMonth(item.date) }}
+                </span>
+                <span class="block mt-2 text-xl font-bold text-neutral-400 dark:text-neutral-500 tracking-widest">
+                  {{ getYear(item.date) }}
+                </span>
+              </div>
+            </div>
+            <!-- Actual Image if exists -->
             <NuxtImg
+              v-else
               :src="getImageUrl(item.image_url, 'banner')"
               :alt="item.title"
               class="w-full h-[320px] lg:h-[420px] object-cover"
@@ -212,13 +252,20 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
           <ClientOnly>
             <div class="space-y-3">
               <div v-for="ag in latest" :key="ag.id" class="flex items-start gap-3">
-                <NuxtImg
-                  :src="getImageUrl(ag.image_url, 'thumbnail')"
-                  :alt="ag.title"
-                  class="w-14 h-14 rounded object-cover"
-                  loading="lazy"
-                  format="webp"
-                />
+                <div class="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
+                  <div v-if="!ag.image_url" class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span class="text-xl font-black text-primary-600 dark:text-primary-400 leading-none tabular-nums">{{ getDay(ag.date) }}</span>
+                    <span class="text-[9px] uppercase font-bold text-neutral-500 tracking-wide mt-0.5">{{ getMonth(ag.date) }}</span>
+                  </div>
+                  <NuxtImg
+                    v-else
+                    :src="getImageUrl(ag.image_url, 'thumbnail')"
+                    :alt="ag.title"
+                    class="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    format="webp"
+                  />
+                </div>
                 <div class="min-w-0">
                   <NuxtLink :to="`/agenda/${ag.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
                     {{ ag.title }}
