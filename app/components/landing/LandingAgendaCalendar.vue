@@ -159,18 +159,18 @@ const goToToday = () => {
               <div
                 v-for="(day, idx) in calendarDays"
                 :key="idx"
-                class="min-h-[100px] md:min-h-[140px] border-b border-t-0 p-1 md:p-2 transition-colors relative"
+                class="min-h-[120px] md:min-h-[180px] border-b border-t-0 p-1 md:p-2 transition-colors relative"
                 :class="[
                   (idx % 7 !== 0) ? 'border-l' : '',
                   !day.isCurrentMonth ? 'bg-slate-50' : 'bg-white hover:bg-slate-50'
                 ]"
               >
                 <!-- Date Number -->
-                <div class="flex justify-end mb-1">
+                <div class="flex justify-end mb-2">
                   <span
-                    class="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium"
+                    class="w-7 h-7 md:w-9 md:h-9 flex items-center justify-center rounded-full text-xs md:text-base font-bold"
                     :class="[
-                      day.isToday ? 'bg-primary-600 text-white font-bold shadow-md' : 'text-slate-600',
+                      day.isToday ? 'bg-primary-600 text-white shadow-lg scale-110' : 'text-slate-600',
                       !day.isCurrentMonth ? 'opacity-30' : ''
                     ]"
                   >
@@ -179,19 +179,19 @@ const goToToday = () => {
                 </div>
 
                 <!-- Events List -->
-                <div class="space-y-1 md:space-y-1.5 overflow-y-auto max-h-[70px] md:max-h-[100px] no-scrollbar">
+                <div class="space-y-1.5 md:space-y-2 overflow-y-auto max-h-[85px] md:max-h-[120px] no-scrollbar">
                   <NuxtLink
                     v-for="event in day.events"
                     :key="event.id"
                     :to="`/agenda/${event.slug}`"
-                    class="block bg-slate-700 hover:bg-primary-600 text-white rounded md:rounded-md p-1.5 cursor-pointer transition-colors shadow-sm group"
+                    class="block bg-slate-800 hover:bg-primary-700 text-white rounded md:rounded-lg p-2 md:p-2.5 cursor-pointer transition-all shadow-md group border border-white/5 hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <div class="text-[9px] md:text-[10px] font-bold leading-tight line-clamp-2 md:line-clamp-3 group-hover:text-white">
+                    <div class="text-[10px] md:text-[13px] font-extrabold leading-snug line-clamp-2 md:line-clamp-3 group-hover:text-white uppercase tracking-tight">
                       {{ event.title }}
                     </div>
-                    <div v-if="event.location" class="flex items-center gap-0.5 mt-1 text-slate-300 group-hover:text-primary-100">
-                      <UIcon name="i-lucide-map-pin" class="w-2.5 h-2.5 shrink-0" />
-                      <span class="text-[8px] md:text-[9px] truncate">{{ event.location }}</span>
+                    <div v-if="event.location" class="flex items-center gap-1 mt-1.5 text-slate-400 group-hover:text-primary-100">
+                      <UIcon name="i-lucide-map-pin" class="w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" />
+                      <span class="text-[9px] md:text-[11px] font-medium truncate">{{ event.location }}</span>
                     </div>
                   </NuxtLink>
                 </div>

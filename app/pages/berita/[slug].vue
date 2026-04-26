@@ -31,9 +31,9 @@ function copyLink() {
 // SEO
 useSeoMeta({
   title: () => item.value ? `${item.value.title} - PDPI` : 'Detail Artikel - PDPI',
-  description: () => item.value?.excerpt,
+  description: () => stripHtml(item.value?.excerpt || ''),
   ogTitle: () => item.value?.title,
-  ogDescription: () => item.value?.excerpt,
+  ogDescription: () => stripHtml(item.value?.excerpt || ''),
   ogImage: () => item.value ? getImageUrl(item.value.image_url) : undefined,
   articlePublishedTime: () => item.value?.published_at,
   articleAuthor: () => item.value ? [item.value.author] : []
@@ -141,6 +141,11 @@ const formatDateShort = (dateStr: string | null | undefined) => {
     return '-'
   }
 }
+
+function stripHtml(html: string) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim()
+}
 </script>
 
 <template>
@@ -155,12 +160,21 @@ const formatDateShort = (dateStr: string | null | undefined) => {
         </UPageHeader>
       </template>
       <UPageHeader
-        :title="item?.title"
-        :description="item?.excerpt"
+        :title="stripHtml(item?.title || '')"
+        :description="stripHtml(item?.excerpt || '')"
       >
         <template #headline v-if="pending">
           <USkeleton class="h-8 w-3/4 mb-2" />
           <USkeleton class="h-4 w-1/2" />
+        </template>
+        <template #headline v-else-if="item?.category === 'RSS'">
+          <div class="flex items-center gap-2 mb-2">
+            <UBadge color="primary" variant="subtle" size="sm">
+              <UIcon name="i-lucide-rss" class="w-3 h-3 mr-1" />
+              Berita Luar
+            </UBadge>
+            <span class="text-xs text-muted">via {{ item.author }}</span>
+          </div>
         </template>
       </UPageHeader>
     </ClientOnly>
@@ -185,16 +199,21 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="rb.id"
                 class="flex items-start gap-3"
               >
+                <div v-if="!rb.image_url || rb.image_url.includes('placehold.co')" 
+                     class="w-14 h-14 rounded bg-gradient-to-br from-slate-50 to-slate-200/50 flex flex-col items-center justify-center border border-slate-200 flex-shrink-0 relative overflow-hidden group">
+                   <UIcon name="i-lucide-image" class="w-5 h-5 text-slate-300 relative z-10" />
+                </div>
                 <NuxtImg
+                  v-else
                   :src="getImageUrl(rb.image_url, 'news')"
                   :alt="rb.title"
-                  class="w-14 h-14 rounded object-cover"
+                  class="w-14 h-14 rounded object-cover flex-shrink-0"
                   loading="lazy"
                   format="webp"
                 />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${rb.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                    {{ rb.title }}
+                    {{ stripHtml(rb.title) }}
                   </NuxtLink>
                   <p class="text-xs text-muted">{{ formatDateShort(rb.published_at) }}</p>
                 </div>
@@ -237,16 +256,21 @@ const formatDateShort = (dateStr: string | null | undefined) => {
                 :key="p.id"
                 class="flex items-start gap-3"
               >
+                <div v-if="!p.image_url || p.image_url.includes('placehold.co')" 
+                     class="w-14 h-14 rounded bg-gradient-to-br from-slate-50 to-slate-200/50 flex flex-col items-center justify-center border border-slate-200 flex-shrink-0 relative overflow-hidden group">
+                   <UIcon name="i-lucide-image" class="w-5 h-5 text-slate-300 relative z-10" />
+                </div>
                 <NuxtImg
+                  v-else
                   :src="getImageUrl(p.image_url, 'news')"
                   :alt="p.title"
-                  class="w-14 h-14 rounded object-cover"
+                  class="w-14 h-14 rounded object-cover flex-shrink-0"
                   loading="lazy"
                   format="webp"
                 />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${p.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                    {{ p.title }}
+                    {{ stripHtml(p.title) }}
                   </NuxtLink>
                   <p class="text-xs text-muted">{{ formatDateShort(p.published_at) }}</p>
                 </div>
@@ -290,7 +314,7 @@ const formatDateShort = (dateStr: string | null | undefined) => {
         </div>
 
         <div v-else-if="item">
-          <div class="overflow-hidden rounded-xl border border-default mb-8">
+          <div v-if="!(item.category === 'RSS' && (!item.image_url || item.image_url.includes('placehold.co')))" class="overflow-hidden rounded-xl border border-default mb-8">
             <NuxtImg
               :src="getImageUrl(item.image_url, 'banner')"
               :alt="item.title"

@@ -12,6 +12,10 @@ const isModalOpen = ref(false)
 const selectedGreetingId = ref<number | null>(null)
 const broadcastType = ref<'email' | 'whatsapp'>('email')
 
+const columnPinning = ref({
+  right: ['actions']
+})
+
 const page = ref(parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 
@@ -73,12 +77,42 @@ function onPageChange(p: number) {
   router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
 }
 
+// Smart Pagination Logic
+const visiblePages = computed(() => {
+  const current = page.value
+  const last = totalPages.value
+  const delta = 2
+  const range = []
+  const rangeWithDots = []
+  let l
+
+  for (let i = 1; i <= last; i++) {
+    if (i === 1 || i === last || (i >= current - delta && i <= current + delta)) {
+      range.push(i)
+    }
+  }
+
+  for (const i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1)
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...')
+      }
+    }
+    rangeWithDots.push(i)
+    l = i
+  }
+
+  return rangeWithDots
+})
+
 const columns = [
   { accessorKey: 'image', id: 'image', header: 'Thumbnail', meta: { class: { th: 'w-24', td: 'w-24' } } },
-  { accessorKey: 'title', id: 'title', header: 'Judul Ucapan', meta: { class: { th: 'min-w-[250px]', td: 'min-w-[250px]' } } },
-  { accessorKey: 'status', id: 'status', header: 'Status' },
-  { accessorKey: 'created_at', id: 'created_at', header: 'Dibuat Pada' },
-  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'text-right', td: 'text-right' } } }
+  { accessorKey: 'title', id: 'title', header: 'Judul Ucapan', meta: { class: { th: 'min-w-[250px]', td: 'min-w-[250px] whitespace-normal' } } },
+  { accessorKey: 'status', id: 'status', header: 'Status', meta: { class: { th: 'w-32', td: 'w-32' } } },
+  { accessorKey: 'created_at', id: 'created_at', header: 'Dibuat Pada', meta: { class: { th: 'w-40', td: 'w-40' } } },
+  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'w-16 text-right', td: 'w-16 text-right bg-white dark:bg-gray-900 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]' } } }
 ]
 
 async function onDelete(id: number) {
@@ -195,12 +229,14 @@ function getItems(row: any) {
       </template>
 
       <ClientOnly>
-        <UTable 
-          :loading="pending"
-          :data="rows" 
-          :columns="columns"
-          class="w-full"
-        >
+        <div class="overflow-x-auto no-scrollbar">
+          <UTable 
+            v-model:column-pinning="columnPinning"
+            :loading="pending"
+            :data="rows" 
+            :columns="columns"
+            class="w-full min-w-[700px]"
+          >
           <template #image-cell="{ row }">
              <img 
                v-if="row.original.image_url"
@@ -213,9 +249,9 @@ function getItems(row: any) {
           </template>
 
           <template #title-cell="{ row }">
-            <div class="max-w-md">
-              <p class="font-semibold text-highlighted line-clamp-1">{{ row.original.title }}</p>
-              <p class="text-xs text-muted line-clamp-2 mt-0.5">{{ row.original.content }}</p>
+            <div class="max-w-md py-2">
+              <p class="font-semibold text-highlighted">{{ row.original.title }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ row.original.content }}</p>
             </div>
           </template>
 
@@ -245,7 +281,8 @@ function getItems(row: any) {
            <p class="text-muted font-medium">Belum ada ucapan yang dibuat</p>
            <UButton to="/dashboard/admin/konten/ucapan/baru" variant="link" label="Buat ucapan pertama Anda" class="mt-2" />
         </div>
-      </ClientOnly>
+      </div>
+    </ClientOnly>
       
       <template #footer>
          <div class="flex items-center justify-between py-2">
@@ -271,18 +308,20 @@ function getItems(row: any) {
              />
              
              <div class="flex items-center gap-1 mx-2">
-               <UButton 
-                 v-for="p in totalPages" 
-                 :key="p"
-                 :color="page === p ? 'primary' : 'neutral'"
-                 :variant="page === p ? 'solid' : 'ghost'"
-                 size="xs"
-                 class="min-w-[28px] justify-center"
-                 @click="onPageChange(p)"
-               >
-                 {{ p }}
-               </UButton>
-             </div>
+                <template v-for="(p, i) in visiblePages" :key="i">
+                  <span v-if="p === '...'" class="px-2 text-muted">...</span>
+                  <UButton 
+                    v-else
+                    :color="page === p ? 'primary' : 'neutral'"
+                    :variant="page === p ? 'solid' : 'ghost'"
+                    size="xs"
+                    class="min-w-[28px] justify-center"
+                    @click="onPageChange(p as number)"
+                  >
+                    {{ p }}
+                  </UButton>
+                </template>
+              </div>
 
              <UButton 
                icon="i-lucide-chevron-right" 

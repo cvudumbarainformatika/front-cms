@@ -163,6 +163,12 @@ const formatDate = (dateStr: string | null | undefined, options: Intl.DateTimeFo
 }
 const formatDateShort = (dateStr: string) => formatDate(dateStr, { day: 'numeric', month: 'short', year: 'numeric' })
 const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric', month: 'short' })
+
+// Helper to strip HTML tags (useful for RSS content)
+function stripHtml(html: string) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim()
+}
 </script>
 
 <template>
@@ -197,8 +203,8 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
       <UBlogPost
         v-if="!pending && beritaData?.data?.items.length"
         :to="`/berita/${beritaData.data.items[0].slug}`"
-        :title="beritaData.data.items[0].title"
-        :description="beritaData.data.items[0].excerpt"
+        :title="stripHtml(beritaData.data.items[0].title)"
+        :description="stripHtml(beritaData.data.items[0].excerpt)"
         :date="new Date(beritaData.data.items[0].published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })"
         :authors="[{ name: beritaData.data.items[0].author, avatar: { src: avatarUrl(beritaData.data.items[0].author) } }]"
         :badge="{ label: beritaData.data.items[0].category }"
@@ -208,7 +214,16 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
         class="mb-8"
       >
         <template #header>
+          <div v-if="!beritaData.data.items[0].image_url || beritaData.data.items[0].image_url.includes('placehold.co')" 
+               class="w-full h-64 lg:h-full rounded-lg bg-gradient-to-br from-slate-50 to-slate-200/50 flex flex-col items-center justify-center border border-slate-200 relative overflow-hidden group">
+            <div class="absolute inset-0 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+               <UIcon name="i-lucide-newspaper" class="w-full h-full -rotate-12 scale-150" />
+            </div>
+            <UIcon name="i-lucide-image" class="w-12 h-12 text-slate-300 mb-2 relative z-10" />
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] relative z-10">{{ beritaData.data.items[0].category || 'NEWS' }}</span>
+          </div>
           <NuxtImg
+            v-else
             :src="getImageUrl(beritaData.data?.items[0].image_url, 'banner')"
             :alt="beritaData.data.items[0].title"
             class="w-full h-full object-cover rounded-lg"
@@ -258,8 +273,8 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               v-for="berita in beritaData.data.items.slice(1)"
               :key="berita.id"
               :to="`/berita/${berita.slug}`"
-              :title="berita.title"
-              :description="berita.excerpt"
+              :title="stripHtml(berita.title)"
+              :description="stripHtml(berita.excerpt)"
               :date="new Date(berita.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })"
               :authors="[{ name: berita.author, avatar: { src: avatarUrl(berita.author) } }]"
               :badge="{ label: berita.category }"
@@ -272,7 +287,16 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
               }"
             >
               <template #header>
+                <div v-if="!berita.image_url || berita.image_url.includes('placehold.co')" 
+                     class="w-full h-56 rounded-lg bg-gradient-to-br from-slate-50 to-slate-200/50 flex flex-col items-center justify-center border border-slate-200 relative overflow-hidden group">
+                  <div class="absolute inset-0 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                     <UIcon name="i-lucide-newspaper" class="w-full h-full -rotate-12 scale-150" />
+                  </div>
+                  <UIcon name="i-lucide-image" class="w-10 h-10 text-slate-300 mb-2 relative z-10" />
+                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] relative z-10">{{ berita.category || 'NEWS' }}</span>
+                </div>
                 <NuxtImg
+                  v-else
                   :src="getImageUrl(berita.image_url, 'news')"
                   :alt="berita.title"
                   class="w-full h-56 object-cover rounded-lg block shadow-sm border border-gray-100"
@@ -365,16 +389,21 @@ const formatDayMonth = (dateStr: string) => formatDate(dateStr, { day: 'numeric'
                 :key="`popular-${berita.id}`"
                 class="flex items-start gap-3"
               >
+                <div v-if="!berita.image_url || berita.image_url.includes('placehold.co')" 
+                     class="w-14 h-14 rounded bg-gradient-to-br from-slate-50 to-slate-200/50 flex flex-col items-center justify-center border border-slate-200 flex-shrink-0 relative overflow-hidden group">
+                   <UIcon name="i-lucide-image" class="w-5 h-5 text-slate-300 relative z-10" />
+                </div>
                 <NuxtImg
+                  v-else
                   :src="getImageUrl(berita.image_url, 'news')"
                   :alt="berita.title"
-                  class="w-14 h-14 rounded object-cover"
+                  class="w-14 h-14 rounded object-cover flex-shrink-0"
                   loading="lazy"
                   format="webp"
                 />
                 <div class="min-w-0">
                   <NuxtLink :to="`/berita/${berita.slug}`" class="text-xs leading-snug line-clamp-3 font-medium hover:underline">
-                    {{ berita.title }}
+                    {{ stripHtml(berita.title) }}
                   </NuxtLink>
                   <p class="text-xs text-muted">{{ formatDayMonth(berita.published_at) }}</p>
                 </div>

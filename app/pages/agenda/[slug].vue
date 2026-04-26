@@ -11,12 +11,9 @@ const { getImageUrl } = useImageUrl()
 // Fetch agenda detail
 const { data: res, pending, error } = useAsyncData(
   `agenda-detail-${slug}`,
-  () => $apiFetch(`/agenda/s/${slug}`)
+  () => $apiFetch(`/agenda/s/${slug}`),
+  { server: false }
 )
-
-if (error.value || !res.value?.data) {
-  throw createError({ statusCode: 404, statusMessage: 'Agenda tidak ditemukan', fatal: true })
-}
 
 const item = computed(() => res.value?.data)
 
@@ -99,8 +96,9 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
 </script>
 
 <template>
-  <UPage v-if="item">
-    <UPageHeader :title="item.title" :description="item.description.replace(/<[^>]*>/g, '').slice(0, 100) + '...'" />
+  <UPage>
+    <UPageHeader v-if="item" :title="item.title" :description="item.description.replace(/<[^>]*>/g, '').slice(0, 100) + '...'" />
+    <UPageHeader v-else title="Detail Agenda" description="..." />
 
     <template #left>
       <UPageAside>
@@ -130,55 +128,72 @@ const latest = computed(() => (latestData.value?.data?.items || []).filter((a: a
     </template>
 
     <UPageBody>
-      <div class="overflow-hidden rounded-xl border border-default mb-8">
-        <NuxtImg
-          :src="getImageUrl(item.image_url, 'banner')"
-          :alt="item.title"
-          class="w-full h-[320px] lg:h-[420px] object-cover"
-          loading="lazy"
-          format="webp"
-        />
-      </div>
-
-      <!-- Meta -->
-      <div class="grid sm:grid-cols-2 gap-4 mb-6 text-sm">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-calendar" />
-          <span>
-            {{ fmtLong(item.date) }}
-            <template v-if="item.end_date"> - {{ fmtLong(item.end_date) }}</template>
-          </span>
+      <ClientOnly>
+        <div v-if="pending" class="space-y-6">
+          <USkeleton class="w-full h-[320px] lg:h-[420px] rounded-xl" />
+          <div class="grid grid-cols-2 gap-4">
+            <USkeleton class="h-4 w-full" />
+            <USkeleton class="h-4 w-full" />
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <UIcon :name="item.is_online ? 'i-lucide-video' : 'i-lucide-map-pin'" />
-          <span>{{ item.location }}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-badge-check" />
-          <UBadge :label="`${item.skp} SKP`" variant="subtle" />
-        </div>
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-users" />
-          <span>Kuota: {{ item.quota }}</span>
-        </div>
-      </div>
 
-      <div class="flex flex-wrap gap-3 mb-6">
-        <UBadge :label="item.type" variant="outline" />
-        <UBadge v-if="item.is_online" label="Online" variant="outline" />
-      </div>
+        <div v-else-if="item">
+          <div class="overflow-hidden rounded-xl border border-default mb-8">
+            <NuxtImg
+              :src="getImageUrl(item.image_url, 'banner')"
+              :alt="item.title"
+              class="w-full h-[320px] lg:h-[420px] object-cover"
+              loading="lazy"
+              format="webp"
+            />
+          </div>
 
-      <div class="prose prose-lg max-w-none">
-        <ClientOnly>
-          <div v-html="sanitizedDesc"></div>
-        </ClientOnly>
-      </div>
+          <!-- Meta -->
+          <div class="grid sm:grid-cols-2 gap-4 mb-6 text-sm">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-calendar" />
+              <span>
+                {{ fmtLong(item.date) }}
+                <template v-if="item.end_date"> - {{ fmtLong(item.end_date) }}</template>
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon :name="item.is_online ? 'i-lucide-video' : 'i-lucide-map-pin'" />
+              <span>{{ item.location }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-badge-check" />
+              <UBadge :label="`${item.skp} SKP`" variant="subtle" />
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-users" />
+              <span>Kuota: {{ item.quota }}</span>
+            </div>
+          </div>
 
-      <div class="mt-8">
-        <UButton v-if="item.registration_url" :to="item.registration_url" external size="lg" trailing-icon="i-lucide-external-link">
-          Daftar Sekarang
-        </UButton>
-      </div>
+          <div class="flex flex-wrap gap-3 mb-6">
+            <UBadge :label="item.type" variant="outline" />
+            <UBadge v-if="item.is_online" label="Online" variant="outline" />
+          </div>
+
+          <div class="prose prose-lg max-w-none">
+            <div v-html="sanitizedDesc"></div>
+          </div>
+
+          <div class="mt-8">
+            <UButton v-if="item.registration_url" :to="item.registration_url" external size="lg" trailing-icon="i-lucide-external-link">
+              Daftar Sekarang
+            </UButton>
+          </div>
+        </div>
+
+        <div v-else class="flex flex-col items-center justify-center py-20 text-center">
+          <UIcon name="i-lucide-calendar-x" class="w-16 h-16 text-slate-300 mb-4" />
+          <h2 class="text-2xl font-bold text-slate-800">Agenda Tidak Ditemukan</h2>
+          <p class="text-slate-600 mt-2">Agenda yang Anda cari tidak ditemukan atau sudah berakhir</p>
+          <UButton to="/agenda" size="lg" class="mt-4">Kembali ke Daftar Agenda</UButton>
+        </div>
+      </ClientOnly>
     </UPageBody>
 
     <template #right>

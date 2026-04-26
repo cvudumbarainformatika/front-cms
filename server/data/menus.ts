@@ -121,6 +121,19 @@ export const headerMenus: MenuItem[] = [
     order: 5,
     isActive: true,
     roles: ['public', 'member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
+  },
+  {
+    id: 'thumbnails',
+    label: 'THUMBNAILS',
+    slug: 'thumbnails',
+    to: '/thumbnails',
+    icon: 'i-lucide-layout-grid',
+    parentId: null,
+    position: 'header',
+    order: 6,
+    isActive: true,
+    isFixed: true,
+    roles: ['public', 'member', 'admin_cabang', 'admin_wilayah', 'admin_pusat']
   }
 ]
 
@@ -303,6 +316,19 @@ export const sidebarMenus: MenuItem[] = [
         position: 'sidebar',
         order: 3,
         isActive: true,
+        roles: ['admin_pusat']
+      },
+      {
+        id: 'admin-content-thumbnails',
+        label: 'Thumbnails',
+        slug: 'thumbnails',
+        to: '/dashboard/admin/konten/thumbnails',
+        icon: 'i-lucide-grid',
+        parentId: 'admin-content',
+        position: 'sidebar',
+        order: 4,
+        isActive: true,
+        isFixed: true,
         roles: ['admin_pusat']
       }
     ]

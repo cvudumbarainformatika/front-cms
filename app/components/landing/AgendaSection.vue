@@ -13,7 +13,7 @@ const { data: agendaData, pending } = useAsyncData(
   () => $apiFetch('/agenda', {
     query: {
       limit: 3,
-      upcoming: 'false',
+      upcoming: 'true',
       status: 'published'
     }
   }),
@@ -113,15 +113,19 @@ const navigateToAgenda = () => router.push('/agenda')
 
             <!-- Event Content -->
             <div class="p-6 flex flex-col flex-1">
-              <h3 class="text-xl font-semibold mb-3 text-white line-clamp-2 min-h-14">{{ event.title }}</h3>
-              <p class="text-primary-200/60 mb-3 text-sm line-clamp-2 min-h-10">{{ event.description }}</p>
+              <h3 class="text-2xl font-bold mb-3 text-white line-clamp-2 min-h-16">{{ event.title }}</h3>
+              <p class="text-primary-100 mb-4 text-base leading-relaxed line-clamp-3 min-h-18">{{ event.description }}</p>
 
               <!-- Meta Info -->
-              <div class="flex items-center gap-2 text-xs text-primary-200/50 mb-6 mt-auto">
-                <UIcon v-if="event.time" name="i-lucide-clock" class="shrink-0 w-3.5 h-3.5" />
-                <span v-if="event.time">{{ event.time }}</span>
-                <UIcon v-if="event.location" name="i-lucide-map-pin" class="shrink-0 w-3.5 h-3.5 ml-2" />
-                <span v-if="event.location" class="truncate max-w-[120px]">{{ event.location }}</span>
+              <div class="flex items-center gap-3 text-sm text-primary-200/70 mb-6 mt-auto">
+                <div class="flex items-center gap-1.5">
+                  <UIcon v-if="event.time" name="i-lucide-clock" class="shrink-0 w-4 h-4 text-primary-400" />
+                  <span v-if="event.time">{{ event.time }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 ml-1">
+                  <UIcon v-if="event.location" name="i-lucide-map-pin" class="shrink-0 w-4 h-4 text-primary-400" />
+                  <span v-if="event.location" class="truncate max-w-[150px]">{{ event.location }}</span>
+                </div>
               </div>
 
               <!-- CTA Button -->

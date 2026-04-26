@@ -41,7 +41,8 @@ const form = ref({
   date: new Date().toISOString(),
   image: { src: '' },
   authors: [] as Array<{ name: string; to?: string; avatar?: { src: string } }>,
-  badge: { label: '' }
+  badge: { label: '' },
+  video_url: ''
 })
 
 // Helper function to convert slug to title
@@ -93,6 +94,7 @@ if (hasValidContent) {
   
   form.value.authors = d.authors || []
   form.value.badge = d.badge || { label: '' }
+  form.value.video_url = d.video_url || ''
 } else {
   // Auto-fill title from slug for new content
   form.value.title = slugToTitle(slug.value)
@@ -237,6 +239,10 @@ async function onSave() {
 
           <UFormField label="Tanggal">
             <UInput v-model="form.date" type="datetime-local" class="w-full" />
+          </UFormField>
+
+          <UFormField label="YouTube URL" help="Contoh: https://www.youtube.com/watch?v=xxx">
+            <UInput v-model="form.video_url" placeholder="https://www.youtube.com/watch?v=..." icon="i-lucide-youtube" class="w-full" />
           </UFormField>
 
           <USeparator class="my-6" />

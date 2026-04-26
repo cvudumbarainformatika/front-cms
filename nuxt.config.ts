@@ -50,12 +50,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (Server Side Only)
     // Dapat di-override saat runtime via env var: NUXT_API_SECRET_TARGET
-    apiSecretTarget: 'http://localhost:8080',
+    apiSecretTarget: 'http://127.0.0.1:8080',
 
     // Nuxt Image configuration at runtime
     image: {
       alias: {
-        '/backend': (process.env.NUXT_API_SECRET_TARGET || 'http://localhost:8080') + '/api/v1'
+        '/backend': (process.env.NUXT_API_SECRET_TARGET || 'http://127.0.0.1:8080') + '/api/v1'
       }
     },
 

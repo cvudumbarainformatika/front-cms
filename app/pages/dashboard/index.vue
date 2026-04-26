@@ -26,9 +26,26 @@ const { data: statsResponse, status: statsStatus } = await useAsyncData('dashboa
       article_count: number
       agenda_count: number
       member_count: number
+      upcoming_agenda: Array<{
+        id: number
+        title: string
+        date: string
+        type: string
+        skp: number
+      }>
     }
   }>('/dashboard/stats')
 })
+
+const upcomingEvents = computed(() => {
+  return statsResponse.value?.data?.upcoming_agenda || []
+})
+
+function formatEventDate(dateStr: string) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 const stats = computed(() => {
   const data = statsResponse.value?.data || { article_count: 0, agenda_count: 0, member_count: 0 }
@@ -53,30 +70,7 @@ const stats = computed(() => {
   ]
 })
 
-// Dummy upcoming events
-const upcomingEvents = ref([
-  {
-    id: 1,
-    title: 'Webinar Tatalaksana PPOK 2024',
-    date: '28 Des 2024',
-    type: 'webinar',
-    skp: 4
-  },
-  {
-    id: 2,
-    title: 'Workshop Bronkoskopi',
-    date: '15 Jan 2025',
-    type: 'workshop',
-    skp: 8
-  },
-  {
-    id: 3,
-    title: 'Kongres Nasional PDPI',
-    date: '20-22 Feb 2025',
-    type: 'kongres',
-    skp: 25
-  }
-])
+
 
 
 
@@ -177,7 +171,7 @@ onMounted(checkAuth)
           </div>
         </template>
 
-        <div class="space-y-4">
+        <div v-if="upcomingEvents.length" class="space-y-4">
           <div
             v-for="event in upcomingEvents"
             :key="event.id"
@@ -194,7 +188,7 @@ onMounted(checkAuth)
                 {{ event.title }}
               </p>
               <p class="text-sm text-muted">
-                {{ event.date }}
+                {{ formatEventDate(event.date) }}
               </p>
             </div>
             <UBadge
@@ -204,6 +198,10 @@ onMounted(checkAuth)
               {{ event.skp }} SKP
             </UBadge>
           </div>
+        </div>
+        <div v-else class="py-12 flex flex-col items-center justify-center text-center gap-2">
+          <UIcon name="i-lucide-calendar-x" class="w-12 h-12 text-slate-200" />
+          <p class="text-sm text-slate-400">Tidak ada agenda mendatang</p>
         </div>
       </UPageCard>
 

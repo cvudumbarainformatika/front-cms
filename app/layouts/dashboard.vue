@@ -91,7 +91,7 @@ useHead({
     <!-- Main Content Area -->
     <div
       :class="[
-        'flex-1 flex flex-col transition-all duration-300',
+        'flex-1 flex flex-col transition-all duration-300 min-w-0',
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
       ]"
     >
@@ -102,7 +102,7 @@ useHead({
       />
 
       <!-- Page Content -->
-      <main class="flex-1 p-6 lg:p-10">
+      <main class="flex-1 p-6 lg:p-10 min-w-0">
         <slot />
       </main>
 

@@ -49,7 +49,6 @@ useSeoMeta({
       <LandingAboutUs />
       <LandingAgendaSection />
       <LandingPublikasiSection />
-      <LandingDirekoriSection />
     </template>
 
     <!-- Theme 1 (Old) -->
@@ -57,7 +56,6 @@ useSeoMeta({
       <LandingHeroSection />
       <LandingAgendaSection />
       <LandingPublikasiSection />
-      <LandingDirekoriSection />
     </template>
   </div>
 </template>

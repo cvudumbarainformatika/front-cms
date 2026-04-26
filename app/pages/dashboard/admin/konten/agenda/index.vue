@@ -7,6 +7,10 @@ const toast = useToast()
 const { $apiFetch } = useNuxtApp()
 const { getImageUrl } = useImageUrl()
 
+const columnPinning = ref({
+  right: ['actions']
+})
+
 const page = ref(parseInt(route.query.page as string) || 1)
 const search = computed(() => route.query.search as string || '')
 const status = computed(() => (route.query.status as string) || 'all')
@@ -78,13 +82,43 @@ function onPageChange(p: number) {
   router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
 }
 
+// Smart Pagination Logic
+const visiblePages = computed(() => {
+  const current = page.value
+  const last = totalPages.value
+  const delta = 2
+  const range = []
+  const rangeWithDots = []
+  let l
+
+  for (let i = 1; i <= last; i++) {
+    if (i === 1 || i === last || (i >= current - delta && i <= current + delta)) {
+      range.push(i)
+    }
+  }
+
+  for (const i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1)
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...')
+      }
+    }
+    rangeWithDots.push(i)
+    l = i
+  }
+
+  return rangeWithDots
+})
+
 const columns = [
   { accessorKey: 'image', id: 'image', header: 'Gambar', meta: { class: { th: 'w-16', td: 'w-16' } } },
-  { accessorKey: 'title', id: 'title', header: 'Nama Agenda', meta: { class: { th: 'min-w-[300px]', td: 'min-w-[300px]' } } },
-  { accessorKey: 'type', id: 'type', header: 'Jenis' },
-  { accessorKey: 'status', id: 'status', header: 'Status' },
-  { accessorKey: 'date', id: 'date', header: 'Tanggal' },
-  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'text-right', td: 'text-right' } } }
+  { accessorKey: 'title', id: 'title', header: 'Nama Agenda', meta: { class: { th: 'min-w-[250px]', td: 'min-w-[250px] whitespace-normal' } } },
+  { accessorKey: 'type', id: 'type', header: 'Jenis', meta: { class: { th: 'w-32', td: 'w-32' } } },
+  { accessorKey: 'status', id: 'status', header: 'Status', meta: { class: { th: 'w-32', td: 'w-32' } } },
+  { accessorKey: 'date', id: 'date', header: 'Tanggal', meta: { class: { th: 'w-40', td: 'w-40' } } },
+  { accessorKey: 'actions', id: 'actions', header: 'Aksi', meta: { class: { th: 'w-16 text-right', td: 'w-16 text-right bg-white dark:bg-gray-900 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]' } } }
 ]
 
 function setStatus(s: string) {
@@ -301,13 +335,14 @@ function getItems(row: any) {
       </template>
 
       <ClientOnly>
-        <div>
+        <div class="overflow-x-auto no-scrollbar">
           <UTable 
             :key="`${page}-${status}-${search}`" 
+            v-model:column-pinning="columnPinning"
             :loading="pending"
             :data="rows" 
             :columns="columns"
-            class="w-full"
+            class="w-full min-w-[800px]"
             :ui="{
               tr: 'hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hover:shadow-sm cursor-pointer'
             }"
@@ -325,8 +360,8 @@ function getItems(row: any) {
 
             <!-- Title Slot -->
             <template #title-cell="{ row }">
-              <div class="min-w-0">
-                <p class="font-semibold text-highlighted line-clamp-2 leading-snug">{{ row.original.title }}</p>
+              <div class="py-2">
+                <p class="font-semibold text-highlighted leading-snug">{{ row.original.title }}</p>
                 <div class="flex items-center gap-2 mt-1">
                    <UBadge color="neutral" variant="subtle" size="xs" class="capitalize">{{ row.original.slug?.slice(0, 20) || '...' }}...</UBadge>
                 </div>
@@ -394,18 +429,20 @@ function getItems(row: any) {
              />
              
              <div class="flex items-center gap-1 mx-2">
-               <UButton 
-                 v-for="p in totalPages" 
-                 :key="p"
-                 :color="page === p ? 'primary' : 'neutral'"
-                 :variant="page === p ? 'solid' : 'ghost'"
-                 size="xs"
-                 class="min-w-[28px] justify-center"
-                 @click="onPageChange(p)"
-               >
-                 {{ p }}
-               </UButton>
-             </div>
+                <template v-for="(p, i) in visiblePages" :key="i">
+                  <span v-if="p === '...'" class="px-2 text-muted">...</span>
+                  <UButton 
+                    v-else
+                    :color="page === p ? 'primary' : 'neutral'"
+                    :variant="page === p ? 'solid' : 'ghost'"
+                    size="xs"
+                    class="min-w-[28px] justify-center"
+                    @click="onPageChange(p as number)"
+                  >
+                    {{ p }}
+                  </UButton>
+                </template>
+              </div>
 
              <UButton 
                icon="i-lucide-chevron-right" 

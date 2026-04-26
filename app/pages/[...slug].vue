@@ -93,6 +93,24 @@ useSeoMeta({
                 <p class="text-muted">Konten kosongan.</p>
               </template>
             </div>
+
+            <!-- YouTube Embed Section -->
+            <div v-if="dyn.video_url" class="mt-12 pt-12 border-t border-default">
+              <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <UIcon name="i-lucide-youtube" class="text-red-600" />
+                Video Terkait
+              </h3>
+              <div class="aspect-video w-full rounded-2xl overflow-hidden shadow-xl border border-default">
+                <iframe 
+                  class="w-full h-full"
+                  :src="getYoutubeEmbedUrl(dyn.video_url)" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  allowfullscreen
+                ></iframe>
+              </div>
+            </div>
           </UPageBody>
         </UPage>
       </template>
@@ -116,3 +134,25 @@ useSeoMeta({
     </UPage>
   </UContainer>
 </template>
+
+<script lang="ts">
+// Helper function for YouTube Embed
+function getYoutubeEmbedUrl(url: string) {
+  if (!url) return ''
+  let id = ''
+  
+  try {
+    if (url.includes('v=')) {
+      id = url.split('v=')[1].split('&')[0]
+    } else if (url.includes('youtu.be/')) {
+      id = url.split('youtu.be/')[1].split('?')[0]
+    } else if (url.includes('embed/')) {
+      id = url.split('embed/')[1].split('?')[0]
+    }
+  } catch (e) {
+    return ''
+  }
+  
+  return id ? `https://www.youtube.com/embed/${id}` : ''
+}
+</script>

@@ -69,22 +69,26 @@ const members = computed(() => {
         </ScrollReveal>
       </div>
 
-      <!-- Members Grid (No title as requested) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        <ScrollReveal
+      <!-- Members Grid (Centered orphans) -->
+      <div class="flex flex-wrap justify-center gap-y-12 gap-x-8">
+        <div
            v-for="(member, idx) in members"
            :key="idx"
-           animation="slide-up"
-           :delay="idx * 100"
+           class="w-full sm:w-[calc(50%-16px)] lg:w-[calc(25%-24px)]"
         >
-          <MemberCard
-             :name="member.name"
-             :position="member.position"
-             :photo="member.photo"
-             :joined-date="member.joinedDate"
-             :icon="(member as any).icon"
-          />
-        </ScrollReveal>
+          <ScrollReveal
+             animation="slide-up"
+             :delay="idx * 100"
+          >
+            <MemberCard
+               :name="member.name"
+               :position="member.position"
+               :photo="member.photo"
+               :joined-date="member.joinedDate"
+               :icon="(member as any).icon"
+            />
+          </ScrollReveal>
+        </div>
       </div>
 
       <!-- Footer Buttons -->
