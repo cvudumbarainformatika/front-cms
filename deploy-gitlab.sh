@@ -70,6 +70,8 @@ services:
     image: $FULL_IMAGE_NAME
     container_name: front-cms
     restart: always
+    volumes:
+      - /opt/apps/frontend/uploads:/app/public/uploads
     environment:
       - NUXT_PUBLIC_API_BASE=/backend
       - NUXT_API_SECRET_TARGET=http://api-go-prod:8080
@@ -86,13 +88,13 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
+      - /opt/apps/frontend/uploads:/usr/share/nginx/html/uploads
     depends_on:
       - front-cms
     networks:
       - app-network
 
 networks:
-
   app-network:
     external: true
     name: gitlab_app-network
