@@ -82,16 +82,16 @@ const navLinks = computed(() => {
       <div class="absolute inset-0 bg-[url('/images/footer-pattern.svg')] opacity-[0.03] pointer-events-none"></div>
 
       <UContainer>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8">
           <!-- Column 1: Navigation -->
-          <div class="space-y-6">
+          <!-- <div class="space-y-6">
             <h5 class="text-xs font-black uppercase tracking-[0.3em] text-primary-400 mb-4 opacity-50">NAVIGASI</h5>
             <div class="flex flex-col gap-4">
                <NuxtLink v-for="link in navLinks" :key="link.label" :to="link.to" class="text-sm font-bold opacity-80 hover:opacity-100 hover:text-primary-300 transition-all leading-snug">
                   {{ link.label }}
                </NuxtLink>
             </div>
-          </div>
+          </div> -->
 
           <!-- Column 2 & 3: Dynamic Specialities -->
           <template v-if="footerData?.columns && footerData.columns.length > 0">
