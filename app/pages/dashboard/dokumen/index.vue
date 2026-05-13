@@ -188,7 +188,7 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-highlighted">Dokumen Pribadi</h1>
-        <p class="text-muted">Kelola dokumen persyaratan (STR, SIP, Serkom, dll.)</p>
+        <p class="text-muted">Kelola dokumen </p>
       </div>
       <div>
         <UButton

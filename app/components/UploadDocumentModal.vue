@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -27,14 +27,38 @@ const form = ref({
   file: null as File | null
 })
 
-const documentTypes = [
-  { label: 'STR', value: 'STR' },
-  { label: 'SIP', value: 'SIP' },
-  { label: 'Serkom', value: 'Serkom' },
-  { label: 'Identitas (KTP/SIM)', value: 'Identitas' },
-  { label: 'Ijazah', value: 'Ijazah' },
-  { label: 'Lainnya', value: 'Lainnya' }
-]
+const { $apiFetch } = useNuxtApp() as any
+const documentTypes = ref<{ label: string; value: string }[]>([])
+const showAddTypeModal = ref(false)
+
+async function fetchDocumentTypes() {
+  try {
+    const res = await $apiFetch('/typedokumen') as {
+      status: string
+      data: any[]
+    }
+
+    if (res?.data) {
+      documentTypes.value = res.data.map((item: any) => ({
+        label: item.typedokumen,
+        value: item.typedokumen
+      }))
+    }
+  } catch (err) {
+    console.error(err)
+
+    documentTypes.value = [
+      { label: 'Serkom', value: 'Serkom' },
+      { label: 'Identitas (KTP/SIM)', value: 'Identitas' },
+      { label: 'Ijazah', value: 'Ijazah' },
+      { label: 'Lainnya', value: 'Lainnya' }
+    ]
+  }
+}
+
+onMounted(() => {
+  fetchDocumentTypes()
+})
 
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement
@@ -66,6 +90,11 @@ function submitForm() {
   formData.append('file', form.value.file)
 
   emit('upload', formData)
+}
+
+async function handleTypeAdded(newType: string) {
+  form.value.type = newType
+  await fetchDocumentTypes()
 }
 
 // Method called by parent to reset state when upload completes
@@ -108,15 +137,25 @@ defineExpose({
           required
           class="mb-6"
         >
-          <USelect
-            v-model="form.type"
-            :items="documentTypes"
-            placeholder="Pilih jenis dokumen..."
-            required
-            value-key="value"
-            size="md"
-            class="w-full"
-          />
+          <div class="flex gap-2">
+            <USelect
+              v-model="form.type"
+              :items="documentTypes"
+              placeholder="Pilih jenis dokumen..."
+              required
+              value-key="value"
+              size="md"
+              class="flex-1"
+            />
+            <UButton
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="outline"
+              size="md"
+              @click="showAddTypeModal = true"
+              title="Tambah tipe dokumen baru"
+            />
+          </div>
         </UFormField>
 
         <UFormField
@@ -183,5 +222,7 @@ defineExpose({
         <UButton type="submit" form="upload-doc-form" color="primary" label="Unggah" icon="i-lucide-upload" :loading="uploading" />
       </div>
     </template>
+
+    <AddDocumentTypeModal v-model="showAddTypeModal" @success="handleTypeAdded" />
   </UModal>
 </template>
