@@ -35,24 +35,25 @@ function slugify (text: string) {
 // File upload using v-model
 const uploadedFile = ref<File | null>(null)
 const imagePreview = ref<string>('') // untuk preview langsung
+const showAddTypeModal = ref(false)
 
 watch(uploadedFile, async (newFile) => {
   if (!newFile) return
-  
+
   // Set preview langsung dengan blob URL
   imagePreview.value = URL.createObjectURL(newFile)
-  
+
   const fd = new FormData()
   fd.append('file', newFile)
-  
+
   try {
-    const res = await $apiFetch('/upload?type=berita', { 
-      method: 'POST', 
+    const res = await $apiFetch('/upload?type=berita', {
+      method: 'POST',
       body: fd
     }) as any
-    
+
     if (res?.data?.url) {
-      form.image_url = res.data.url 
+      form.image_url = res.data.url
       toast.add({ title: 'Gambar berhasil diupload', color: 'success' })
     }
   } catch (error: any) {
@@ -89,19 +90,49 @@ async function save(status?: 'draft'|'published') {
 }
 
 // Preset kategori & validasi ringan
-const categoryOptions = [
-  { label: 'Umum', value: 'umum' },
-  { label: 'Ilmiah', value: 'ilmiah' },
-  { label: 'Kegiatan', value: 'kegiatan' },
-  { label: 'Pengumuman', value: 'pengumuman' },
-  { label: 'Prestasi', value: 'prestasi' }
-]
+const categoryOptions = ref([])
 
 const errors = reactive<{ title?: string; category?: string; content?: string }>({})
 watch(() => form.title, v => { errors.title = v ? undefined : 'Judul wajib' })
 watch(() => form.category, v => { errors.category = v ? undefined : 'Kategori wajib' })
 watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib' })
 
+
+function handleTypeAdded(typeName: string) {
+  categoryOptions.value = [
+    {
+      label: typeName,
+      value: typeName
+    },
+    ...categoryOptions.value
+  ]
+
+  form.category = typeName
+}
+
+
+
+async function fetchTypeArtikel() {
+  try {
+    const res = await $apiFetch('/typeartikel') as any
+
+    categoryOptions.value = (res.data || [])
+      .filter((item: any) => item.typeartikel)
+      .map((item: any) => ({
+        label: item.typeartikel,
+        value: item.typeartikel
+      }))
+
+    console.log(categoryOptions.value)
+
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => {
+  fetchTypeArtikel()
+})
 
 </script>
 
@@ -123,9 +154,9 @@ watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib'
         <div class="xl:col-span-9 space-y-4">
           <!-- Title Field - WordPress Style: Large and Prominent -->
           <UFormField label="Judul" :error="errors.title" required class="mb-4">
-            <UInput 
-              v-model="form.title" 
-              placeholder="Tambahkan judul berita" 
+            <UInput
+              v-model="form.title"
+              placeholder="Tambahkan judul berita"
               class="w-full text-2xl font-semibold placeholder:text-gray-400 placeholder:font-normal"
             />
           </UFormField>
@@ -153,9 +184,9 @@ watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib'
             >
               <div class="w-full min-h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-500 transition-colors" @click="open()">
                 <template v-if="displayImageUrl">
-                  <img 
-                    :src="displayImageUrl" 
-                    alt="cover" 
+                  <img
+                    :src="displayImageUrl"
+                    alt="cover"
                     class="max-h-40 object-contain rounded"
                   />
                   <div class="flex gap-2">
@@ -173,9 +204,30 @@ watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib'
             </UFileUpload>
           </UFormField>
 
-          <UFormField label="Kategori" :error="errors.category">
-            <USelect v-model="form.category" :items="categoryOptions" placeholder="Pilih kategori" class="w-full" />
-          </UFormField>
+         <UFormField :error="errors.category">
+          <template #label>
+            <div class="flex items-center gap-2">
+              <span>Kategori</span>
+
+              <UButton
+                type="button"
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="showAddTypeModal = true"
+                title="Tambah kategori baru"
+              />
+            </div>
+          </template>
+
+          <USelect
+            v-model="form.category"
+            :items="categoryOptions"
+            placeholder="Pilih kategori"
+            class="w-full"
+          />
+        </UFormField>
 
           <!-- Field author otomatis dari user login, tidak perlu input manual -->
 
@@ -192,4 +244,10 @@ watch(() => form.content, v => { errors.content = v ? undefined : 'Konten wajib'
       <UButton v-if="hasMinimumRole('admin_pusat')" :loading="saving" :disabled="!form.title || !form.content" icon="i-lucide-send" color="primary" @click="save('published')">Publish</UButton>
     </div>
   </div>
+  <Teleport to="body">
+  <AddArticelTypeModal
+    v-model:open="showAddTypeModal"
+    @success="handleTypeAdded"
+  />
+</Teleport>
 </template>
