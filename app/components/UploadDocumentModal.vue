@@ -2,6 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import AddDocumentTypeModal from '~/components/AddDocumentTypeModal.vue'
 
+
+const authCookie = useCookie('auth')
+const user = computed(() => authCookie.value?.user)
+const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin' || user.value?.role === 'admin_pusat')
 const props = defineProps<{
   modelValue: boolean
 }>()
@@ -224,6 +228,7 @@ defineExpose({
 
         <!-- Baris 4: status dokumen -->
         <UFormField
+          v-if="isAdmin"
           label="Pilih Satus Dokumen "
           required
         >
