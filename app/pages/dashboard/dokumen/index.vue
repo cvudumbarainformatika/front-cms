@@ -5,8 +5,14 @@ definePageMeta({ layout: 'dashboard', ssr: false })
 
 const { $apiFetch } = useNuxtApp()
 const toast = useToast()
-const authCookie = useCookie('auth')
-const user = computed(() => authCookie.value?.user)
+// const authCookie = useCookie('auth')
+// const user = computed(() => authCookie.value?.user)
+let user = null
+
+if (import.meta.client) {
+  const rawUser = localStorage.getItem('auth_user')
+  user = rawUser ? JSON.parse(rawUser) : null
+}
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase || '/backend'

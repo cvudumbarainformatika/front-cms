@@ -3,9 +3,14 @@ import { ref, computed, onMounted } from 'vue'
 import AddDocumentTypeModal from '~/components/AddDocumentTypeModal.vue'
 
 
-const authCookie = useCookie('auth')
-const user = computed(() => authCookie.value?.user)
-const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin' || user.value?.role === 'admin_pusat')
+// const authCookie = useCookie('auth_user')
+let user = null
+
+if (import.meta.client) {
+  const rawUser = localStorage.getItem('auth_user')
+  user = rawUser ? JSON.parse(rawUser) : null
+}
+const isAdmin = computed(() => user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'admin_pusat')
 const props = defineProps<{
   modelValue: boolean
 }>()
@@ -141,6 +146,7 @@ defineExpose({
     </template>
 
     <template #body>
+      
       <form @submit.prevent="submitForm" class="space-y-6" id="upload-doc-form">
         <!-- Baris 1: Nama & Jenis Dokumen -->
         <UFormField
