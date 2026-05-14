@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import AddDocumentTypeModal from '~/components/AddDocumentTypeModal.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -148,6 +149,7 @@ defineExpose({
               class="flex-1"
             />
             <UButton
+              type="button"
               icon="i-lucide-plus"
               color="neutral"
               variant="outline"
@@ -223,6 +225,11 @@ defineExpose({
       </div>
     </template>
 
-    <AddDocumentTypeModal v-model="showAddTypeModal" @success="handleTypeAdded" />
+    <Teleport to="body">
+  <AddDocumentTypeModal
+    v-model:open="showAddTypeModal"
+    @success="handleTypeAdded"
+  />
+</Teleport>
   </UModal>
 </template>
