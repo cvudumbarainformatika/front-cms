@@ -22,6 +22,7 @@ interface User {
   id: string
   name: string
   email: string
+  password_string?: string
   phone: string
   cabang: string
   status: 'pending_verification' | 'verified' | 'active' | 'inactive'
@@ -130,6 +131,11 @@ const columns = [
     label: 'Email',
     sortable: true
   },
+  {
+  key: 'password_string',
+  label: 'Password',
+  sortable: false
+},
   {
     key: 'phone',
     label: 'WhatsApp',
@@ -474,6 +480,12 @@ const getRoleLabel = (role: string) => {
   }
   return labels[role] || role
 }
+
+const showPassword = ref<Record<string, boolean>>({})
+
+const togglePassword = (id: string) => {
+  showPassword.value[id] = !showPassword.value[id]
+}
 </script>
 
 <template>
@@ -641,7 +653,30 @@ const getRoleLabel = (role: string) => {
               <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                 {{ user.email }}
               </td>
+              <!-- Password -->
+              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono">
+                    {{
+                      showPassword[user.id]
+                        ? (user.password_string || '-')
+                        : '••••••••'
+                    }}
+                  </span>
 
+                  <UButton
+                    :icon="
+                      showPassword[user.id]
+                        ? 'i-lucide-eye-off'
+                        : 'i-lucide-eye'
+                    "
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="togglePassword(user.id)"
+                  />
+                </div>
+              </td>
               <!-- Phone -->
               <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                 {{ user.phone }}
