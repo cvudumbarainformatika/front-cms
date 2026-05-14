@@ -107,7 +107,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       submit-label="Masuk"
       @submit="onSubmit"
     >
-      <template #password-hint>
+      <!-- <template #password-hint>
         <ULink
           to="/lupa-password"
           class="text-primary font-medium"
@@ -115,7 +115,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         >
           Lupa password?
         </ULink>
-      </template>
+      </template> -->
 
       <template #footer>
         <USeparator label="..." class="my-4" />
