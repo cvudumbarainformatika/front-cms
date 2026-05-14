@@ -23,6 +23,7 @@ const toast = useToast()
 
 const form = ref({
   name: '',
+  jenis: 'private',
   type: '',
   valid_until: '',
   file: null as File | null
@@ -79,7 +80,7 @@ function handleClose() {
 }
 
 function submitForm() {
-  if (!form.value.name || !form.value.type || !form.value.file) {
+  if (!form.value.name || !form.value.type || !form.value.file || !form.value.jenis) {
     toast.add({ title: 'Validasi', description: 'Mohon lengkapi semua field yang wajib', color: 'error' })
     return
   }
@@ -88,6 +89,7 @@ function submitForm() {
   formData.append('name', form.value.name)
   formData.append('type', form.value.type)
   if (form.value.valid_until) formData.append('valid_until', form.value.valid_until)
+  formData.append('jenis', form.value.jenis)
   formData.append('file', form.value.file)
 
   emit('upload', formData)
@@ -97,11 +99,15 @@ async function handleTypeAdded(newType: string) {
   form.value.type = newType
   await fetchDocumentTypes()
 }
-
+// Options jenis
+const documentJenises = [
+  { label: 'Private', value: 'private' },
+  { label: 'Public', value: 'public' },
+]
 // Method called by parent to reset state when upload completes
 defineExpose({
   reset() {
-    form.value = { name: '', type: '', valid_until: '', file: null }
+    form.value = { name: '', jenis:'private', type: '', valid_until: '', file: null }
     if (fileInput.value) fileInput.value.value = ''
     uploading.value = false
   },
@@ -214,6 +220,22 @@ defineExpose({
             <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
             Format yang didukung: PDF, JPG, PNG, WEBP, ZIP. Maksimal ukuran 5MB.
           </p>
+        </UFormField>
+
+        <!-- Baris 4: status dokumen -->
+        <UFormField
+          label="Pilih Satus Dokumen "
+          required
+        >
+          <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50 mt-1">
+            <!-- <template> -->
+              <URadioGroup v-model="form.jenis" :items="documentJenises" orientation="horizontal"/>
+            <!-- </template> -->
+          </div>
+          <!-- <p class="text-xs text-info-600 dark:text-info-400 mt-2 flex items-center gap-1">
+            <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5" />
+            Format yang didukung: PDF, JPG, PNG, WEBP, ZIP. Maksimal ukuran 5MB.
+          </p> -->
         </UFormField>
       </form>
     </template>

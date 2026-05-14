@@ -50,6 +50,8 @@ const documentTypes = [
   { label: 'Lainnya', value: 'Lainnya' }
 ]
 
+
+
 // Table Columns (dynamic based on role)
 const columns = computed(() => {
   const baseCols = [
@@ -286,6 +288,7 @@ onMounted(() => {
           <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-2 text-base leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ doc.name }}</h3>
 
           <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400">
+             
              <div class="flex items-center gap-2">
                <UIcon name="i-lucide-calendar" class="w-4 h-4 text-gray-400" />
                <span class="truncate">Dibuat: {{ formatDate(doc.created_at) }}</span>
@@ -293,6 +296,9 @@ onMounted(() => {
              <div class="flex items-center gap-2" :class="{ 'text-red-600 dark:text-red-400 font-medium': doc.valid_until && new Date(doc.valid_until) < new Date() }">
                <UIcon name="i-lucide-hourglass" class="w-4 h-4 text-gray-400" :class="{ 'text-red-500 dark:text-red-400': doc.valid_until && new Date(doc.valid_until) < new Date() }" />
                <span class="truncate">Batas: {{ doc.valid_until ? formatDate(doc.valid_until) : 'Seumur Hidup' }}</span>
+             </div>
+             <div class="flex items-center gap-2">
+               <span class="truncate">{{ doc.jenis }}</span>
              </div>
              <div v-if="isAdmin" class="flex items-center gap-2">
                 <UIcon name="i-lucide-user" class="w-4 h-4 text-gray-400" />
