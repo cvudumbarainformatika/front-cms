@@ -195,7 +195,7 @@ onMounted(() => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-highlighted">Dokumen Pribadi</h1>
+        <h1 class="text-2xl font-bold text-highlighted">Dokumen</h1>
         <p class="text-muted">Kelola dokumen </p>
       </div>
       <div>
@@ -294,7 +294,7 @@ onMounted(() => {
           <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-2 text-base leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ doc.name }}</h3>
 
           <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400">
-             
+
              <div class="flex items-center gap-2">
                <UIcon name="i-lucide-calendar" class="w-4 h-4 text-gray-400" />
                <span class="truncate">Dibuat: {{ formatDate(doc.created_at) }}</span>
