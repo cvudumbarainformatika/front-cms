@@ -15,35 +15,24 @@ const toast = useToast()
 const page = ref(parseInt(route.query.page as string) || 1)
 const search = ref(route.query.search as string || '')
 const selectedCategory = ref((route.query.category as string)?.toUpperCase() || 'SEMUA KATEGORI')
-const categories = ref<string[]>([]) // kategori existing
+const categories = ref<string[]>([])
 
-// Form State
-const isOpen = ref(false)
-const isEditing = ref(false)
-const saving = ref(false)
-
-const form = ref({
-  id: null as number | null,
-  title: '',
-  categories: [] as string[],      // ← Diubah jadi array
-  youtube_url: '',
-  description: ''
-})
-
-const newCategoryInput = ref('')   // untuk input kategori baru
-
-// Fetch categories
+// Fetch categories for filter & suggestion
 async function fetchCategories() {
   try {
     const res = await $apiFetch('/thumbnails/categories')
     const rawData = (res as any).data
     categories.value = Array.isArray(rawData) ? rawData : []
-  } catch (e) {
-    console.error(e)
-  }
+  } catch (e) {}
 }
 
-// Main Data
+// Options for the filter dropdown
+const categoryOptions = computed(() => {
+  const opts = categories.value.map(c => ({ label: String(c).toUpperCase(), value: c }))
+  return [{ label: 'Semua Kategori', value: '' }, ...opts]
+})
+
+// Main Data Fetching
 const { data, pending, refresh } = useAsyncData(
   'thumbnails-list',
   async () => {
@@ -64,93 +53,80 @@ const items = computed(() => (data.value as any)?.data?.items || [])
 const total = computed(() => (data.value as any)?.data?.pagination?.total || 0)
 const totalPages = computed(() => (data.value as any)?.data?.pagination?.last_page || 1)
 
-// ==================== FORM LOGIC ====================
+// Sync URL with state
+watch(selectedCategory, (val) => {
+  page.value = 1
+  const queryVal = val === 'SEMUA KATEGORI' ? undefined : val
+  router.push({ query: { ...route.query, category: queryVal, page: undefined } })
+})
 
+watch(search, (val) => {
+  page.value = 1
+  router.push({ query: { ...route.query, search: val || undefined, page: undefined } })
+})
+
+function onPageChange(p: number) {
+  if (p < 1 || p > totalPages.value) return
+  page.value = p
+  router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
+}
+
+// Form State
+const isOpen = ref(false)
+const isEditing = ref(false)
+const saving = ref(false)
+const form = ref({
+  id: null,
+  title: '',
+  category: '',
+  youtube_url: '',
+  description: ''
+})
+
+// Actions
 function openAdd() {
   isEditing.value = false
-  form.value = { id: null, title: '', categories: [], youtube_url: '', description: '' }
-  newCategoryInput.value = ''
+  form.value = { id: null, title: '', category: '', youtube_url: '', description: '' }
   isOpen.value = true
 }
 
 function openEdit(item: any) {
   isEditing.value = true
-  form.value = {
-    id: item.id,
-    title: item.title,
-    categories: Array.isArray(item.categories) ? item.categories : [],
-    youtube_url: item.youtube_url,
-    description: item.description || ''
-  }
-  newCategoryInput.value = ''
+  form.value = { ...item }
   isOpen.value = true
 }
 
-function addNewCategory() {
-  const val = newCategoryInput.value.trim().toUpperCase()
-  if (val && !form.value.categories.includes(val)) {
-    form.value.categories.push(val)
-    newCategoryInput.value = ''
-  }
-}
-
-function removeCategory(cat: string) {
-  form.value.categories = form.value.categories.filter(c => c !== cat)
-}
-
-function toggleExistingCategory(cat: string) {
-  const idx = form.value.categories.indexOf(cat)
-  if (idx === -1) {
-    form.value.categories.push(cat)
-  } else {
-    form.value.categories.splice(idx, 1)
-  }
-}
-
-// Save
 async function save() {
-  if (!form.value.title || !form.value.youtube_url || form.value.categories.length === 0) {
-    toast.add({ 
-      title: 'Validasi', 
-      description: 'Judul, URL, dan minimal 1 kategori wajib diisi', 
-      color: 'warning' 
-    })
+  if (!form.value.title || !form.value.youtube_url || !form.value.category) {
+    toast.add({ title: 'Validasi', description: 'Judul, Kategori, dan URL wajib diisi', color: 'warning' })
     return
   }
 
   saving.value = true
   try {
-    const payload = { ...form.value }
-
     if (isEditing.value) {
       await $apiFetch(`/thumbnails/${form.value.id}`, {
         method: 'PUT',
-        body: payload
+        body: form.value
       })
       toast.add({ title: 'Berhasil', description: 'Thumbnail diperbarui', color: 'success' })
     } else {
       await $apiFetch('/thumbnails', {
         method: 'POST',
-        body: payload
+        body: form.value
       })
       toast.add({ title: 'Berhasil', description: 'Thumbnail ditambahkan', color: 'success' })
     }
-
     isOpen.value = false
     refresh()
     fetchCategories()
   } catch (e: any) {
-    toast.add({ 
-      title: 'Gagal', 
-      description: e.data?.message || 'Gagal menyimpan data', 
-      color: 'error' 
-    })
+    toast.add({ title: 'Gagal', description: e.data?.message || 'Gagal menyimpan data', color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
-// Delete functions (tetap sama)
 async function confirmDelete(id: number) {
   if (!confirm('Apakah Anda yakin ingin menghapus thumbnail ini?')) return
   
@@ -165,11 +141,12 @@ async function confirmDelete(id: number) {
 }
 
 async function deleteCategory(cat: string) {
-  if (!confirm(`Apakah Anda yakin ingin menghapus kategori "${cat}"?\n\nPERINGATAN: SEMUA video dalam kategori ini akan ikut terhapus secara permanen.`)) return
+  if (!confirm(`Apakah Anda yakin ingin menghapus kategori "${cat}"? \nPERINGATAN: SEMUA video dalam kategori ini akan ikut terhapus secara permanen.`)) return
   
   try {
     await $apiFetch(`/thumbnails/category/${cat}`, { method: 'DELETE' })
     toast.add({ title: 'Berhasil', description: `Kategori ${cat} dan semua videonya telah dihapus`, color: 'success' })
+    if (form.value.category === cat) form.value.category = ''
     refresh()
     fetchCategories()
   } catch (e) {
@@ -177,6 +154,13 @@ async function deleteCategory(cat: string) {
   }
 }
 
+// Columns
+const columns = [
+  { id: 'title', key: 'title', label: 'Judul Video' },
+  { id: 'category', key: 'category', label: 'Kategori' },
+  { id: 'youtube_url', key: 'youtube_url', label: 'YouTube URL' },
+  { id: 'actions', key: 'actions', label: 'Aksi', sortable: false }
+]
 
 function getYoutubeID(url: string) {
   if (!url) return ''
@@ -186,13 +170,14 @@ function getYoutubeID(url: string) {
   return id
 }
 
+// Smart Pagination Logic
 const visiblePages = computed(() => {
   const current = page.value
   const last = totalPages.value
   const delta = 2
-  const range: number[] = []
-  const rangeWithDots: (number | string)[] = []
-  let l: number | undefined
+  const range = []
+  const rangeWithDots = []
+  let l
 
   for (let i = 1; i <= last; i++) {
     if (i === 1 || i === last || (i >= current - delta && i <= current + delta)) {
@@ -201,7 +186,7 @@ const visiblePages = computed(() => {
   }
 
   for (const i of range) {
-    if (l !== undefined) {
+    if (l) {
       if (i - l === 2) {
         rangeWithDots.push(l + 1)
       } else if (i - l !== 1) {
@@ -214,28 +199,23 @@ const visiblePages = computed(() => {
 
   return rangeWithDots
 })
-function onPageChange(p: number) {
-  if (p < 1 || p > totalPages.value) return
-  page.value = p
-  router.push({ query: { ...route.query, page: p > 1 ? p : undefined } })
-}
 
-// Columns Definition
-const columns = [
-  { id: 'title', key: 'title', label: 'Judul Video', class: 'w-auto' },
-  { id: 'categories', key: 'categories', label: 'Kategori', class: 'w-48' },
-  { id: 'youtube_url', key: 'youtube_url', label: 'YouTube URL', class: 'w-40' },
-  { id: 'actions', key: 'actions', label: 'Aksi', class: 'w-24 text-right', sortable: false }
-]
-
-// Computed & Watchers
+// Combined categories for realtime feedback
 const allCategories = computed(() => {
-  return [...new Set(categories.value)].sort()
+  const typedCat = form.value.category?.toUpperCase() || ''
+  const list = categories.value.map(c => String(c).toUpperCase())
+  if (typedCat && !list.includes(typedCat)) {
+    list.push(typedCat)
+  }
+  return [...new Set(list)].sort((a, b) => a.localeCompare(b))
 })
 
-watch(() => form.value.categories, () => {
-  // optional: sort categories
-}, { deep: true })
+// Watcher to force uppercase on input
+watch(() => form.value.category, (newVal) => {
+  if (newVal && newVal !== newVal.toUpperCase()) {
+    form.value.category = newVal.toUpperCase()
+  }
+})
 
 onMounted(() => {
   fetchCategories()
@@ -244,30 +224,45 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <UPageHeader title="Kelola Thumbnails" description="Manajemen daftar video YouTube dengan multi kategori">
+    <UPageHeader title="Kelola Thumbnails" description="Manajemen daftar video YouTube berdasarkan kategori">
       <template #links>
         <UButton icon="i-lucide-plus" label="Tambah Thumbnail" @click="openAdd" />
       </template>
     </UPageHeader>
 
-    <!-- Table Card -->
-    <UCard :ui="{ root: 'overflow-hidden', body: 'p-0' }">
-      <!-- Header Filter -->
+    <UCard :ui="{ root: 'overflow-hidden max-w-full', body: 'p-0 sm:p-0 overflow-hidden' }">
       <template #header>
-        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4">
+        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div class="flex items-center gap-3">
-            <h3 class="font-bold">Daftar Thumbnails</h3>
-            <UBadge variant="subtle" size="sm">{{ total }} Video</UBadge>
+            <h3 class="font-bold text-highlighted">Daftar Thumbnails</h3>
+            <UBadge variant="subtle" size="sm" color="neutral" class="rounded-full">{{ total }} Video</UBadge>
           </div>
-          
-          <div class="flex items-center gap-3">
-            <UInput v-model="search" placeholder="Cari video..." icon="i-lucide-search" class="w-72" />
-            
+          <div class="flex items-center gap-2">
+            <UInput
+              v-model="search"
+              placeholder="Cari video..."
+              icon="i-lucide-search"
+              class="w-64"
+            >
+               <template #trailing v-if="search">
+                 <UButton
+                   color="neutral"
+                   variant="link"
+                   size="xs"
+                   icon="i-lucide-x"
+                   :padded="false"
+                   @click="search = ''"
+                 />
+               </template>
+            </UInput>
+
             <USelect
               v-model="selectedCategory"
               :items="['SEMUA KATEGORI', ...categories.map(c => String(c).toUpperCase())]"
-              class="w-52"
+              class="w-48"
             />
+            
+            <UButton v-if="selectedCategory && selectedCategory !== 'SEMUA KATEGORI'" icon="i-lucide-x" color="neutral" variant="ghost" size="xs" @click="selectedCategory = 'SEMUA KATEGORI'" />
           </div>
         </div>
       </template>
@@ -291,10 +286,8 @@ onMounted(() => {
             </div>
           </template>
 
-          <template #categories-cell="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <UBadge v-for="cat in row.original.categories" :key="cat" color="primary" variant="subtle" class="rounded-full px-3">{{ cat }}</UBadge>
-            </div>
+          <template #category-cell="{ row }">
+            <UBadge color="primary" variant="subtle" class="rounded-full px-3">{{ row.original.category }}</UBadge>
           </template>
 
           <template #youtube_url-cell="{ row }">
@@ -307,7 +300,7 @@ onMounted(() => {
           <template #actions-cell="{ row }">
             <div class="flex items-center justify-end gap-1">
               <UButton icon="i-lucide-edit" size="xs" color="neutral" variant="ghost" class="hover:bg-primary-50 hover:text-primary-600" @click="openEdit(row.original)" />
-              <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" class="hover:bg-red-50" @click="confirmDelete(row.original.id as number)" />
+              <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" class="hover:bg-red-50" @click="confirmDelete(row.original.id)" />
             </div>
           </template>
         </UTable>
@@ -318,8 +311,7 @@ onMounted(() => {
         </div>
       </ClientOnly>
 
-      <!-- Pagination tetap sama... (bisa copy dari kode lama kamu) -->
-       <!-- Footer Pagination -->
+      <!-- Footer Pagination -->
       <template #footer>
          <div class="flex items-center justify-between py-2 px-4">
            <span class="text-xs text-muted font-medium">Menampilkan {{ items.length }} dari {{ total }} data (Hal: {{ page }}/{{ totalPages }})</span>
@@ -370,75 +362,59 @@ onMounted(() => {
       </template>
     </UCard>
 
-    <!-- ==================== MODAL FORM ==================== -->
-    <UModal v-model:open="isOpen" :title="isEditing ? 'Edit Thumbnail' : 'Tambah Thumbnail Baru'" size="lg">
+    <!-- Form Modal -->
+    <UModal v-model:open="isOpen" :title="isEditing ? 'Edit Thumbnail' : 'Tambah Thumbnail Baru'" description="Lengkapi data video di bawah ini">
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon :name="isEditing ? 'i-lucide-edit' : 'i-lucide-plus-circle'" class="w-5 h-5 text-primary-600" />
+          <span class="font-semibold text-lg">{{ isEditing ? 'Edit Thumbnail' : 'Tambah Thumbnail Baru' }}</span>
+        </div>
+      </template>
+
       <template #body>
-        <div class="space-y-6">
+        <div class="space-y-4">
           <UFormField label="Judul Video" required>
-            <UInput v-model="form.title" placeholder="Judul video..." />
+            <UInput v-model="form.title" placeholder="Masukkan judul video..." class="w-full" />
           </UFormField>
 
-          <!-- Multi Category Section -->
-          <UFormField label="Kategori" required help="Bisa pilih lebih dari satu kategori">
-            <div class="flex gap-2">
-              <UInput 
-                v-model="newCategoryInput"
-                placeholder="Ketik kategori baru..."
-                @keydown.enter="addNewCategory"
-              />
-              <UButton type="button" @click="addNewCategory">Tambah</UButton>
-            </div>
-
-            <!-- Selected Categories (Chips) -->
-            <div v-if="form.categories.length" class="flex flex-wrap gap-2 mt-4">
-              <div
-                v-for="cat in form.categories"
-                :key="cat"
-                class="bg-primary-100 text-primary-700 px-4 py-2 rounded-full flex items-center gap-2 text-sm"
-              >
-                {{ cat }}
-                <UIcon 
-                  name="i-lucide-x" 
-                  class="w-4 h-4 cursor-pointer hover:text-red-600"
-                  @click="removeCategory(cat)"
-                />
-              </div>
-            </div>
-
-            <!-- Existing Categories -->
-            <div v-if="allCategories.length" class="mt-6">
-              <p class="text-xs font-bold text-slate-400 mb-3">Pilih dari kategori yang sudah ada:</p>
+          <UFormField label="Kategori" required help="Gunakan kategori yang sama untuk mengelompokkan video">
+            <UInput v-model="form.category" placeholder="Ketik kategori baru..." class="w-full" />
+            <div v-if="allCategories.length" class="mt-4">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pilih Kategori yang Sudah Ada:</p>
               <div class="flex flex-wrap gap-2">
-                <UButton
-                  v-for="cat in allCategories"
-                  :key="cat"
-                  size="sm"
-                  :variant="form.categories.includes(cat) ? 'solid' : 'outline'"
-                  :color="form.categories.includes(cat) ? 'primary' : 'neutral'"
-                  @click="toggleExistingCategory(cat)"
+                <button
+                  v-for="cat in allCategories" :key="cat" type="button"
+                  :class="['px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-2 group', form.category === cat ? 'bg-primary-50 border-primary-500 text-primary-700 ring-1 ring-primary-500' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50']"
+                  @click="form.category = cat"
                 >
-                  {{ cat }}
-                </UButton>
+                  <UIcon :name="form.category === cat ? 'i-lucide-check-circle-2' : 'i-lucide-circle'" :class="form.category === cat ? 'text-primary-500' : 'text-slate-300'" />
+                  <span>{{ cat }}</span>
+                  
+                  <UIcon 
+                    v-if="categories.includes(cat)"
+                    name="i-lucide-trash-2" 
+                    class="w-3.5 h-3.5 ml-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" 
+                    @click.stop="deleteCategory(cat)"
+                  />
+                </button>
               </div>
             </div>
           </UFormField>
 
           <UFormField label="YouTube URL" required>
-            <UInput v-model="form.youtube_url" icon="i-lucide-youtube" placeholder="https://youtube.com/watch?v=..." />
+            <UInput v-model="form.youtube_url" icon="i-lucide-youtube" placeholder="https://www.youtube.com/watch?v=..." class="w-full" />
           </UFormField>
 
           <UFormField label="Deskripsi">
-            <UTextarea v-model="form.description" placeholder="Deskripsi singkat (opsional)" />
+            <UTextarea v-model="form.description" placeholder="Keterangan singkat video (opsional)" class="w-full" />
           </UFormField>
         </div>
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-3">
-          <UButton color="neutral" variant="outline" @click="isOpen = false">Batal</UButton>
-          <UButton :loading="saving" @click="save" icon="i-lucide-save">
-            {{ isEditing ? 'Simpan Perubahan' : 'Simpan Thumbnail' }}
-          </UButton>
+        <div class="flex justify-end gap-2">
+          <UButton color="neutral" variant="outline" label="Batal" @click="isOpen = false" />
+          <UButton :loading="saving" icon="i-lucide-save" :label="isEditing ? 'Simpan Perubahan' : 'Simpan Data'" @click="save" />
         </div>
       </template>
     </UModal>
